@@ -26,7 +26,27 @@ be-validate:
 be-clean:
 	cd $(BE) && ./mvnw clean
 
-# INTERGARTION
+# FRONTEND
+fe-install:
+	cd promo-graud-fe && npm install
+
+fe-dev:
+	cd promo-graud-fe && npm run dev
+
+fe-build:
+	cd promo-graud-fe && npm run build
+
+fe-lint:
+	cd promo-graud-fe && npm run lint
+
+fe-format:
+	cd promo-graud-fe && npm run format
+
+fe-format-check:
+	cd promo-graud-fe && npm run format:check
+
+# INTEGRATION
 dev: up be-run
 
-.PHONY: up down logs be-run be-build be-test be-validate be-clean dev
+.PHONY: up down logs be-run be-build be-test be-validate be-clean dev \
+        fe-install fe-dev fe-build fe-lint fe-format fe-format-check
