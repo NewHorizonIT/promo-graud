@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS type_of_user (
     id        SERIAL PRIMARY KEY,
     type      VARCHAR(20)    NOT NULL,
+    -- type: normal, bronze, silver, gold
     threshold DECIMAL(15, 2) NOT NULL
 );
 
@@ -12,7 +13,11 @@ CREATE TABLE IF NOT EXISTS "user" (
     email    VARCHAR(255)  NOT NULL UNIQUE,
     password VARCHAR(255)  NOT NULL,
     role     VARCHAR(10)   NOT NULL DEFAULT 'user',
-    type_id  INT           REFERENCES type_of_user (id)
+    -- role: user, admin
+    type_id  INT           REFERENCES type_of_user (id),
+    is_deleted BOOLEAN       NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP     NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP     NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS campaign (
@@ -21,7 +26,11 @@ CREATE TABLE IF NOT EXISTS campaign (
     start_time       TIMESTAMP      NOT NULL,
     end_time         TIMESTAMP      NOT NULL,
     promotion_budget DECIMAL(15, 2) NOT NULL,
-    status           VARCHAR(20)    NOT NULL DEFAULT 'chua_dien_ra'
+    status           VARCHAR(20)    NOT NULL DEFAULT 'upcoming',
+    -- status: active | ended
+    is_deleted       BOOLEAN        NOT NULL DEFAULT FALSE,
+    created_at       TIMESTAMP      NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP      NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS rule_campaign (
@@ -35,8 +44,11 @@ CREATE TABLE IF NOT EXISTS rule_campaign (
     type_of_user      VARCHAR(20)    NOT NULL DEFAULT 'all',
     start_time        TIMESTAMP,
     end_time          TIMESTAMP,
-    payload           TEXT,
-    status            VARCHAR(20)    NOT NULL DEFAULT 'active'
+    payload           JSONB,
+    status            VARCHAR(20)    NOT NULL DEFAULT 'active',
+     -- status: active | inactive
+     is_deleted       BOOLEAN        NOT NULL DEFAULT FALSE,
+     created_at       TIMESTAMP      NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS voucher (
@@ -50,6 +62,7 @@ CREATE TABLE IF NOT EXISTS voucher (
     expired_at           TIMESTAMP    NOT NULL,
     distribution_channel VARCHAR(10)  NOT NULL,
     status               VARCHAR(20)  NOT NULL DEFAULT 'active'
+    -- status: active | disabled | blocked
 );
 
 CREATE TABLE IF NOT EXISTS user_voucher (
@@ -57,7 +70,8 @@ CREATE TABLE IF NOT EXISTS user_voucher (
     user_id      INT         NOT NULL REFERENCES "user" (id),
     voucher_id   INT         NOT NULL REFERENCES voucher (id),
     collected_at TIMESTAMP   NOT NULL DEFAULT NOW(),
-    status       VARCHAR(20) NOT NULL DEFAULT 'chua_dung'
+    status       VARCHAR(20) NOT NULL DEFAULT 'unused'
+    -- status: unused | used | expired
 );
 
 CREATE TABLE IF NOT EXISTS type_of_product (
@@ -71,7 +85,10 @@ CREATE TABLE IF NOT EXISTS product (
     images      TEXT,
     description TEXT,
     price       DECIMAL(15, 2) NOT NULL,
-    type_id     INT            REFERENCES type_of_product (id)
+    type_id     INT            REFERENCES type_of_product (id),
+    is_deleted       BOOLEAN        NOT NULL DEFAULT FALSE,
+    created_at       TIMESTAMP      NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMP      NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS "order" (
@@ -80,7 +97,10 @@ CREATE TABLE IF NOT EXISTS "order" (
     total_price DECIMAL(15, 2) NOT NULL,
     final_price DECIMAL(15, 2) NOT NULL,
     voucher_id  INT            REFERENCES voucher (id),
-    status      VARCHAR(20)    NOT NULL DEFAULT 'thanh_cong'
+    status      VARCHAR(20)    NOT NULL DEFAULT 'success',
+    -- status: success | failed | pending | cancelled
+    is_deleted       BOOLEAN        NOT NULL DEFAULT FALSE,
+    created_at       TIMESTAMP      NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS order_item (
@@ -99,6 +119,7 @@ CREATE TABLE IF NOT EXISTS voucher_redemption (
     ip_address         VARCHAR(45)  NOT NULL,
     device_fingerprint VARCHAR(255),
     status_of_order    VARCHAR(20)  NOT NULL,
+     -- status_of_order: success | failed | pending | cancelled
     reason             TEXT
 );
 
@@ -108,6 +129,7 @@ CREATE TABLE IF NOT EXISTS distribution_log (
     channel         VARCHAR(10)  NOT NULL,
     recipient       VARCHAR(255) NOT NULL,
     status          VARCHAR(10)  NOT NULL DEFAULT 'pending',
+    -- status: pending | sent | failed
     retry_count     INT          NOT NULL DEFAULT 0,
     last_attempt_at TIMESTAMP,
     error_message   TEXT
