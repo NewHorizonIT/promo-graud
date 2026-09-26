@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/promo_graud_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/promo_graud_db}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
 
