@@ -1,6 +1,7 @@
 package group2d.promo_graud.modules.products;
 
 import jakarta.persistence.*;
+
 import lombok.*;
 
 @Entity
@@ -12,10 +13,10 @@ import lombok.*;
 @Builder
 public class TypeOfProduct {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Integer id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-  @Column(name = "type", length = 100, nullable = false)
-  private String type;
+    @Column(name = "type", length = 100, nullable = false)
+    private String type;
 }

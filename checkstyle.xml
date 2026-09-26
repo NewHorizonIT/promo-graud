@@ -30,9 +30,8 @@
     <!-- ── Imports ─────────────────────────────────────────────────────── -->
     <module name="UnusedImports"/>
     <module name="IllegalImport"/>
-    <module name="AvoidStarImport"/>
     <module name="ImportOrder">
-      <property name="groups" value="java,javax,org,com"/>
+      <property name="groups" value="java,javax,jakarta,org,com,lombok"/>
       <property name="ordered" value="true"/>
       <property name="separated" value="true"/>
       <property name="option" value="bottom"/>

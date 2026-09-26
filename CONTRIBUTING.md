@@ -1,5 +1,15 @@
 # Contributing Guide
 
+## Setup (chạy 1 lần sau khi clone)
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Hook sẽ tự động format Java code bằng Spotless trước mỗi commit. Không cần làm thêm gì.
+
+---
+
 ## Branch
 
 ```

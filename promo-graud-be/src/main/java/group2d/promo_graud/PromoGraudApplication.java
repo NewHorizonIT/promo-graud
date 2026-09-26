@@ -9,5 +9,4 @@ public class PromoGraudApplication {
     public static void main(String[] args) {
         SpringApplication.run(PromoGraudApplication.class, args);
     }
-
 }

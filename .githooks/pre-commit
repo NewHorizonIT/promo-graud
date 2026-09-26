@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+ROOT=$(git rev-parse --show-toplevel)
+
+# Only run if Java files are staged
+STAGED_JAVA=$(git diff --cached --name-only --diff-filter=ACM | grep "promo-graud-be/.*\.java$" || true)
+if [ -z "$STAGED_JAVA" ]; then
+    exit 0
+fi
+
+echo "[pre-commit] Formatting Java files with Spotless..."
+cd "$ROOT/promo-graud-be"
+./mvnw spotless:apply -q
+
+cd "$ROOT"
+for f in $STAGED_JAVA; do
+    git add "$f"
+done
+
+echo "[pre-commit] Done."
