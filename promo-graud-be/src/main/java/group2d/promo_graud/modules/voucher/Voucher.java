@@ -2,19 +2,22 @@ package group2d.promo_graud.modules.voucher;
 
 import java.time.LocalDateTime;
 
+import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
+import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
+import group2d.promo_graud.modules.voucher.enums.VoucherType;
 import jakarta.persistence.*;
 
 import lombok.*;
 
 import group2d.promo_graud.modules.rules.RuleCampaign;
 
+@Builder
 @Entity
 @Table(name = "voucher")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Voucher {
 
     @Id
@@ -25,8 +28,10 @@ public class Voucher {
     private String code;
 
     // Nếu type có các giá trị cố định, bạn có thể chuyển thành Enum (VD: VoucherTypeEnum)
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "type", length = 10, nullable = false)
-    private String type;
+    private VoucherType type = VoucherType.GENERIC;
 
     // Quan hệ N-1 với bảng rule_campaign
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,12 +48,10 @@ public class Voucher {
     @Column(name = "limit_client", nullable = false)
     private Integer limitClient = 1;
 
-    @Column(name = "expired_at", nullable = false)
-    private LocalDateTime expiredAt;
-
-    // Nếu channel có các giá trị cố định (EMAIL, SMS...), bạn nên chuyển thành Enum
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "distribution_channel", length = 10, nullable = false)
-    private String distributionChannel;
+    private DistributionChannel distributionChannel = DistributionChannel.WEBHOOK;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

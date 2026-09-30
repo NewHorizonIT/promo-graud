@@ -12,7 +12,6 @@ import group2d.promo_graud.shared.dto.ApiResponse;
 // Bắt toàn bộ lỗi (exception) từ các API
 @ControllerAdvice
 public class GlobalExceptionHandler {
-
     // 1. Lỗi phân quyền (Không có quyền truy cập API)
     @ExceptionHandler(value = AuthorizationDeniedException.class)
     ResponseEntity<ApiResponse<String>> handlingAccessDeniedException(

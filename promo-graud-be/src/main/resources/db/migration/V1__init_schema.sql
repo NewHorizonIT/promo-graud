@@ -54,15 +54,16 @@ CREATE TABLE IF NOT EXISTS rule_campaign (
 CREATE TABLE IF NOT EXISTS voucher (
     id                   SERIAL PRIMARY KEY,
     code                 VARCHAR(50)  NOT NULL UNIQUE,
-    type                 VARCHAR(10)  NOT NULL,
+    type                 VARCHAR(10)  NOT NULL DEFAULT 'generic',
+    -- voucher type : generic | unique
     rule_id              INT          NOT NULL REFERENCES rule_campaign (id),
     quantity             INT          NOT NULL,
     quantity_remain      INT          NOT NULL,
     limit_client         INT          NOT NULL DEFAULT 1,
     expired_at           TIMESTAMP    NOT NULL,
-    distribution_channel VARCHAR(10)  NOT NULL,
+    distribution_channel VARCHAR(10)  NOT NULL DEFAULT 'webhook',
     status               VARCHAR(20)  NOT NULL DEFAULT 'active'
-    -- status: active | disabled | blocked
+    -- status: active | disabled
 );
 
 CREATE TABLE IF NOT EXISTS user_voucher (
