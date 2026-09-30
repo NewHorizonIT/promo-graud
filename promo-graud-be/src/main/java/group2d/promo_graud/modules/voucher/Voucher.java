@@ -1,15 +1,13 @@
 package group2d.promo_graud.modules.voucher;
 
-import java.time.LocalDateTime;
-
-import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
-import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
-import group2d.promo_graud.modules.voucher.enums.VoucherType;
 import jakarta.persistence.*;
 
 import lombok.*;
 
 import group2d.promo_graud.modules.rules.RuleCampaign;
+import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
+import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
+import group2d.promo_graud.modules.voucher.enums.VoucherType;
 
 @Builder
 @Entity

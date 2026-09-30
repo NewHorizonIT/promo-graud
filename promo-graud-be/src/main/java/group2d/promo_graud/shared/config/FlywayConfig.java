@@ -12,15 +12,16 @@ public class FlywayConfig {
 
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
-      Flyway flyway = Flyway.configure()
-        .dataSource(dataSource)
-        .locations("classpath:db/migration")
-        .load();
+        Flyway flyway =
+                Flyway.configure()
+                        .dataSource(dataSource)
+                        .locations("classpath:db/migration")
+                        .load();
 
-      flyway.repair();   // TẠM THỜI: cập nhật lại checksum V1 trong DB
-      flyway.migrate();
+        flyway.repair(); // TẠM THỜI: cập nhật lại checksum V1 trong DB
+        flyway.migrate();
 
-      return flyway;
+        return flyway;
     }
 
     @Bean
