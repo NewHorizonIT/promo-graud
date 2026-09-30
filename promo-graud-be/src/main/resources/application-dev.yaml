@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/promo_graud_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/promo_graud_db}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
 
@@ -19,3 +19,10 @@ spring:
 
 server:
   port: ${BACKEND_PORT:8080}
+
+jwt:
+  secret: 20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35e214a94
+  refresh-secret: 659079efaa0f77794f8bb02b664e608dbec37d700acdd238f951e82611d647c0
+  valid-duration: 25
+  refresh-duration: 72000
+
