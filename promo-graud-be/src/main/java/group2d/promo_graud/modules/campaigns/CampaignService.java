@@ -80,9 +80,6 @@ public class CampaignService {
         Pageable pageable = PageRequest.of(request.getPage() - 1, request.getSize(), sort);
 
         validateTimeFilter(request);
-        // Chuẩn hóa name để tránh PostgreSQL/Hibernate
-        // không xác định được kiểu dữ liệu khi name = null
-        String normalizedName = request.getName() == null ? "" : request.getName().trim();
 
         Specification<Campaign> specification = CampaignSpecification.filter(request);
         Page<Campaign> campaignPage = campaignRepository.findAll(specification, pageable);
