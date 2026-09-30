@@ -1,11 +1,12 @@
 package group2d.promo_graud.modules.campaigns.dto;
 
-import group2d.promo_graud.modules.campaigns.CampaignStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import group2d.promo_graud.modules.campaigns.CampaignStatus;
 
 @Data
 @AllArgsConstructor

@@ -1,12 +1,14 @@
 package group2d.promo_graud.modules.campaigns.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import jakarta.validation.constraints.*;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @AllArgsConstructor
@@ -15,7 +17,10 @@ import java.time.LocalDateTime;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CampaignRequest {
     @NotBlank(message = "Tên chiến dịch không được để trống")
-    @Size(min = 5, max = 100, message = "Tên chiến dịch phải ít nhất 5 ký tự và không quá 100 ký tự")
+    @Size(
+            min = 5,
+            max = 100,
+            message = "Tên chiến dịch phải ít nhất 5 ký tự và không quá 100 ký tự")
     String name;
 
     @NotNull(message = "Thời gian bắt đầu không được để trống")

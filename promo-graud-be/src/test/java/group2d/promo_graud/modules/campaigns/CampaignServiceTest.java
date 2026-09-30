@@ -1,9 +1,10 @@
 package group2d.promo_graud.modules.campaigns;
 
-import group2d.promo_graud.modules.campaigns.dto.CampaignRequest;
-import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
-import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
-import group2d.promo_graud.shared.exception.AppException;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,17 +15,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import org.springframework.data.jpa.domain.Specification;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+
+import group2d.promo_graud.modules.campaigns.dto.CampaignRequest;
+import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
+import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
+import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
+import group2d.promo_graud.shared.exception.AppException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Campaign Service Unit Test")
@@ -33,8 +34,7 @@ public class CampaignServiceTest {
     // Tạo Repo giả
     private CampaignRepository campaignRepository;
 
-    @InjectMocks
-    private CampaignService campaignService;
+    @InjectMocks private CampaignService campaignService;
 
     // 1. NHÓM TEST CHO HÀM CREATE CAMPAIGN
     @Nested
@@ -43,9 +43,10 @@ public class CampaignServiceTest {
         @Test
         @DisplayName("Tạo chiến dịch thành công")
         void createCampaign_Success() {
-            //ARRANGE (chuẩn bị dữ liệu)
+            // ARRANGE (chuẩn bị dữ liệu)
             CampaignRequest request = createValidRequest();
-            Campaign savedCampaign = createMockCampaign(1, request.getStartTime(), CampaignStatus.UPCOMING);
+            Campaign savedCampaign =
+                    createMockCampaign(1, request.getStartTime(), CampaignStatus.UPCOMING);
             when(campaignRepository.save(any(Campaign.class))).thenReturn(savedCampaign);
 
             // ACT (thực thi)
@@ -55,6 +56,7 @@ public class CampaignServiceTest {
             assertNotNull(response);
             assertEquals("Test Campaign", response.getName());
         }
+
         @Test
         @DisplayName("Thất bại vì thời gian chiến dịch nằm trong quá khứ")
         void createCampaign_Fail_StartTimeInPast() {
@@ -64,7 +66,8 @@ public class CampaignServiceTest {
             request.setStartTime(LocalDateTime.now().minusDays(1)); // Quá khứ
 
             // Act & Assert
-            AppException ex = assertThrows(AppException.class, () -> campaignService.createCampaign(request));
+            AppException ex =
+                    assertThrows(AppException.class, () -> campaignService.createCampaign(request));
             assertEquals(CampaignErrorCode.CAMPAIGN_IN_PAST, ex.getErrorCode());
             verify(campaignRepository, never()).save(any()); // Đảm bảo không gọi DB
         }
@@ -77,7 +80,8 @@ public class CampaignServiceTest {
             request.setPromotionBudget(BigDecimal.ZERO);
 
             // Act & Assert
-            AppException ex = assertThrows(AppException.class, () -> campaignService.createCampaign(request));
+            AppException ex =
+                    assertThrows(AppException.class, () -> campaignService.createCampaign(request));
             assertEquals(CampaignErrorCode.INVALID_CAMPAIGN_BUDGET, ex.getErrorCode());
         }
 
@@ -87,7 +91,8 @@ public class CampaignServiceTest {
             CampaignRequest request = createValidRequest();
             request.setEndTime(request.getStartTime().minusDays(1));
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.createCampaign(request));
+            AppException ex =
+                    assertThrows(AppException.class, () -> campaignService.createCampaign(request));
             assertEquals(CampaignErrorCode.INVALID_CAMPAIGN_TIME, ex.getErrorCode());
         }
 
@@ -97,7 +102,8 @@ public class CampaignServiceTest {
             CampaignRequest request = createValidRequest();
             request.setPromotionBudget(null);
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.createCampaign(request));
+            AppException ex =
+                    assertThrows(AppException.class, () -> campaignService.createCampaign(request));
             assertEquals(CampaignErrorCode.CAMPAIGN_BUDGET_NOT_NULL, ex.getErrorCode());
         }
     }
@@ -113,7 +119,8 @@ public class CampaignServiceTest {
             // Arrange
             Integer id = 1;
             CampaignRequest request = createValidRequest();
-            Campaign existingCampaign = createMockCampaign(id, request.getStartTime(), CampaignStatus.UPCOMING);
+            Campaign existingCampaign =
+                    createMockCampaign(id, request.getStartTime(), CampaignStatus.UPCOMING);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(existingCampaign));
             // THÊM DÒNG NÀY: Mock hành vi save để không bị trả về null
@@ -134,12 +141,15 @@ public class CampaignServiceTest {
             Integer id = 1;
             CampaignRequest request = createValidRequest();
             // StartTime cũ khác với StartTime trong request
-            Campaign activeCampaign = createMockCampaign(id, LocalDateTime.now().minusDays(2), CampaignStatus.ACTIVE);
+            Campaign activeCampaign =
+                    createMockCampaign(id, LocalDateTime.now().minusDays(2), CampaignStatus.ACTIVE);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(activeCampaign));
 
             // Act & Assert
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedCampaign(id, request));
+            AppException ex =
+                    assertThrows(
+                            AppException.class, () -> campaignService.updatedCampaign(id, request));
             assertEquals(CampaignErrorCode.CANNOT_UPDATE_RUNNING_CAMPAIGN, ex.getErrorCode());
         }
 
@@ -148,13 +158,17 @@ public class CampaignServiceTest {
         void updateCampaign_Fail_WhenDeleted() {
             // Arrange
             Integer id = 1;
-            Campaign deletedCampaign = createMockCampaign(id, LocalDateTime.now(), CampaignStatus.UPCOMING);
+            Campaign deletedCampaign =
+                    createMockCampaign(id, LocalDateTime.now(), CampaignStatus.UPCOMING);
             deletedCampaign.setIsDeleted(true);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(deletedCampaign));
 
             // Act & Assert
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedCampaign(id, createValidRequest()));
+            AppException ex =
+                    assertThrows(
+                            AppException.class,
+                            () -> campaignService.updatedCampaign(id, createValidRequest()));
             assertEquals(CampaignErrorCode.CAMPAIGN_IS_DELETED, ex.getErrorCode());
         }
 
@@ -163,7 +177,10 @@ public class CampaignServiceTest {
         void updateCampaign_Fail_NotFound() {
             when(campaignRepository.findById(1)).thenReturn(Optional.empty());
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedCampaign(1, createValidRequest()));
+            AppException ex =
+                    assertThrows(
+                            AppException.class,
+                            () -> campaignService.updatedCampaign(1, createValidRequest()));
             assertEquals(CampaignErrorCode.CAMPAIGN_NOT_FOUND, ex.getErrorCode());
         }
 
@@ -171,10 +188,14 @@ public class CampaignServiceTest {
         @DisplayName("Thất bại khi cập nhật chiến dịch đã ENDED")
         void updateCampaign_Fail_WhenEnded() {
             Integer id = 1;
-            Campaign endedCampaign = createMockCampaign(id, LocalDateTime.now().minusDays(5), CampaignStatus.ENDED);
+            Campaign endedCampaign =
+                    createMockCampaign(id, LocalDateTime.now().minusDays(5), CampaignStatus.ENDED);
             when(campaignRepository.findById(id)).thenReturn(Optional.of(endedCampaign));
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedCampaign(id, createValidRequest()));
+            AppException ex =
+                    assertThrows(
+                            AppException.class,
+                            () -> campaignService.updatedCampaign(id, createValidRequest()));
             assertEquals(CampaignErrorCode.CAMPAIGN_END, ex.getErrorCode());
         }
 
@@ -186,10 +207,13 @@ public class CampaignServiceTest {
             request.setEndTime(LocalDateTime.now().minusDays(1)); // Đặt EndTime ở quá khứ
 
             // Giữ nguyên StartTime để pass qua check đầu tiên của nhánh ACTIVE
-            Campaign activeCampaign = createMockCampaign(id, request.getStartTime(), CampaignStatus.ACTIVE);
+            Campaign activeCampaign =
+                    createMockCampaign(id, request.getStartTime(), CampaignStatus.ACTIVE);
             when(campaignRepository.findById(id)).thenReturn(Optional.of(activeCampaign));
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedCampaign(id, request));
+            AppException ex =
+                    assertThrows(
+                            AppException.class, () -> campaignService.updatedCampaign(id, request));
             assertEquals(CampaignErrorCode.END_TIME_MUST_BE_IN_FUTURE, ex.getErrorCode());
         }
 
@@ -200,7 +224,8 @@ public class CampaignServiceTest {
             CampaignRequest request = createValidRequest();
 
             // StartTime trong DB phải khớp với request
-            Campaign activeCampaign = createMockCampaign(id, request.getStartTime(), CampaignStatus.ACTIVE);
+            Campaign activeCampaign =
+                    createMockCampaign(id, request.getStartTime(), CampaignStatus.ACTIVE);
             when(campaignRepository.findById(id)).thenReturn(Optional.of(activeCampaign));
             when(campaignRepository.save(any(Campaign.class))).thenReturn(activeCampaign);
 
@@ -210,22 +235,34 @@ public class CampaignServiceTest {
     }
 
     // 3. NHÓM TEST CHO HÀM GET ALL
+    // 3. NHÓM TEST CHO HÀM GET ALL
     @Nested
     @DisplayName("Tests for getAll()")
     class GetAllTests {
+
         @Test
         @DisplayName("Lấy danh sách phân trang thành công")
         void getAll_Success() {
+
             // Arrange
-            Campaign mockCampaign = createMockCampaign(1, LocalDateTime.now(), CampaignStatus.ACTIVE);
+            Campaign mockCampaign =
+                    createMockCampaign(1, LocalDateTime.now(), CampaignStatus.ACTIVE);
+
             Page<Campaign> pagedResponse = new PageImpl<>(List.of(mockCampaign));
 
-            when(campaignRepository.searchAndFilterCampaign(
-              anyString(), any(), anyBoolean(), any(), anyBoolean(), any(), anyBoolean(), any(Pageable.class)
-            )).thenReturn(pagedResponse);
+            CampaignSearchRequest request = new CampaignSearchRequest();
+
+            request.setName("Test");
+            request.setPage(1);
+            request.setSize(10);
+            request.setSortBy("id");
+            request.setSortDir("desc");
+
+            when(campaignRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(pagedResponse);
 
             // Act
-            Page<CampaignResponse> result = campaignService.getAll("Test", null, null, null, 1, 10, "id", "desc");
+            Page<CampaignResponse> result = campaignService.getAll(request);
 
             // Assert
             assertNotNull(result);
@@ -244,8 +281,11 @@ public class CampaignServiceTest {
             // Arrange
             Integer id = 1;
             // Đang UPCOMING, StartTime < Now -> Đủ điều kiện sang ACTIVE
-            Campaign existingCampaign = createMockCampaign(id, LocalDateTime.now().minusDays(1), CampaignStatus.UPCOMING);
-            CampaignUpdateStatusRequest request = new CampaignUpdateStatusRequest(CampaignStatus.ACTIVE);
+            Campaign existingCampaign =
+                    createMockCampaign(
+                            id, LocalDateTime.now().minusDays(1), CampaignStatus.UPCOMING);
+            CampaignUpdateStatusRequest request =
+                    new CampaignUpdateStatusRequest(CampaignStatus.ACTIVE);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(existingCampaign));
             when(campaignRepository.save(any(Campaign.class))).thenReturn(existingCampaign);
@@ -263,8 +303,10 @@ public class CampaignServiceTest {
         void updateStatus_EarlyReturn_WhenStatusIsSame() {
             // Arrange
             Integer id = 1;
-            Campaign existingCampaign = createMockCampaign(id, LocalDateTime.now(), CampaignStatus.ACTIVE);
-            CampaignUpdateStatusRequest request = new CampaignUpdateStatusRequest(CampaignStatus.ACTIVE); // Y chang
+            Campaign existingCampaign =
+                    createMockCampaign(id, LocalDateTime.now(), CampaignStatus.ACTIVE);
+            CampaignUpdateStatusRequest request =
+                    new CampaignUpdateStatusRequest(CampaignStatus.ACTIVE); // Y chang
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(existingCampaign));
 
@@ -282,13 +324,18 @@ public class CampaignServiceTest {
             // Arrange
             Integer id = 1;
             // Start time tận ngày mai
-            Campaign existingCampaign = createMockCampaign(id, LocalDateTime.now().plusDays(1), CampaignStatus.UPCOMING);
-            CampaignUpdateStatusRequest request = new CampaignUpdateStatusRequest(CampaignStatus.ACTIVE);
+            Campaign existingCampaign =
+                    createMockCampaign(
+                            id, LocalDateTime.now().plusDays(1), CampaignStatus.UPCOMING);
+            CampaignUpdateStatusRequest request =
+                    new CampaignUpdateStatusRequest(CampaignStatus.ACTIVE);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(existingCampaign));
 
             // Act & Assert
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedStatus(id, request));
+            AppException ex =
+                    assertThrows(
+                            AppException.class, () -> campaignService.updatedStatus(id, request));
             assertEquals(CampaignErrorCode.CANNOT_ACTIVATE_BEFORE_START_TIME, ex.getErrorCode());
         }
 
@@ -296,12 +343,16 @@ public class CampaignServiceTest {
         @DisplayName("Thất bại khi cập nhật trạng thái của chiến dịch đã ENDED")
         void updateStatus_Fail_WhenEnded() {
             Integer id = 1;
-            Campaign endedCampaign = createMockCampaign(id, LocalDateTime.now().minusDays(5), CampaignStatus.ENDED);
-            CampaignUpdateStatusRequest request = new CampaignUpdateStatusRequest(CampaignStatus.UPCOMING);
+            Campaign endedCampaign =
+                    createMockCampaign(id, LocalDateTime.now().minusDays(5), CampaignStatus.ENDED);
+            CampaignUpdateStatusRequest request =
+                    new CampaignUpdateStatusRequest(CampaignStatus.UPCOMING);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(endedCampaign));
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.updatedStatus(id, request));
+            AppException ex =
+                    assertThrows(
+                            AppException.class, () -> campaignService.updatedStatus(id, request));
             assertEquals(CampaignErrorCode.CAMPAIGN_END, ex.getErrorCode());
         }
     }
@@ -315,7 +366,8 @@ public class CampaignServiceTest {
         void deleteCampaign_Success() {
             // Arrange
             Integer id = 1;
-            Campaign existingCampaign = createMockCampaign(id, LocalDateTime.now().minusDays(5), CampaignStatus.ENDED);
+            Campaign existingCampaign =
+                    createMockCampaign(id, LocalDateTime.now().minusDays(5), CampaignStatus.ENDED);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(existingCampaign));
 
@@ -332,12 +384,14 @@ public class CampaignServiceTest {
         void deleteCampaign_Fail_WhenNotEnded() {
             // Arrange
             Integer id = 1;
-            Campaign existingCampaign = createMockCampaign(id, LocalDateTime.now(), CampaignStatus.ACTIVE);
+            Campaign existingCampaign =
+                    createMockCampaign(id, LocalDateTime.now(), CampaignStatus.ACTIVE);
 
             when(campaignRepository.findById(id)).thenReturn(Optional.of(existingCampaign));
 
             // Act & Assert
-            AppException ex = assertThrows(AppException.class, () -> campaignService.deleteCampaign(id));
+            AppException ex =
+                    assertThrows(AppException.class, () -> campaignService.deleteCampaign(id));
             assertEquals(CampaignErrorCode.CANNOT_DELETE_UNENDED_CAMPAIGN, ex.getErrorCode());
         }
     }
@@ -350,7 +404,8 @@ public class CampaignServiceTest {
         @DisplayName("Lấy chi tiết chiến dịch thành công")
         void getCampaignById_Success() {
             Integer id = 1;
-            Campaign mockCampaign = createMockCampaign(id, LocalDateTime.now(), CampaignStatus.UPCOMING);
+            Campaign mockCampaign =
+                    createMockCampaign(id, LocalDateTime.now(), CampaignStatus.UPCOMING);
             when(campaignRepository.findById(id)).thenReturn(Optional.of(mockCampaign));
 
             CampaignResponse response = campaignService.getCampaignById(id);
@@ -365,7 +420,8 @@ public class CampaignServiceTest {
             Integer id = 99;
             when(campaignRepository.findById(id)).thenReturn(Optional.empty());
 
-            AppException ex = assertThrows(AppException.class, () -> campaignService.getCampaignById(id));
+            AppException ex =
+                    assertThrows(AppException.class, () -> campaignService.getCampaignById(id));
             assertEquals(CampaignErrorCode.CAMPAIGN_NOT_FOUND, ex.getErrorCode());
         }
     }
@@ -382,15 +438,16 @@ public class CampaignServiceTest {
     }
 
     // Tạo 1 Campaign entity mẫu lấy từ DB
-    private Campaign createMockCampaign(Integer id, LocalDateTime startTime, CampaignStatus status) {
+    private Campaign createMockCampaign(
+            Integer id, LocalDateTime startTime, CampaignStatus status) {
         return Campaign.builder()
-          .id(id)
-          .name("Test Campaign")
-          .startTime(startTime)
-          .endTime(startTime.plusDays(5))
-          .promotionBudget(new BigDecimal("1000000"))
-          .status(status)
-          .isDeleted(false)
-          .build();
+                .id(id)
+                .name("Test Campaign")
+                .startTime(startTime)
+                .endTime(startTime.plusDays(5))
+                .promotionBudget(new BigDecimal("1000000"))
+                .status(status)
+                .isDeleted(false)
+                .build();
     }
 }
