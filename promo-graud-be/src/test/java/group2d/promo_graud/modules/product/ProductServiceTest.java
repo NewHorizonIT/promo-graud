@@ -1,4 +1,4 @@
-package group2d.promo_graud.module.product;
+package group2d.promo_graud.modules.product;
 
 import java.math.BigDecimal;
 import java.util.Optional;

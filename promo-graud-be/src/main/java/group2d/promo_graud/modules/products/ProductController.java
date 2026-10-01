@@ -19,10 +19,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import group2d.promo_graud.modules.products.dto.PageResponse;
 import group2d.promo_graud.modules.products.dto.ProductRequest;
 import group2d.promo_graud.modules.products.dto.ProductResponse;
 import group2d.promo_graud.shared.dto.ApiResponse;
+import group2d.promo_graud.shared.dto.PaginatedResponse;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -33,21 +33,21 @@ public class ProductController {
     ProductService productService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> getProducts(
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getProducts(
             @RequestParam(required = false) Integer typeId,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "0") int offset) {
         Page<ProductResponse> pages = productService.getProducts(typeId, limit, offset);
-        PageResponse<ProductResponse> result =
-                PageResponse.<ProductResponse>builder()
+        PaginatedResponse<ProductResponse> result =
+                PaginatedResponse.<ProductResponse>builder()
                         .data(pages.getContent())
                         .page(pages.getNumber() + 1)
-                        .total(pages.getTotalElements())
-                        .totalPage(pages.getTotalPages())
+                        .totalItems(pages.getTotalElements())
+                        .totalPages(pages.getTotalPages())
                         .build();
 
         return ResponseEntity.ok(
-                ApiResponse.<PageResponse<ProductResponse>>builder()
+                ApiResponse.<PaginatedResponse<ProductResponse>>builder()
                         .code(200)
                         .message("Lấy danh sách sản phẩm thành công")
                         .result(result)
