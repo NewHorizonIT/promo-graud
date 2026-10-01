@@ -1,8 +1,7 @@
 package group2d.promo_graud.shared.exception;
 
-import java.nio.file.AccessDeniedException;
-
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,9 +14,9 @@ import group2d.promo_graud.shared.dto.ApiResponse;
 public class GlobalExceptionHandler {
 
     // 1. Lỗi phân quyền (Không có quyền truy cập API)
-    @ExceptionHandler(value = AccessDeniedException.class)
+    @ExceptionHandler(value = AuthorizationDeniedException.class)
     ResponseEntity<ApiResponse<String>> handlingAccessDeniedException(
-            AccessDeniedException accessDeniedException) {
+            AuthorizationDeniedException e) {
         BaseErrorCode errorCode = AuthErrorCode.UNAUTHORIZED;
         return ResponseEntity.status(errorCode.getStatusCode())
                 .body(
