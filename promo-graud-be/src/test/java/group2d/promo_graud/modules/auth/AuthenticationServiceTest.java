@@ -40,12 +40,12 @@ public class AuthenticationServiceTest {
 
     @BeforeEach
     void setUp() {
-        authenticationService.SECRET =
+        authenticationService.secret =
                 "20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35e214a94";
-        authenticationService.REFRESH_SECRET =
+        authenticationService.refresSecret =
                 "20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35dsadsadsaPh";
-        authenticationService.VALID_DURATION = 7200L;
-        authenticationService.REFRESH_DURATION = 72000L;
+        authenticationService.validDuration = 7200L;
+        authenticationService.refreshDuration = 72000L;
     }
 
     @Test
