@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 
 import lombok.*;
 
-import group2d.promo_graud.modules.products.Product;
+import group2d.promo_graud.modules.products.entity.Product;
 
 @Entity
 @Table(name = "order_item")
