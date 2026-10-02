@@ -1,9 +1,6 @@
 package group2d.promo_graud.modules.voucher.dto.requests;
 
-import java.time.LocalDateTime;
-
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import lombok.Data;
@@ -14,9 +11,9 @@ import group2d.promo_graud.modules.voucher.enums.VoucherType;
 @Data
 public class VoucherRequest {
 
-    @NotBlank private VoucherType type;
+    @NotNull private VoucherType type;
 
-    @NotNull private Integer ruleId;
+    private Integer ruleId;
 
     @NotNull
     @Min(1)
@@ -27,7 +24,5 @@ public class VoucherRequest {
     @Min(1)
     private Integer limitClient = 1;
 
-    @NotNull private LocalDateTime expiredAt;
-
-    @NotBlank private DistributionChannel distributionChannel;
+    @NotNull private DistributionChannel distributionChannel;
 }

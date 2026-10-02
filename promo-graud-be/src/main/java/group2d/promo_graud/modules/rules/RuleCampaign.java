@@ -13,6 +13,9 @@ import org.hibernate.type.SqlTypes;
 import lombok.*;
 
 import group2d.promo_graud.modules.campaigns.Campaign;
+import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.TypeOfRule;
+import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Entity
 @Table(name = "rule_campaign")
@@ -35,8 +38,9 @@ public class RuleCampaign {
     @JoinColumn(name = "campaign_id", nullable = false)
     private Campaign campaign;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "type_of_rule", length = 30, nullable = false)
-    private String typeOfRule;
+    private TypeOfRule typeOfRule;
 
     @Column(name = "value", precision = 15, scale = 2)
     private BigDecimal value;
@@ -50,7 +54,7 @@ public class RuleCampaign {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "type_of_user", length = 20, nullable = false)
-    private RuleUserType typeOfUser = RuleUserType.ALL;
+    private UserTypeEnum typeOfUser = UserTypeEnum.NORMAL;
 
     @Column(name = "start_time")
     private LocalDateTime startTime;
