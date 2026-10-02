@@ -23,6 +23,6 @@ server:
 jwt:
   secret: 20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35e214a94
   refresh-secret: 659079efaa0f77794f8bb02b664e608dbec37d700acdd238f951e82611d647c0
-  valid-duration: 25
+  valid-duration: 900
   refresh-duration: 72000
 

@@ -13,7 +13,7 @@ import group2d.promo_graud.modules.user.service.UserService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 public class UserController {
     private UserService userService;
 

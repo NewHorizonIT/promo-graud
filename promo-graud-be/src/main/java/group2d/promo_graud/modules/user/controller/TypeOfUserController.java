@@ -13,7 +13,7 @@ import group2d.promo_graud.modules.user.service.TypeOfUserService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 
 @RestController
-@RequestMapping("/api/type-of-users")
+@RequestMapping("/api/v1/type-of-users")
 public class TypeOfUserController {
     private TypeOfUserService typeOfUserService;
 
