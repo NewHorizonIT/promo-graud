@@ -19,11 +19,11 @@ import group2d.promo_graud.modules.auth.component.JwtAuthenticationEntryPoint;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final String[] publicEndpoints = {
-        "/api/users",
-        "/api/auth/login",
-        "/api/auth/introspect",
-        "/api/auth/logout",
-        "/api/auth/refresh"
+        "/api/v1/users",
+        "/api/v1/auth/login",
+        "/api/v1/auth/introspect",
+        "/api/v1/auth/logout",
+        "/api/v1/auth/refresh"
     };
     private CustomJwtDecoder customJwtDecoder;
 

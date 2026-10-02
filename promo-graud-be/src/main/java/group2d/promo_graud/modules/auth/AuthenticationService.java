@@ -126,7 +126,12 @@ public class AuthenticationService {
                         .findByUsername(username)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
         String token = generateToken(user, false);
-        return AuthenticationResponse.builder().valid(true).token(token).build();
+        String newRefreshToken = generateToken(user, true);
+        return AuthenticationResponse.builder()
+                .valid(true)
+                .token(token)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 
     public SignedJWT verifyToken(String token, boolean isRefresh)

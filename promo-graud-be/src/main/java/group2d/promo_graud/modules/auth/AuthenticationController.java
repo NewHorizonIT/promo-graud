@@ -23,7 +23,7 @@ import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.exception.AppException;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
 
@@ -43,13 +43,18 @@ public class AuthenticationController {
                         .sameSite("Strict")
                         .build();
 
+        AuthenticationResponse response =
+                AuthenticationResponse.builder()
+                        .valid(true)
+                        .token(authenticationResponse.getToken())
+                        .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(
                         ApiResponse.<AuthenticationResponse>builder()
                                 .code(201)
                                 .message("Login thành công")
-                                .result(authenticationResponse)
+                                .result(response)
                                 .build());
     }
 
@@ -115,13 +120,19 @@ public class AuthenticationController {
                         .sameSite("Strict")
                         .build();
 
+        AuthenticationResponse response =
+                AuthenticationResponse.builder()
+                        .token(authenticationResponse.getToken())
+                        .valid(true)
+                        .build();
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(
                         ApiResponse.<AuthenticationResponse>builder()
                                 .code(201)
                                 .message("Refresh token thành công")
-                                .result(authenticationResponse)
+                                .result(response)
                                 .build());
     }
 }
