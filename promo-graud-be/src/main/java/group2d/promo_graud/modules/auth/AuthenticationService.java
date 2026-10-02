@@ -53,7 +53,10 @@ public class AuthenticationService {
     protected Long refreshDuration;
 
     public AuthenticationResponse login(AuthenticationRequest request) {
-        User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+        User user =
+                userRepository
+                        .findByUsername(request.getUsername())
+                        .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if (!matches) {
@@ -118,14 +121,17 @@ public class AuthenticationService {
             redisTemplate.opsForValue().set(key, "1", ttl, TimeUnit.MILLISECONDS);
         }
         String username = signedJwt.getJWTClaimsSet().getSubject();
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+        User user =
+                userRepository
+                        .findByUsername(username)
+                        .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
         String token = generateToken(user, false);
         String newRefreshToken = generateToken(user, true);
         return AuthenticationResponse.builder()
-          .valid(true)
-          .token(token)
-          .refreshToken(newRefreshToken)
-          .build();
+                .valid(true)
+                .token(token)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 
     public SignedJWT verifyToken(String token, boolean isRefresh)
