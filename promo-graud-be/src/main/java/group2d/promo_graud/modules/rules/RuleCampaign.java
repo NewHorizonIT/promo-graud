@@ -67,7 +67,8 @@ public class RuleCampaign {
     @Column(name = "payload", columnDefinition = "jsonb")
     private Map<String, Object> payload;
 
-    // Mẹo: Bạn có thể thay Map<String, Object> bằng một custom class (VD: PayloadDto) nếu JSON có
+    // Mẹo: Bạn có thể thay Map<String, Object> bằng một custom class (VD:
+    // PayloadDto) nếu JSON có
     // cấu trúc cố định.
 
     @Builder.Default

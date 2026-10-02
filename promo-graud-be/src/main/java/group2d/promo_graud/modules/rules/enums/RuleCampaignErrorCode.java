@@ -44,6 +44,7 @@ public enum RuleCampaignErrorCode implements BaseErrorCode {
             1512,
             "Order does not meet the conditions required by this rule",
             HttpStatus.BAD_REQUEST);
+
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;
