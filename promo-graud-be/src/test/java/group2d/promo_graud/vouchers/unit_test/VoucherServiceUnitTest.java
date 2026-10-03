@@ -30,7 +30,7 @@ import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.voucher.Voucher;
 import group2d.promo_graud.modules.voucher.VoucherInsertHelper;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
-import group2d.promo_graud.modules.voucher.VoucherService;
+import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
@@ -78,7 +78,7 @@ public class VoucherServiceUnitTest {
                     .thenReturn(pagedResponse);
 
             // Act (truyền chữ thường để test luôn việc toUpperCase())
-            PaginatedResponse<Voucher> result =
+            PaginatedResponse<VoucherResponse> result =
                     voucherService.getAll("generic", "active", 10, "webhook", 1, 5);
 
             // Assert
@@ -105,7 +105,7 @@ public class VoucherServiceUnitTest {
                     .thenReturn(Page.empty());
 
             // Act
-            PaginatedResponse<Voucher> result =
+            PaginatedResponse<VoucherResponse> result =
                     voucherService.getAll(null, null, null, null, 1, 10);
 
             // Assert

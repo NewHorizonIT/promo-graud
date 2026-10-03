@@ -1,5 +1,7 @@
 package group2d.promo_graud.modules.voucher;
 
+import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
+import group2d.promo_graud.modules.voucher.service.VoucherService;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -21,7 +23,7 @@ public class VoucherController {
     private final VoucherService voucherService;
 
     @GetMapping
-    public ResponseEntity<PaginatedResponse<Voucher>> getVouchers(
+    public ResponseEntity<PaginatedResponse<VoucherResponse>> getVouchers(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer ruleId,
@@ -53,4 +55,14 @@ public class VoucherController {
                         .result(voucherService.update(id, request))
                         .build());
     }
+
+  @GetMapping("/jobs/{jobId}")
+  public ResponseEntity<ApiResponse<JobStatusResponse>> jobStatus(@PathVariable("jobId") Long jobId) {
+    return ResponseEntity.ok(
+      ApiResponse.<JobStatusResponse>builder()
+        .code(200)
+        .message("Request success")
+        .result(voucherService.getJobStatus(jobId))
+        .build());
+  }
 }
