@@ -17,7 +17,7 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:54365}
+      port: ${REDIS_PORT:59056}
       timeout: 2000ms
 
 server:
@@ -26,7 +26,8 @@ server:
 jwt:
   secret: 20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35e214a94
   refresh-secret: 659079efaa0f77794f8bb02b664e608dbec37d700acdd238f951e82611d647c0
-  valid-duration: 900
+
+  valid-duration: 3600
   refresh-duration: 72000
 
 voucher:

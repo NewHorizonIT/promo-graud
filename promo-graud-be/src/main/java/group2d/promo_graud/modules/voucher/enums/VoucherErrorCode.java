@@ -44,6 +44,7 @@ public enum VoucherErrorCode implements BaseErrorCode {
             "Job finished but the number of generated vouchers is less than requested",
             HttpStatus.MULTI_STATUS),
     VOUCHER_BUSY(1808, "Voucher busy", HttpStatus.BAD_REQUEST);
+
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;
