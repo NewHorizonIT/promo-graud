@@ -4,5 +4,6 @@ public enum UserTypeEnum {
     NORMAL,
     BRONZE,
     SILVER,
-    GOLD
+    GOLD,
+    ALL
 }

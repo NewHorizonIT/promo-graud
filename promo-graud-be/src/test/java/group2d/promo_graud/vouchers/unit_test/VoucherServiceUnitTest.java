@@ -25,8 +25,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 import group2d.promo_graud.modules.rules.RuleCampaign;
-import group2d.promo_graud.modules.rules.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
+import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.voucher.Voucher;
 import group2d.promo_graud.modules.voucher.VoucherInsertHelper;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
@@ -206,22 +206,6 @@ public class VoucherServiceUnitTest {
                     assertThrows(AppException.class, () -> voucherService.update(id, request));
             assertEquals(VoucherErrorCode.INSUFFICIENT_QUANTITY, ex.getErrorCode());
             assertEquals(50, genericVoucher.getQuantityRemain()); // Không bị đổi
-            verify(voucherRepository, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("Thất bại khi đổi trạng thái sang ACTIVE")
-        void update_Fail_StatusActive() {
-            // Arrange
-            Integer id = 1;
-            Voucher voucher = createMockVoucher(id, VoucherType.UNIQUE, anyNonActiveStatus(), 1, 1);
-            UpdatedVoucherRequest request = createUpdateRequest(VoucherStatus.ACTIVE, null);
-            when(voucherRepository.findById(id)).thenReturn(Optional.of(voucher));
-
-            // Act & Assert
-            AppException ex =
-                    assertThrows(AppException.class, () -> voucherService.update(id, request));
-            assertEquals(VoucherErrorCode.INVALID_STATUS, ex.getErrorCode());
             verify(voucherRepository, never()).save(any());
         }
 

@@ -15,8 +15,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import group2d.promo_graud.modules.rules.RuleCampaign;
-import group2d.promo_graud.modules.rules.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
+import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
@@ -73,7 +73,6 @@ public class VoucherService {
     }
 
     // -----------------------Cập nhật voucher-----------------------------
-    // Không cho cập nhật trạng thái active
     // Voucher unique thì mới cho cập nhật số lương
     public VoucherResponse update(Integer id, UpdatedVoucherRequest request) {
         if (request.getStatus() == null && request.getQuantityRemain() == null) {
@@ -94,9 +93,6 @@ public class VoucherService {
         if (request.getQuantityRemain() != null) {
             voucher.setQuantityRemain(request.getQuantityRemain());
         }
-        if (request.getStatus() != null && request.getStatus() == VoucherStatus.ACTIVE) {
-            throw new AppException(VoucherErrorCode.INVALID_STATUS);
-        }
         if (request.getStatus() != null) {
             voucher.setStatus(request.getStatus());
         }
@@ -114,6 +110,7 @@ public class VoucherService {
 
     // -----------------------Tạo voucher----------------------------------
     public CreateVoucherResponse create(VoucherRequest request) {
+
         RuleCampaign rule =
                 ruleCampaignRepository
                         .findById(request.getRuleId())
