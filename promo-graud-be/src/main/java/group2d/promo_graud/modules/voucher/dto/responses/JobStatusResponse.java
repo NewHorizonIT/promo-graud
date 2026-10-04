@@ -11,9 +11,9 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JobStatusResponse {
-   Long jobId;
-  String status;     // STARTING, STARTED, COMPLETED, FAILED, STOPPED
-  long processed;      // số item đã ghi
-  long requested;      // số yêu cầu
-  String errorMessage;
+    Long jobId;
+    String status; // STARTING, STARTED, COMPLETED, FAILED, STOPPED
+    long processed; // số item đã ghi
+    long requested; // số yêu cầu
+    String errorMessage;
 }

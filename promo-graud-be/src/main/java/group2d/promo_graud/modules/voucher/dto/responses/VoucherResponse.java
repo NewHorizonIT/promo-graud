@@ -1,11 +1,11 @@
 package group2d.promo_graud.modules.voucher.dto.responses;
 
-import group2d.promo_graud.modules.voucher.enums.VoucherType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.enums.VoucherType;
 
 @Getter
 @Setter
@@ -22,7 +22,7 @@ public class VoucherResponse {
     private String status;
 
     public static VoucherResponse fromEntity(Voucher v) {
-      boolean isGeneric = v.getType() == VoucherType.GENERIC;
+        boolean isGeneric = v.getType() == VoucherType.GENERIC;
         return VoucherResponse.builder()
                 .id(v.getId())
                 .code(v.getCode())

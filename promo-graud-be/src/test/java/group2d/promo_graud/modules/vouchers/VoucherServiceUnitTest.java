@@ -1,9 +1,10 @@
-package group2d.promo_graud.vouchers.unit_test;
+package group2d.promo_graud.modules.vouchers;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -28,9 +30,7 @@ import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherInsertHelper;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
-import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
@@ -39,6 +39,9 @@ import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
+import group2d.promo_graud.modules.voucher.service.VoucherBatchService;
+import group2d.promo_graud.modules.voucher.service.VoucherInsertHelper;
+import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 import group2d.promo_graud.shared.exception.AppException;
 
@@ -53,6 +56,12 @@ public class VoucherServiceUnitTest {
 
     @Mock private VoucherInsertHelper voucherInsertHelper;
 
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(voucherService, "UNIQUE_BATCH_THRESHOLD", 100);
+    }
+
+    @Mock private VoucherBatchService voucherBatchService;
     @InjectMocks private VoucherService voucherService;
 
     // 1. NHÓM TEST CHO HÀM GET ALL

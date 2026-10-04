@@ -1,7 +1,5 @@
 package group2d.promo_graud.modules.voucher;
 
-import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
-import group2d.promo_graud.modules.voucher.service.VoucherService;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
@@ -12,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 
@@ -56,13 +56,14 @@ public class VoucherController {
                         .build());
     }
 
-  @GetMapping("/jobs/{jobId}")
-  public ResponseEntity<ApiResponse<JobStatusResponse>> jobStatus(@PathVariable("jobId") Long jobId) {
-    return ResponseEntity.ok(
-      ApiResponse.<JobStatusResponse>builder()
-        .code(200)
-        .message("Request success")
-        .result(voucherService.getJobStatus(jobId))
-        .build());
-  }
+    @GetMapping("/jobs/{jobId}")
+    public ResponseEntity<ApiResponse<JobStatusResponse>> jobStatus(
+            @PathVariable("jobId") Long jobId) {
+        return ResponseEntity.ok(
+                ApiResponse.<JobStatusResponse>builder()
+                        .code(200)
+                        .message("Request success")
+                        .result(voucherService.getJobStatus(jobId))
+                        .build());
+    }
 }

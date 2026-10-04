@@ -1,10 +1,13 @@
-package group2d.promo_graud.modules.voucher;
+package group2d.promo_graud.modules.voucher.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+
+import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.VoucherRepository;
 
 @Service
 @RequiredArgsConstructor
