@@ -34,7 +34,6 @@ public class VoucherBatchConfig {
             JobRegistry jobRegistry,
             @Qualifier("batchTaskExecutor") ThreadPoolTaskExecutor executor)
             throws Exception {
-
         TaskExecutorJobOperator operator = new TaskExecutorJobOperator();
         operator.setJobRepository(jobRepository);
         operator.setJobRegistry(jobRegistry);
