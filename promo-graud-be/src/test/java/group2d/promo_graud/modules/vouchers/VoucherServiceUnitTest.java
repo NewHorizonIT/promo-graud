@@ -58,7 +58,7 @@ public class VoucherServiceUnitTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(voucherService, "UNIQUE_BATCH_THRESHOLD", 100);
+        ReflectionTestUtils.setField(voucherService, "uniqueThreshold", 100);
     }
 
     @Mock private VoucherBatchService voucherBatchService;

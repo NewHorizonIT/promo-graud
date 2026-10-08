@@ -20,7 +20,7 @@ import group2d.promo_graud.modules.voucher.Voucher;
 
 @Configuration
 public class GenerateVoucherJobConfig {
-    @Value("${voucher.batch.unique-threshold:50}")
+    @Value("${voucher.batch.chunk-size:50}")
     private int chunkSize;
 
     @Bean

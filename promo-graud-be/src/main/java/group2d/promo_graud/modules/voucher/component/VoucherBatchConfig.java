@@ -5,6 +5,7 @@ import org.springframework.batch.core.configuration.support.MapJobRegistry;
 import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.launch.support.TaskExecutorJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -16,15 +17,23 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class VoucherBatchConfig {
 
-    @Bean("asyncJobOperator")
-    public JobOperator asyncJobOperator(JobRepository jobRepository, JobRegistry jobRegistry)
-            throws Exception {
+    @Bean("batchTaskExecutor")
+    public ThreadPoolTaskExecutor batchTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2); // số luồng cơ bản
-        executor.setMaxPoolSize(4); // số luồng tối đa
-        executor.setQueueCapacity(20); // số job trong hàng đợi
-        executor.setThreadNamePrefix("voucher-batch-"); // tên luồng vd voucher-batch-1...
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(20);
+        executor.setThreadNamePrefix("voucher-batch-");
         executor.initialize();
+        return executor;
+    }
+
+    @Bean("asyncJobOperator")
+    public JobOperator asyncJobOperator(
+            JobRepository jobRepository,
+            JobRegistry jobRegistry,
+            @Qualifier("batchTaskExecutor") ThreadPoolTaskExecutor executor)
+            throws Exception {
 
         TaskExecutorJobOperator operator = new TaskExecutorJobOperator();
         operator.setJobRepository(jobRepository);
