@@ -2,10 +2,13 @@ package group2d.promo_graud.modules.user.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
@@ -18,19 +21,11 @@ import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private UserRepository userRepository;
-    private TypeOfUserRepository typeOfUserRepository;
-    private PasswordEncoder passwordEncoder;
-
-    public UserService(
-            UserRepository userRepository,
-            TypeOfUserRepository typeOfUserRepository,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.typeOfUserRepository = typeOfUserRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final UserRepository userRepository;
+    private final TypeOfUserRepository typeOfUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(UserRequest request) {
         TypeOfUser typeOfUser =
@@ -73,6 +68,13 @@ public class UserService {
                         .findById(id)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
         return mapToUserResponse(user);
+    }
+
+    @Cacheable(value = "users", key = "'username:' + #username")
+    public User findByUsername(String username) {
+        return userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
     }
 
     public UserResponse mapToUserResponse(User user) {

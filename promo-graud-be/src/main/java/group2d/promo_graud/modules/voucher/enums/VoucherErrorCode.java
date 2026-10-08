@@ -16,6 +16,7 @@ public enum VoucherErrorCode implements BaseErrorCode {
             HttpStatus.MULTI_STATUS),
     REQUIRED_FIELD(1803, "Minimum one status or quantity_remain field ", HttpStatus.BAD_REQUEST),
     NOT_EXIST(1804, "Voucher does not exist", HttpStatus.NOT_FOUND),
+    OUT_OF_STOCK(1805, "Voucher is out of stock", HttpStatus.BAD_REQUEST),
     GENERIC_QUANTITY_NOT_EDITABLE(
             1806,
             "Quantity of a UNIQUE voucher cannot be modified",
@@ -41,7 +42,8 @@ public enum VoucherErrorCode implements BaseErrorCode {
     BATCH_PARTIAL_COMPLETED(
             1815,
             "Job finished but the number of generated vouchers is less than requested",
-            HttpStatus.MULTI_STATUS);
+            HttpStatus.MULTI_STATUS),
+    VOUCHER_BUSY(1808, "Voucher busy", HttpStatus.BAD_REQUEST);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;

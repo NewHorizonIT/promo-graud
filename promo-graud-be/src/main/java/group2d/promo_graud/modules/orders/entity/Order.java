@@ -1,4 +1,4 @@
-package group2d.promo_graud.modules.orders;
+package group2d.promo_graud.modules.orders.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ import group2d.promo_graud.modules.voucher.Voucher;
 
 @Entity
 @Table(name = "\"order\"") // Bắt buộc phải escape từ khóa "order" trong SQL
-@Getter
+@Getter 
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
