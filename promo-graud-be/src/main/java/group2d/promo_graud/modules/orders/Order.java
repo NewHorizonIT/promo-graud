@@ -2,6 +2,8 @@ package group2d.promo_graud.modules.orders;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import jakarta.persistence.*;
 
@@ -40,6 +42,10 @@ public class Order {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucher_id")
     private Voucher voucher;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<OrderItem> items = new ArrayList<>();
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
