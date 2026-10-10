@@ -1,9 +1,6 @@
 package group2d.promo_graud.modules.user.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,7 +14,7 @@ import group2d.promo_graud.modules.user.enums.RoleEnum;
 @NoArgsConstructor
 public class UserRequest {
     @NotBlank(message = "Username không được để trống")
-    @Size(min = 3, message = "Password phải có ít nhất 6 k tự")
+    @Size(min = 3, message = "Password phải có ít nhất 6 kí tự")
     String username;
 
     @NotBlank(message = "Email không được để trống")

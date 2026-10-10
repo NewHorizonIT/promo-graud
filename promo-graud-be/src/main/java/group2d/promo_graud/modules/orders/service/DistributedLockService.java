@@ -1,8 +1,10 @@
 package group2d.promo_graud.modules.orders.service;
 
 import java.time.Duration;
+import java.util.Collections;
 
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -34,10 +36,19 @@ public class DistributedLockService {
         return false;
     }
 
-    public void unLock(String lockKey, String lockValue) {
-        String currentValue = redisTemplate.opsForValue().get(lockKey);
-        if (lockValue.equals(currentValue)) {
-            redisTemplate.delete(lockKey);
-        }
-    }
+
+  public void unLock(String lockKey, String lockValue) {
+    String script =
+      """
+      if redis.call('GET', KEYS[1]) == ARGV[1] then
+          return redis.call('DEL', KEYS[1])
+      else
+          return 0
+      end
+      """;
+    DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+    redisScript.setScriptText(script);
+    redisScript.setResultType(Long.class);
+    redisTemplate.execute(redisScript, Collections.singletonList(lockKey), lockValue);
+  }
 }
