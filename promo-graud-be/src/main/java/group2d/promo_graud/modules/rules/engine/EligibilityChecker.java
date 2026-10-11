@@ -36,7 +36,7 @@ public class EligibilityChecker {
     }
 
     private boolean checkUserType(RuleCampaign rule, User user) {
-        if (UserTypeEnum.ALL.equals(rule.getTypeOfUser())) {
+        if (UserTypeEnum.NORMAL.equals(rule.getTypeOfUser())) {
             return true;
         }
         if (user.getTypeOfUser() == null || user.getTypeOfUser().getType() == null) {

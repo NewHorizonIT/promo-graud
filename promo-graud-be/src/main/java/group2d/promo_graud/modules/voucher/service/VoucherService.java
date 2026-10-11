@@ -1,9 +1,13 @@
-package group2d.promo_graud.modules.voucher;
+package group2d.promo_graud.modules.voucher.service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,9 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
+import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
@@ -35,13 +42,17 @@ public class VoucherService {
 
     private final VoucherInsertHelper voucherInsertHelper;
 
+    private final VoucherBatchService voucherBatchService;
+
     private final VoucherRepository voucherRepository;
     private final RuleCampaignRepository ruleCampaignRepository;
+    private final JobRepository jobRepository;
 
-    private static final int UNIQUE_BATCH_THRESHOLD = 100;
+    @Value("${voucher.batch.unique-threshold:50}")
+    private int uniqueThreshold;
 
     // -----------------------Lấy danh sách voucher------------------------
-    public PaginatedResponse<Voucher> getAll(
+    public PaginatedResponse<VoucherResponse> getAll(
             String type,
             String status,
             Integer ruleId,
@@ -63,8 +74,8 @@ public class VoucherService {
         Page<Voucher> result =
                 voucherRepository.getAll(typeEnum, statusEnum, ruleId, channelEnum, pageable);
 
-        return PaginatedResponse.<Voucher>builder()
-                .data(result.getContent())
+        return PaginatedResponse.<VoucherResponse>builder()
+                .data(result.getContent().stream().map(VoucherResponse::fromEntity).toList())
                 .page(page)
                 .size(pageSize)
                 .totalItems(result.getTotalElements())
@@ -108,6 +119,38 @@ public class VoucherService {
                 .build();
     }
 
+    // ------------------------Kiểm tra trạng thái job(AI)----------------------
+    public JobStatusResponse getJobStatus(Long jobId) {
+        JobExecution je = jobRepository.getJobExecution(jobId);
+        if (je == null) {
+            throw new AppException(VoucherErrorCode.BATCH_JOB_NOT_FOUND);
+        }
+
+        long written =
+                je.getStepExecutions().stream().mapToLong(step -> step.getWriteCount()).sum();
+
+        Long requestedParam = je.getJobParameters().getLong("quantity");
+        long requested = requestedParam != null ? requestedParam : 0L;
+
+        return JobStatusResponse.builder()
+                .errorMessage(resolveErrorMessage(je))
+                .jobId(jobId)
+                .status(je.getStatus().name())
+                .processed(written)
+                .requested(requested)
+                .build();
+    }
+
+    private String resolveErrorMessage(JobExecution je) {
+        if (je.getStatus() != BatchStatus.FAILED) {
+            return null;
+        }
+        // log chi tiết ở server, chỉ trả message chung cho client
+        je.getAllFailureExceptions()
+                .forEach(e -> log.error("Voucher job {} failed", je.getId(), e));
+        return "Voucher generation failed";
+    }
+
     // -----------------------Tạo voucher----------------------------------
     public CreateVoucherResponse create(VoucherRequest request) {
 
@@ -127,16 +170,15 @@ public class VoucherService {
                     .jobId(null)
                     .build();
         }
-        //    // UNIQUE
-        //    if (request.getQuantity() >= UNIQUE_BATCH_THRESHOLD ) {
-        //      Long jobId = voucherBatchService.triggerGenerateVoucherJob(request, rule);
-        //      return CreateVoucherResponse.builder()
-        //        .generated(request.getQuantity())   // số lượng yêu cầu, chưa phải đã tạo
-        //        .vouchers(List.of())
-        //        .status("processing")
-        //        .jobId(jobId)
-        //        .build();
-        //    }
+        if (request.getQuantity() >= uniqueThreshold) {
+            Long jobId = voucherBatchService.triggerGenerateVoucherJob(request, rule);
+            return CreateVoucherResponse.builder()
+                    .generated(request.getQuantity())
+                    .vouchers(List.of())
+                    .status("processing")
+                    .jobId(jobId)
+                    .build();
+        }
 
         List<Voucher> voucherList = createUniqueSync(request, rule);
         return CreateVoucherResponse.builder()

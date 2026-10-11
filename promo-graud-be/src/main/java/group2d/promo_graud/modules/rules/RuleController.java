@@ -49,6 +49,7 @@ public class RuleController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteRules(@PathVariable("id") Integer id) {
+        deleteRules(id);
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder().code(1000).message("Xóa voucher thành công ").build());
     }

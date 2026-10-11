@@ -1,4 +1,7 @@
 spring:
+  batch:
+    job:
+      enabled: false
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/promo_graud_db}
     username: ${SPRING_DATASOURCE_USERNAME:root}
@@ -14,7 +17,7 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:54365}
+      port: ${REDIS_PORT:61387}
       timeout: 2000ms
 
 server:
@@ -25,4 +28,10 @@ jwt:
   refresh-secret: 659079efaa0f77794f8bb02b664e608dbec37d700acdd238f951e82611d647c0
   valid-duration: 900
   refresh-duration: 72000
+
+voucher:
+  batch:
+    unique-threshold: 50         # UNIQUE >= số này thì chạy bằng batch
+    chunk-size: 20               # số bản ghi mỗi lần commit
+
 

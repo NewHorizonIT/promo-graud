@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 
@@ -21,7 +23,7 @@ public class VoucherController {
     private final VoucherService voucherService;
 
     @GetMapping
-    public ResponseEntity<PaginatedResponse<Voucher>> getVouchers(
+    public ResponseEntity<PaginatedResponse<VoucherResponse>> getVouchers(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer ruleId,
@@ -51,6 +53,17 @@ public class VoucherController {
                         .code(200)
                         .message("Request success")
                         .result(voucherService.update(id, request))
+                        .build());
+    }
+
+    @GetMapping("/jobs/{jobId}")
+    public ResponseEntity<ApiResponse<JobStatusResponse>> jobStatus(
+            @PathVariable("jobId") Long jobId) {
+        return ResponseEntity.ok(
+                ApiResponse.<JobStatusResponse>builder()
+                        .code(200)
+                        .message("Request success")
+                        .result(voucherService.getJobStatus(jobId))
                         .build());
     }
 }

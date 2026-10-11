@@ -27,7 +27,7 @@ class EligibilityCheckerTest {
         return RuleCampaign.builder()
                 .status(RuleStatus.ACTIVE)
                 .isDeleted(false)
-                .typeOfUser(UserTypeEnum.ALL)
+                .typeOfUser(UserTypeEnum.NORMAL)
                 .startTime(LocalDateTime.now().minusDays(1))
                 .endTime(LocalDateTime.now().plusDays(1))
                 .build();
