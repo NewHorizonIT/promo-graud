@@ -5,13 +5,13 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import group2d.promo_graud.modules.orders.OrderStatus;
 import jakarta.persistence.*;
 
 import org.hibernate.annotations.CreationTimestamp;
 
 import lombok.*;
 
+import group2d.promo_graud.modules.orders.OrderStatus;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.voucher.Voucher;
 

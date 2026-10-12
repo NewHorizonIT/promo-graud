@@ -2,7 +2,6 @@ package group2d.promo_graud.modules.user.service;
 
 import java.util.List;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,7 +52,13 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
-        TypeOfUser typeOfUser = typeOfUserRepository.findById(request.getTypeOfUser()).orElseThrow(()->new AppException(TypeOfUserErrorCode.TYPE_OF_USER_NOT_EXISTS));
+        TypeOfUser typeOfUser =
+                typeOfUserRepository
+                        .findById(request.getTypeOfUser())
+                        .orElseThrow(
+                                () ->
+                                        new AppException(
+                                                TypeOfUserErrorCode.TYPE_OF_USER_NOT_EXISTS));
         user.setTypeOfUser(typeOfUser);
         return mapToUserResponse(userRepository.save(user));
     }

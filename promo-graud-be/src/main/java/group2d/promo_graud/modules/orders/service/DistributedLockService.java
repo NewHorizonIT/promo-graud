@@ -36,19 +36,18 @@ public class DistributedLockService {
         return false;
     }
 
-
-  public void unLock(String lockKey, String lockValue) {
-    String script =
-      """
-      if redis.call('GET', KEYS[1]) == ARGV[1] then
-          return redis.call('DEL', KEYS[1])
-      else
-          return 0
-      end
-      """;
-    DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
-    redisScript.setScriptText(script);
-    redisScript.setResultType(Long.class);
-    redisTemplate.execute(redisScript, Collections.singletonList(lockKey), lockValue);
-  }
+    public void unLock(String lockKey, String lockValue) {
+        String script =
+                """
+                if redis.call('GET', KEYS[1]) == ARGV[1] then
+                    return redis.call('DEL', KEYS[1])
+                else
+                    return 0
+                end
+                """;
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(script);
+        redisScript.setResultType(Long.class);
+        redisTemplate.execute(redisScript, Collections.singletonList(lockKey), lockValue);
+    }
 }
