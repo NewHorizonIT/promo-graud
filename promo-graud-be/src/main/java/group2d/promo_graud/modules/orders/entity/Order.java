@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import group2d.promo_graud.modules.orders.OrderStatus;
 import jakarta.persistence.*;
 
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,7 +17,7 @@ import group2d.promo_graud.modules.voucher.Voucher;
 
 @Entity
 @Table(name = "\"order\"") // Bắt buộc phải escape từ khóa "order" trong SQL
-@Getter 
+@Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor

@@ -6,8 +6,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-import group2d.promo_graud.modules.orders.Order;
-import group2d.promo_graud.modules.orders.OrderItem;
+import group2d.promo_graud.modules.orders.entity.Order;
+import group2d.promo_graud.modules.orders.entity.OrderItem;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;

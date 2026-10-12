@@ -15,5 +15,5 @@ import group2d.promo_graud.modules.orders.OrderStatus;
 public class OrderRequest {
     Integer voucherId;
     OrderStatus status;
-    List<OrderItemRequest> orderItemRequests;
+    List<OrderItemRequest> items;
 }

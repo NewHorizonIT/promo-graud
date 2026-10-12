@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import group2d.promo_graud.modules.orders.Order;
-import group2d.promo_graud.modules.orders.OrderItem;
+import group2d.promo_graud.modules.orders.entity.Order;
+import group2d.promo_graud.modules.orders.entity.OrderItem;
 import group2d.promo_graud.modules.products.entity.Product;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.engine.strategy.BuyXGetYStrategy;

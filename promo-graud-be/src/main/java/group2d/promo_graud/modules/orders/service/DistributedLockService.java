@@ -15,8 +15,8 @@ public class DistributedLockService {
     private final RedisTemplate<String, String> redisTemplate;
 
     public boolean tryLock(String lockKey, String lockValue, long lockTime) {
-        long timeout = 50;
-        long retryInterval = 5;
+        long timeout = 4000;
+        long retryInterval = 10;
         long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() - startTime < timeout) {
             Boolean isLocked =

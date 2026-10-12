@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
 
-import group2d.promo_graud.modules.orders.Order;
+import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
 import group2d.promo_graud.modules.user.entity.User;
@@ -13,12 +13,12 @@ import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 @Component
 public class EligibilityChecker {
 
-    public boolean isEligible(Order order, RuleCampaign rule, User user) {
-        return checkStatus(rule)
-                && checkTimeWindow(rule)
-                && checkUserType(rule, user)
-                && checkMinOrder(rule, order);
-    }
+  public boolean isEligible(Order order, RuleCampaign rule, User user) {
+    return checkStatus(rule)
+      && checkTimeWindow(rule)
+      && checkUserType(rule, user)
+      && checkMinOrder(rule, order);
+  }
 
     private boolean checkStatus(RuleCampaign rule) {
         return RuleStatus.ACTIVE.equals(rule.getStatus()) && !rule.getIsDeleted();

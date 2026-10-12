@@ -53,6 +53,8 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
+        TypeOfUser typeOfUser = typeOfUserRepository.findById(request.getTypeOfUser()).orElseThrow(()->new AppException(TypeOfUserErrorCode.TYPE_OF_USER_NOT_EXISTS));
+        user.setTypeOfUser(typeOfUser);
         return mapToUserResponse(userRepository.save(user));
     }
 
@@ -70,19 +72,11 @@ public class UserService {
         return mapToUserResponse(user);
     }
 
-    @Cacheable(value = "users", key = "'username:' + #username")
-    public User findByUsername(String username) {
-        return userRepository
-                .findByUsername(username)
-                .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
-    }
-
     public UserResponse mapToUserResponse(User user) {
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .password(user.getPassword())
                 .role(user.getRole())
                 .isDelete(user.getIsDeleted())
                 .typeOfUser(user.getTypeOfUser())

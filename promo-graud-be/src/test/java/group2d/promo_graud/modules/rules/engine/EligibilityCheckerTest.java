@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import group2d.promo_graud.modules.orders.Order;
+import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;

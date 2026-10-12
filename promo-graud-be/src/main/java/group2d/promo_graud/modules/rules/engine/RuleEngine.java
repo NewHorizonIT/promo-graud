@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
-import group2d.promo_graud.modules.orders.Order;
+import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.engine.strategy.RuleStrategy;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;

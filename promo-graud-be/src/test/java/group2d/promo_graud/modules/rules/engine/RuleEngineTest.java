@@ -12,7 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import group2d.promo_graud.modules.orders.Order;
+import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.engine.strategy.RuleStrategy;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
