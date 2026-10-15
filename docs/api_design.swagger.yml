@@ -1,0 +1,1445 @@
+openapi: 3.0.3
+info:
+  title: PromoGuard API
+  description: |
+    Smart Multi-Channel Voucher & Anti-Fraud Promotion Engine.
+
+    
+  version: 1.1.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+  - name: Campaigns
+  - name: Rules
+  - name: Vouchers
+  - name: Users
+  - name: TypeOfUsers
+  - name: Products
+  - name: Distribution
+    description: "🔜 Chưa implement"
+  - name: Fraud
+    description: "🔜 Chưa implement"
+  - name: Analytics
+    description: "🔜 Chưa implement"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ── Wrappers ──────────────────────────────────────────────────
+    ApiResponse:
+      type: object
+      description: "Wrapper chuẩn cho single-object response"
+      properties:
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Thao tác thành công"
+        result:
+          type: object
+          description: "Payload thực, nullable nếu không có data"
+
+    PaginatedResponse:
+      type: object
+      description: "Wrapper cho list response có phân trang"
+      properties:
+        data:
+          type: array
+          items: {}
+        page:
+          type: integer
+          example: 1
+        size:
+          type: integer
+          example: 10
+        totalItems:
+          type: integer
+          format: int64
+          example: 100
+        totalPages:
+          type: integer
+          example: 10
+
+    # Pattern 1: Validation Error
+    ValidationErrorResponse:
+      type: object
+      properties:
+        code: { type: integer, example: 400 }
+        message: { type: string, example: "Dữ liệu không hợp lệ" }
+        result:
+          type: object
+          description: "Map field → message lỗi"
+          additionalProperties: { type: string }
+          example:
+            name: "Tên chiến dịch không được để trống"
+            startTime: "Thời gian bắt đầu không được để trống"
+
+    # Pattern 2: Auth Error
+    AuthErrorResponse:
+      type: object
+      properties:
+        code: { type: integer, example: 401 }
+        message: { type: string, example: "Unauthenticated" }
+
+    # Pattern 3: Business / System Error
+    ErrorResponse:
+      type: object
+      properties:
+        code: { type: integer }
+        message: { type: string }
+
+    # ── Auth ──────────────────────────────────────────────────────
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, example: "admin" }
+        password: { type: string, format: password, example: "secret123" }
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: "Access token (JWT) — gửi trong Authorization header"
+        valid: { type: boolean, example: true }
+      description: |
+        Refresh token được set tự động trong httpOnly cookie `refreshToken` (maxAge 7 ngày).
+
+    IntrospectRequest:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+
+    IntrospectResponse:
+      type: object
+      properties:
+        valid: { type: boolean }
+
+    # ── Campaign ──────────────────────────────────────────────────
+    CampaignRequest:
+      type: object
+      required: [name, startTime, endTime, promotionBudget]
+      properties:
+        name:
+          type: string
+          minLength: 5
+          maxLength: 100
+          example: "Summer Sale 2026"
+        startTime:
+          type: string
+          example: "2026-10-15 08:00:00"
+          description: "Format: yyyy-MM-dd HH:mm:ss"
+        endTime:
+          type: string
+          example: "2026-10-31 23:59:59"
+          description: "Format: yyyy-MM-dd HH:mm:ss"
+        promotionBudget:
+          type: number
+          format: decimal
+          example: 50000000
+
+    CampaignResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        startTime: { type: string }
+        endTime: { type: string }
+        promotionBudget: { type: number }
+        status:
+          type: string
+          enum: [UPCOMING, ACTIVE, ENDED]
+        createdAt: { type: string }
+        updatedAt: { type: string }
+        isDeleted: { type: boolean }
+
+    CampaignUpdateStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [UPCOMING, ACTIVE, ENDED]
+
+    # ── Rule ──────────────────────────────────────────────────────
+    RuleCreateRequest:
+      type: object
+      required: [name, campaignId, typeOfRule, startTime, endTime]
+      properties:
+        name:
+          type: string
+          maxLength: 255
+          example: "Giảm 20% toàn bộ đơn hàng"
+        campaignId:
+          type: integer
+          example: 1
+        typeOfRule:
+          type: string
+          enum: [PERCENTAGE, FIXED_AMOUNT, TIERED, BUY_X_GET_Y]
+        value:
+          type: number
+          description: "Giá trị giảm — % hoặc số tiền tùy typeOfRule"
+          example: 20
+        maxDiscountValue:
+          type: number
+          description: "Mức giảm tối đa (dùng cho PERCENTAGE)"
+          example: 100000
+        minOrderValue:
+          type: number
+          description: "Giá trị đơn hàng tối thiểu để áp rule"
+          example: 200000
+        typeOfUser:
+          type: string
+          enum: [NORMAL, BRONZE, SILVER, GOLD, ALL]
+          default: NORMAL
+        startTime:
+          type: string
+          example: "2026-10-15 08:00:00"
+          description: "Format: yyyy-MM-dd HH:mm:ss (phải ở hiện tại hoặc tương lai)"
+        endTime:
+          type: string
+          example: "2026-10-31 23:59:59"
+          description: "Format: yyyy-MM-dd HH:mm:ss (phải ở tương lai)"
+        payload:
+          type: object
+          description: |
+            JSON tùy chỉnh theo loại rule.
+
+            **TIERED**: `{"tiers": [{"minAmount": 500000, "discount": 50000}, ...]}`
+
+            **BUY_X_GET_Y**: `{"buyQuantity": 2, "getQuantity": 1, "productId": 5}`
+          example:
+            tiers:
+              - minAmount: 500000
+                discount: 50000
+              - minAmount: 1000000
+                discount: 120000
+
+    RuleResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        campaignId: { type: integer }
+        typeOfRule:
+          type: string
+          enum: [PERCENTAGE, FIXED_AMOUNT, TIERED, BUY_X_GET_Y]
+        value: { type: number }
+        maxDiscountValue: { type: number }
+        minOrderValue: { type: number }
+        typeOfUser:
+          type: string
+          enum: [NORMAL, BRONZE, SILVER, GOLD, ALL]
+        startTime: { type: string }
+        endTime: { type: string }
+        payload: { type: object }
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        createdAt: { type: string }
+
+    # ── Voucher ──────────────────────────────────────────────────
+    VoucherRequest:
+      type: object
+      required: [type, quantity, prefix, distributionChannel]
+      properties:
+        type:
+          type: string
+          enum: [GENERIC, UNIQUE]
+          description: "GENERIC = 1 mã dùng chung; UNIQUE = sinh N mã riêng"
+        ruleId:
+          type: integer
+          description: "ID của rule áp dụng cho voucher này"
+        quantity:
+          type: integer
+          minimum: 1
+          description: "Tổng lượt dùng (GENERIC) hoặc số mã cần sinh (UNIQUE)"
+        prefix:
+          type: string
+          description: "Tiền tố của mã voucher, ví dụ: SUMMER2026"
+          example: "SUMMER"
+        limitClient:
+          type: integer
+          minimum: 1
+          default: 1
+          description: "Số lần 1 user được dùng"
+        distributionChannel:
+          type: string
+          enum: [EMAIL, WEBHOOK]
+
+    VoucherResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        type:
+          type: string
+          enum: [GENERIC, UNIQUE]
+        ruleId: { type: integer }
+        quantity:
+          type: integer
+          description: "null nếu UNIQUE"
+        quantityRemain:
+          type: integer
+          description: "null nếu UNIQUE"
+        limitClient:
+          type: integer
+          description: "null nếu UNIQUE"
+        distributionChannel:
+          type: string
+          enum: [EMAIL, WEBHOOK]
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED, USED]
+
+    CreateVoucherResponse:
+      type: object
+      properties:
+        generated:
+          type: integer
+          description: "Số mã đã sinh"
+        vouchers:
+          type: array
+          items:
+            type: object
+          description: "Danh sách mã (chỉ có khi status = completed)"
+        status:
+          type: string
+          enum: [completed, processing]
+          description: "completed = xong ngay; processing = đang chạy batch job"
+        jobId:
+          type: integer
+          format: int64
+          description: "ID của batch job — null nếu completed, dùng để poll /jobs/{jobId}"
+
+    UpdatedVoucherRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ACTIVE, DISABLED, USED]
+        quantityRemain:
+          type: integer
+          minimum: 0
+
+    JobStatusResponse:
+      type: object
+      properties:
+        jobId: { type: integer, format: int64 }
+        status:
+          type: string
+          enum: [STARTING, STARTED, COMPLETED, FAILED, STOPPED]
+        processed:
+          type: integer
+          format: int64
+          description: "Số item đã ghi thành công"
+        requested:
+          type: integer
+          format: int64
+          description: "Tổng số yêu cầu"
+        errorMessage:
+          type: string
+          description: "Chi tiết lỗi nếu FAILED"
+
+    # ── User ──────────────────────────────────────────────────────
+    UserRequest:
+      type: object
+      required: [username, email, password, typeOfUser]
+      properties:
+        username:
+          type: string
+          minLength: 3
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        typeOfUser:
+          type: integer
+          description: "ID của TypeOfUser"
+
+    UserResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        email: { type: string }
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        typeOfUser:
+          type: object
+          properties:
+            id: { type: integer }
+            type:
+              type: string
+              enum: [NORMAL, BRONZE, SILVER, GOLD, ALL]
+            threshold: { type: number }
+        isDelete: { type: boolean }
+        createdAt: { type: string }
+        updateAt: { type: string }
+
+    # ── TypeOfUser ────────────────────────────────────────────────
+    TypeOfUserRequest:
+      type: object
+      required: [type, threshold]
+      properties:
+        type:
+          type: string
+          enum: [NORMAL, BRONZE, SILVER, GOLD, ALL]
+        threshold:
+          type: number
+          description: "Ngưỡng chi tiêu để đạt tier này"
+          example: 5000000
+
+    TypeOfUserResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        type:
+          type: string
+          enum: [NORMAL, BRONZE, SILVER, GOLD, ALL]
+        threshold: { type: number }
+
+    # ── Product ──────────────────────────────────────────────────
+    ProductRequest:
+      type: object
+      required: [name, price, typeOfProduct]
+      properties:
+        name: { type: string }
+        images: { type: string, description: "URL ảnh" }
+        description: { type: string }
+        price:
+          type: number
+          format: decimal
+        typeOfProduct:
+          type: integer
+          description: "ID của TypeOfProduct"
+
+    ProductResponse:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        images: { type: string }
+        price: { type: number }
+        typeName: { type: string }
+        typeId: { type: integer }
+        createdAt: { type: string }
+        updatedAt: { type: string }
+
+    TypeOfProduct:
+      type: object
+      properties:
+        id: { type: integer }
+        type: { type: string }
+
+    # ── Distribution (planned) ───────────────────────────────────
+    DistributeRequest:
+      type: object
+      required: [channel]
+      properties:
+        channel: { type: string, enum: [EMAIL, WEBHOOK] }
+        recipients:
+          type: array
+          items: { type: string }
+          description: "Danh sách email hoặc webhook URL"
+        scheduled_at:
+          type: string
+          description: "Để trống = gửi ngay. Format: yyyy-MM-dd HH:mm:ss"
+
+# ─────────────────────────────────────────────────────────────────
+# PATHS
+# ─────────────────────────────────────────────────────────────────
+paths:
+
+  # ══ AUTH ═══════════════════════════════════════════════════════
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Đăng nhập
+      description: |
+        Trả về `token` (access token) trong body và set httpOnly cookie `refreshToken` (7 ngày).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Đăng nhập thành công
+          headers:
+            Set-Cookie:
+              description: "refreshToken=<jwt>; HttpOnly; Secure; SameSite=Strict; Path=/"
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/LoginResponse" }
+        "401":
+          description: Sai thông tin đăng nhập
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthErrorResponse" }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Đăng xuất
+      description: |
+        Blacklist access token hiện tại và xóa cookie `refreshToken`.
+
+        Body cần truyền access token hiện tại.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntrospectRequest" }
+      responses:
+        "200":
+          description: Đăng xuất thành công
+          headers:
+            Set-Cookie:
+              description: "refreshToken=; maxAge=0 (xóa cookie)"
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiResponse" }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Làm mới access token
+      description: |
+        Đọc `refreshToken` từ httpOnly cookie, trả về access token mới và cập nhật cookie.
+
+        Không cần body. Client chỉ cần đảm bảo cookie được gửi kèm.
+      responses:
+        "200":
+          description: Token mới
+          headers:
+            Set-Cookie:
+              description: "refreshToken mới được set lại"
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/LoginResponse" }
+        "401":
+          description: Không có hoặc hết hạn refresh token
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AuthErrorResponse" }
+
+  /auth/introspect:
+    post:
+      tags: [Auth]
+      summary: Kiểm tra tính hợp lệ của token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IntrospectRequest" }
+      responses:
+        "200":
+          description: Kết quả kiểm tra
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/IntrospectResponse" }
+
+  # ══ CAMPAIGNS ══════════════════════════════════════════════════
+  /campaigns:
+    get:
+      tags: [Campaigns]
+      summary: Lấy danh sách campaign (có filter + phân trang)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: name
+          schema: { type: string }
+          description: "Tìm theo tên (contains)"
+        - in: query
+          name: status
+          schema: { type: string, enum: [UPCOMING, ACTIVE, ENDED] }
+        - in: query
+          name: startTime
+          schema: { type: string }
+          description: "Format: yyyy-MM-dd HH:mm:ss"
+        - in: query
+          name: endTime
+          schema: { type: string }
+          description: "Format: yyyy-MM-dd HH:mm:ss"
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+        - in: query
+          name: sortBy
+          schema: { type: string, default: "id" }
+        - in: query
+          name: sortDir
+          schema: { type: string, enum: [asc, desc], default: "desc" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/CampaignResponse" }
+
+    post:
+      tags: [Campaigns]
+      summary: Tạo campaign mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignRequest" }
+      responses:
+        "200":
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/CampaignResponse" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /campaigns/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+
+    get:
+      tags: [Campaigns]
+      summary: Lấy chi tiết campaign
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/CampaignResponse" }
+        "404":
+          description: Không tìm thấy
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+    put:
+      tags: [Campaigns]
+      summary: Cập nhật thông tin campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignRequest" }
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/CampaignResponse" }
+
+    patch:
+      tags: [Campaigns]
+      summary: Cập nhật trạng thái campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CampaignUpdateStatusRequest" }
+      responses:
+        "200":
+          description: Cập nhật trạng thái thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/CampaignResponse" }
+
+    delete:
+      tags: [Campaigns]
+      summary: Xóa campaign
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Xóa thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiResponse" }
+
+  # ══ RULES ══════════════════════════════════════════════════════
+  # Note: endpoint phẳng /rules, không nested dưới /campaigns
+  /rules:
+    get:
+      tags: [Rules]
+      summary: Lấy danh sách rule (có filter + phân trang)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: name
+          schema: { type: string }
+        - in: query
+          name: typeOfRule
+          schema: { type: string, enum: [PERCENTAGE, FIXED_AMOUNT, TIERED, BUY_X_GET_Y] }
+        - in: query
+          name: status
+          schema: { type: string, enum: [ACTIVE, INACTIVE] }
+        - in: query
+          name: campaignId
+          schema: { type: integer }
+          description: "Lọc rule theo campaign"
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 10 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/RuleResponse" }
+
+    post:
+      tags: [Rules]
+      summary: Tạo rule cho campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RuleCreateRequest" }
+      responses:
+        "200":
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/RuleResponse" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /rules/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+
+    delete:
+      tags: [Rules]
+      summary: Xóa rule
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Xóa thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiResponse" }
+
+  # ══ VOUCHERS ═══════════════════════════════════════════════════
+  /vouchers:
+    get:
+      tags: [Vouchers]
+      summary: Lấy danh sách voucher (có filter + phân trang)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: type
+          schema: { type: string, enum: [GENERIC, UNIQUE] }
+        - in: query
+          name: status
+          schema: { type: string, enum: [ACTIVE, DISABLED, USED] }
+        - in: query
+          name: ruleId
+          schema: { type: integer }
+        - in: query
+          name: distributionChannel
+          schema: { type: string, enum: [EMAIL, WEBHOOK] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 20 }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items: { $ref: "#/components/schemas/VoucherResponse" }
+
+    post:
+      tags: [Vouchers]
+      summary: Tạo voucher
+      description: |
+        - **GENERIC**: tạo 1 mã dùng chung, trả về ngay (`status: completed`).
+        - **UNIQUE**: sinh batch N mã, trả về `jobId` nếu lớn (`status: processing`),
+          hoặc trả về danh sách luôn nếu nhỏ (`status: completed`).
+
+        Dùng `GET /vouchers/jobs/{jobId}` để poll tiến độ batch.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VoucherRequest" }
+      responses:
+        "200":
+          description: Tạo thành công (hoặc đang xử lý)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/CreateVoucherResponse" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /vouchers/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+
+    patch:
+      tags: [Vouchers]
+      summary: Cập nhật trạng thái / số lượng còn lại của voucher
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdatedVoucherRequest" }
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/VoucherResponse" }
+
+  /vouchers/jobs/{jobId}:
+    get:
+      tags: [Vouchers]
+      summary: Kiểm tra tiến độ batch job sinh mã UNIQUE
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: jobId
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: Trạng thái job
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/JobStatusResponse" }
+
+  # ══ USERS ══════════════════════════════════════════════════════
+  /users:
+    get:
+      tags: [Users]
+      summary: Lấy danh sách tất cả user
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result:
+                        type: array
+                        items: { $ref: "#/components/schemas/UserResponse" }
+
+    post:
+      tags: [Users]
+      summary: Tạo user mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserRequest" }
+      responses:
+        "200":
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/UserResponse" }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationErrorResponse" }
+
+  /users/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+
+    get:
+      tags: [Users]
+      summary: Lấy chi tiết user theo ID
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/UserResponse" }
+
+    put:
+      tags: [Users]
+      summary: Cập nhật thông tin user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UserRequest" }
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/UserResponse" }
+
+  # ══ TYPE OF USERS ═══════════════════════════════════════════════
+  /type-of-users:
+    get:
+      tags: [TypeOfUsers]
+      summary: Lấy danh sách tất cả tier user
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result:
+                        type: array
+                        items: { $ref: "#/components/schemas/TypeOfUserResponse" }
+
+    post:
+      tags: [TypeOfUsers]
+      summary: Tạo tier user mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TypeOfUserRequest" }
+      responses:
+        "200":
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/TypeOfUserResponse" }
+
+  /type-of-users/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+
+    get:
+      tags: [TypeOfUsers]
+      summary: Lấy tier user theo ID
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/TypeOfUserResponse" }
+
+    put:
+      tags: [TypeOfUsers]
+      summary: Cập nhật tier user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TypeOfUserRequest" }
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/TypeOfUserResponse" }
+
+  # ══ PRODUCTS ═══════════════════════════════════════════════════
+  /products:
+    get:
+      tags: [Products]
+      summary: Lấy danh sách sản phẩm (có filter + phân trang)
+      parameters:
+        - in: query
+          name: typeId
+          schema: { type: integer }
+          description: "Lọc theo loại sản phẩm"
+        - in: query
+          name: minPrice
+          schema: { type: number }
+        - in: query
+          name: maxPrice
+          schema: { type: number }
+        - in: query
+          name: name
+          schema: { type: string }
+          description: "Tìm theo tên"
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10 }
+        - in: query
+          name: offset
+          schema: { type: integer, default: 0 }
+          description: "Offset (số bản ghi bỏ qua), khác với page-based"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result:
+                        allOf:
+                          - $ref: "#/components/schemas/PaginatedResponse"
+                          - type: object
+                            properties:
+                              data:
+                                type: array
+                                items: { $ref: "#/components/schemas/ProductResponse" }
+
+    post:
+      tags: [Products]
+      summary: Tạo sản phẩm mới
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductRequest" }
+      responses:
+        "201":
+          description: Tạo thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/ProductResponse" }
+
+  /products/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+
+    get:
+      tags: [Products]
+      summary: Lấy chi tiết sản phẩm
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/ProductResponse" }
+
+    put:
+      tags: [Products]
+      summary: Cập nhật sản phẩm
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductRequest" }
+      responses:
+        "200":
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result: { $ref: "#/components/schemas/ProductResponse" }
+
+    delete:
+      tags: [Products]
+      summary: Xóa sản phẩm
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Xóa thành công
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApiResponse" }
+
+  /products/type:
+    get:
+      tags: [Products]
+      summary: Lấy danh sách loại sản phẩm
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponse"
+                  - type: object
+                    properties:
+                      result:
+                        type: array
+                        items: { $ref: "#/components/schemas/TypeOfProduct" }
+
+  # ══ DISTRIBUTION (🔜 planned) ══════════════════════════════════
+  /vouchers/{id}/distribute:
+    post:
+      tags: [Distribution]
+      summary: "🔜 Phân phối mã voucher qua Email hoặc Webhook"
+      description: "Chưa implement. Giữ làm contract cho Sprint 2."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DistributeRequest" }
+      responses:
+        "501":
+          description: Not implemented
+
+  /distribution-logs:
+    get:
+      tags: [Distribution]
+      summary: "🔜 Lấy lịch sử phân phối"
+      description: "Chưa implement."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: voucherId
+          schema: { type: integer }
+        - in: query
+          name: status
+          schema: { type: string, enum: [pending, success, failed] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 20 }
+      responses:
+        "501":
+          description: Not implemented
+
+  # ══ REDEEM (🔜 planned) ════════════════════════════════════════
+  /vouchers/redeem:
+    post:
+      tags: [Vouchers]
+      summary: "🔜 Áp dụng voucher khi thanh toán"
+      description: "Chưa implement. Sẽ dùng Distributed Lock (Redis SETNX). Planned Sprint 3."
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, orderItems]
+              properties:
+                code: { type: string }
+                orderItems:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      productId: { type: integer }
+                      quantity: { type: integer }
+                      price: { type: number }
+      responses:
+        "501":
+          description: Not implemented
+
+  # ══ FRAUD (🔜 planned) ════════════════════════════════════════
+  /fraud-logs:
+    get:
+      tags: [Fraud]
+      summary: "🔜 Lấy danh sách gian lận bị block"
+      description: "Chưa implement. Planned Sprint 3."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: reason
+          schema: { type: string, enum: [MULTIPLE_ACCOUNTS, VPN_DETECTED, BOT_SCRIPT] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, default: 20 }
+      responses:
+        "501":
+          description: Not implemented
+
+  # ══ ANALYTICS (🔜 planned) ════════════════════════════════════
+  /analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: "🔜 Dashboard tổng quan"
+      description: "Chưa implement. Planned Sprint 4."
+      security:
+        - BearerAuth: []
+      responses:
+        "501":
+          description: Not implemented
+
+  /analytics/campaigns/{id}/stats:
+    get:
+      tags: [Analytics]
+      summary: "🔜 Thống kê tổng quan chiến dịch"
+      description: "Chưa implement. Planned Sprint 4."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "501":
+          description: Not implemented
+
+  /analytics/campaigns/{id}/timeline:
+    get:
+      tags: [Analytics]
+      summary: "🔜 Biểu đồ redemption theo thời gian"
+      description: "Chưa implement. Planned Sprint 4."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: from
+          schema: { type: string }
+        - in: query
+          name: to
+          schema: { type: string }
+        - in: query
+          name: interval
+          schema: { type: string, enum: [hour, day], default: hour }
+      responses:
+        "501":
+          description: Not implemented
+
+  /analytics/fraud-stats:
+    get:
+      tags: [Analytics]
+      summary: "🔜 Thống kê gian lận"
+      description: "Chưa implement. Planned Sprint 4."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string }
+        - in: query
+          name: to
+          schema: { type: string }
+      responses:
+        "501":
+          description: Not implemented
