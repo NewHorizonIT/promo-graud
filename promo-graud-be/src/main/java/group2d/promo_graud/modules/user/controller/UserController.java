@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +12,7 @@ import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.service.UserService;
 import group2d.promo_graud.shared.dto.ApiResponse;
+import group2d.promo_graud.shared.dto.PaginatedResponse;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -65,5 +67,24 @@ public class UserController {
                         .message("Updated user success")
                         .result(userResponse)
                         .build());
+    }
+
+    // lấy danh sách phân trang
+    @GetMapping("/page")
+    public ResponseEntity<PaginatedResponse<UserResponse>> getAll(
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String typeOfUser,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<UserResponse> result = userService.getAll(userName, typeOfUser, page, size);
+        PaginatedResponse<UserResponse> response =
+                PaginatedResponse.<UserResponse>builder()
+                        .data(result.getContent())
+                        .page(result.getNumber() + 1)
+                        .size(result.getSize())
+                        .totalItems(result.getTotalElements())
+                        .totalPages(result.getTotalPages())
+                        .build();
+        return ResponseEntity.ok(response);
     }
 }

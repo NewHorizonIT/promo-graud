@@ -41,7 +41,8 @@ public enum VoucherErrorCode implements BaseErrorCode {
     BATCH_PARTIAL_COMPLETED(
             1815,
             "Job finished but the number of generated vouchers is less than requested",
-            HttpStatus.MULTI_STATUS);
+            HttpStatus.MULTI_STATUS),
+    NO_USER_SELECTED(1816, "No select user", HttpStatus.MULTI_STATUS);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;

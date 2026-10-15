@@ -3,7 +3,7 @@ spring:
     job:
       enabled: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/promo_graud_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/promo_graud_db}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
 
@@ -17,8 +17,19 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:61387}
+      port: ${REDIS_PORT:6378}
       timeout: 2000ms
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: ${BACKEND_PORT:8080}
@@ -28,6 +39,10 @@ jwt:
   refresh-secret: 659079efaa0f77794f8bb02b664e608dbec37d700acdd238f951e82611d647c0
   valid-duration: 900
   refresh-duration: 72000
+
+resend:
+  api-key: ${RESEND_API_KEY}
+  domain-name: ${RESEND_FROM_ADDRESS}
 
 voucher:
   batch:

@@ -2,6 +2,9 @@ package group2d.promo_graud.modules.user.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,6 +14,7 @@ import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
 import group2d.promo_graud.modules.user.entity.User;
+import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.error.TypeOfUserErrorCode;
 import group2d.promo_graud.modules.user.error.UserErrorCode;
 import group2d.promo_graud.modules.user.repository.TypeOfUserRepository;
@@ -73,6 +77,18 @@ public class UserService {
                         .findById(id)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
         return mapToUserResponse(user);
+    }
+
+    public Page<UserResponse> getAll(String userName, String typeOfUser, int page, int size) {
+        UserTypeEnum userType =
+                (typeOfUser != null && !typeOfUser.isBlank())
+                        ? UserTypeEnum.valueOf(typeOfUser.trim().toUpperCase())
+                        : null;
+
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<User> result = userRepository.getAll(userName, userType, pageable);
+        return result.map(this::mapToUserResponse);
     }
 
     public UserResponse mapToUserResponse(User user) {

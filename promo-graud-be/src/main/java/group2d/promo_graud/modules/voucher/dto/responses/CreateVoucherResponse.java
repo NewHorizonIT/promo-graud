@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 
 @Getter
 @Setter

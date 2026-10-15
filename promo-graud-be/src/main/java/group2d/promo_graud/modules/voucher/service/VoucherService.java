@@ -21,17 +21,18 @@ import lombok.extern.slf4j.Slf4j;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
-import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherCardResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
+import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 import group2d.promo_graud.shared.exception.AppException;
 
@@ -257,5 +258,10 @@ public class VoucherService {
     private String generateCode(String prefix) {
         String random = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         return StringUtils.hasText(prefix) ? prefix + "-" + random : random;
+    }
+
+    // lấy card Voucher
+    public List<VoucherCardResponse> getSummaryCards() {
+        return voucherRepository.getUniqueVoucherCard();
     }
 }

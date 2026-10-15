@@ -9,7 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import lombok.*;
 
 import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 
 @Entity
 @Table(name = "user_voucher")
