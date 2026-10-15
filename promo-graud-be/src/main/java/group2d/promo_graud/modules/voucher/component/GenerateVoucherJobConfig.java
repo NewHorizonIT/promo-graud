@@ -16,7 +16,7 @@ import org.springframework.dao.TransientDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 
 @Configuration
 public class GenerateVoucherJobConfig {

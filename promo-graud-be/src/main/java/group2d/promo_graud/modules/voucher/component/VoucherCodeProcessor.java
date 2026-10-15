@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
 import group2d.promo_graud.shared.exception.AppException;

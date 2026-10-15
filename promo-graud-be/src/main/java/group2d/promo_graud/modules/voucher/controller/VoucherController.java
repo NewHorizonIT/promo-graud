@@ -1,4 +1,6 @@
-package group2d.promo_graud.modules.voucher;
+package group2d.promo_graud.modules.voucher.controller;
+
+import java.util.List;
 
 import jakarta.validation.Valid;
 
@@ -11,6 +13,7 @@ import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherCardResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.shared.dto.ApiResponse;
@@ -89,5 +92,14 @@ public class VoucherController {
         voucherService.delete(id);
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder().code(200).message("Xóa voucher thành công").build());
+    }
+    @GetMapping("/summary-cards")
+    public ResponseEntity<ApiResponse<List<VoucherCardResponse>>> getSummaryCards() {
+        return ResponseEntity.ok(
+                ApiResponse.<List<VoucherCardResponse>>builder()
+                        .code(200)
+                        .message("Lấy card voucher unique thành công")
+                        .result(voucherService.getSummaryCards())
+                        .build());
     }
 }

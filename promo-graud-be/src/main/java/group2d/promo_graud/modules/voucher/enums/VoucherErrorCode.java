@@ -51,7 +51,8 @@ public enum VoucherErrorCode implements BaseErrorCode {
     TARGET_USER_LIMIT_EXCEEDED(
             1817,
             "Targeted user count exceeds the maximum allowed (500) for synchronous generation",
-            HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST),
+    NO_USER_SELECTED(1818, "No select user", HttpStatus.MULTI_STATUS);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;
