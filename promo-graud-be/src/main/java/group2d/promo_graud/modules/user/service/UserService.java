@@ -7,6 +7,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import lombok.RequiredArgsConstructor;
+
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
@@ -18,19 +20,11 @@ import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    private UserRepository userRepository;
-    private TypeOfUserRepository typeOfUserRepository;
-    private PasswordEncoder passwordEncoder;
-
-    public UserService(
-            UserRepository userRepository,
-            TypeOfUserRepository typeOfUserRepository,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.typeOfUserRepository = typeOfUserRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final UserRepository userRepository;
+    private final TypeOfUserRepository typeOfUserRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponse createUser(UserRequest request) {
         TypeOfUser typeOfUser =
@@ -58,6 +52,14 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(request.getRole());
+        TypeOfUser typeOfUser =
+                typeOfUserRepository
+                        .findById(request.getTypeOfUser())
+                        .orElseThrow(
+                                () ->
+                                        new AppException(
+                                                TypeOfUserErrorCode.TYPE_OF_USER_NOT_EXISTS));
+        user.setTypeOfUser(typeOfUser);
         return mapToUserResponse(userRepository.save(user));
     }
 
@@ -80,7 +82,6 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .password(user.getPassword())
                 .role(user.getRole())
                 .isDelete(user.getIsDeleted())
                 .typeOfUser(user.getTypeOfUser())

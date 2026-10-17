@@ -1,4 +1,4 @@
-package group2d.promo_graud.modules.orders;
+package group2d.promo_graud.modules.orders.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -11,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import lombok.*;
 
+import group2d.promo_graud.modules.orders.OrderStatus;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.voucher.Voucher;
 

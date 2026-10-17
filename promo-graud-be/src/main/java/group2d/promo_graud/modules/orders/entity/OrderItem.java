@@ -1,4 +1,4 @@
-package group2d.promo_graud.modules.orders;
+package group2d.promo_graud.modules.orders.entity;
 
 import java.math.BigDecimal;
 

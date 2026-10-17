@@ -4,8 +4,8 @@ import jakarta.persistence.*;
 
 import lombok.*;
 
-import group2d.promo_graud.modules.orders.Order;
 import group2d.promo_graud.modules.orders.OrderStatus;
+import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.user.entity.User;
 
 @Entity

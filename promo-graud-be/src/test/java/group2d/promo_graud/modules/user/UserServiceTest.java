@@ -78,7 +78,6 @@ class UserServiceTest {
         assertEquals(1, response.getId());
         assertEquals("huy", response.getUsername());
         assertEquals("huy@gmail.com", response.getEmail());
-        assertEquals("encodedPassword", response.getPassword());
         assertEquals(RoleEnum.USER, response.getRole());
         assertEquals(typeOfUser, response.getTypeOfUser());
 
@@ -109,11 +108,19 @@ class UserServiceTest {
     @DisplayName("TC3: Cập nhật User thành công")
     void updateUserSuccess() {
         Integer id = 1;
+        TypeOfUser typeOfUser =
+                TypeOfUser.builder()
+                        .id(1)
+                        .type(UserTypeEnum.GOLD)
+                        .threshold(BigDecimal.valueOf(3500000))
+                        .build();
+
         UserRequest request =
                 UserRequest.builder()
                         .username("huy123")
                         .email("new@gmail.com")
                         .password("newPassword")
+                        .typeOfUser(1)
                         .role(RoleEnum.USER)
                         .build();
 
@@ -132,12 +139,13 @@ class UserServiceTest {
                         .username("huy123")
                         .email("new@gmail.com")
                         .password("encodedNewPassword")
+                        .typeOfUser(typeOfUser)
                         .role(RoleEnum.USER)
                         .build();
 
         when(userRepository.findById(id)).thenReturn(Optional.of(existingUser));
         when(passwordEncoder.encode("newPassword")).thenReturn("encodedNewPassword");
-
+        when(typeOfUserRepository.findById(1)).thenReturn(Optional.of(typeOfUser));
         when(userRepository.save(any(User.class))).thenReturn(updatedUser);
 
         UserResponse response = userService.updateUser(request, id);
@@ -146,11 +154,12 @@ class UserServiceTest {
         assertEquals(id, response.getId());
         assertEquals("huy123", response.getUsername());
         assertEquals("new@gmail.com", response.getEmail());
-        assertEquals("encodedNewPassword", response.getPassword());
         assertEquals(RoleEnum.USER, response.getRole());
+        assertEquals(typeOfUser, response.getTypeOfUser());
 
         verify(userRepository).findById(id);
         verify(passwordEncoder).encode("newPassword");
+        verify(typeOfUserRepository).findById(1);
         verify(userRepository).save(any(User.class));
     }
 
