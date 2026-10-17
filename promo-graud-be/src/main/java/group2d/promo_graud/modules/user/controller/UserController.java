@@ -5,6 +5,8 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
@@ -63,6 +65,18 @@ public class UserController {
                 ApiResponse.<UserResponse>builder()
                         .code(200)
                         .message("Updated user success")
+                        .result(userResponse)
+                        .build());
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getMe(@AuthenticationPrincipal Jwt jwt) {
+        Integer userId = ((Number) jwt.getClaim("userId")).intValue();
+        UserResponse userResponse = userService.findUserById(userId);
+        return ResponseEntity.ok(
+                ApiResponse.<UserResponse>builder()
+                        .code(200)
+                        .message("Lấy thông tin user thành công")
                         .result(userResponse)
                         .build());
     }
