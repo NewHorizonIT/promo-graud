@@ -17,52 +17,51 @@ import group2d.promo_graud.shared.dto.ApiResponse;
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController {
-  private final OrderService orderService;
+    private final OrderService orderService;
 
-  @PostMapping
-  public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-    @RequestBody OrderRequest request) {
-    OrderResponse orderResponse = orderService.createOrder(request);
-    return ResponseEntity.ok(
-      ApiResponse.<OrderResponse>builder()
-        .code(201)
-        .message("Create order success")
-        .result(orderResponse)
-        .build());
-  }
+    @PostMapping
+    public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
+            @RequestBody OrderRequest request) {
+        OrderResponse orderResponse = orderService.createOrder(request);
+        return ResponseEntity.ok(
+                ApiResponse.<OrderResponse>builder()
+                        .code(201)
+                        .message("Create order success")
+                        .result(orderResponse)
+                        .build());
+    }
 
-  @GetMapping
-  public ResponseEntity<ApiResponse<List<OrderResponse>>> findAll() {
-    List<OrderResponse> listOrder = orderService.findAll();
-    return ResponseEntity.ok(
-      ApiResponse.<List<OrderResponse>>builder()
-        .code(200)
-        .message("Find all orders success")
-        .result(listOrder)
-        .build());
-  }
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> findAll() {
+        List<OrderResponse> listOrder = orderService.findAll();
+        return ResponseEntity.ok(
+                ApiResponse.<List<OrderResponse>>builder()
+                        .code(200)
+                        .message("Find all orders success")
+                        .result(listOrder)
+                        .build());
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<OrderResponse>> findById(@PathVariable Integer id) {
-    OrderResponse orderResponse = orderService.findById(id);
-    return ResponseEntity.ok(
-      ApiResponse.<OrderResponse>builder()
-        .code(200)
-        .message("Find by order id success")
-        .result(orderResponse)
-        .build());
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<OrderResponse>> findById(@PathVariable Integer id) {
+        OrderResponse orderResponse = orderService.findById(id);
+        return ResponseEntity.ok(
+                ApiResponse.<OrderResponse>builder()
+                        .code(200)
+                        .message("Find by order id success")
+                        .result(orderResponse)
+                        .build());
+    }
 
-  @GetMapping("/filter-by-time")
-  public ResponseEntity<ApiResponse<List<OrderResponse>>> filterByTime(
-    @RequestParam LocalDate startDate,
-    @RequestParam LocalDate endDate) {
-    List<OrderResponse> orders = orderService.filterByTime(startDate, endDate);
-    return ResponseEntity.ok(
-      ApiResponse.<List<OrderResponse>>builder()
-        .code(200)
-        .message("Filter orders by time success")
-        .result(orders)
-        .build());
-  }
+    @GetMapping("/filter-by-time")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> filterByTime(
+            @RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
+        List<OrderResponse> orders = orderService.filterByTime(startDate, endDate);
+        return ResponseEntity.ok(
+                ApiResponse.<List<OrderResponse>>builder()
+                        .code(200)
+                        .message("Filter orders by time success")
+                        .result(orders)
+                        .build());
+    }
 }

@@ -87,7 +87,7 @@ public class OrderServiceTest {
     private final List<OrderItemRequest> itemRequest = List.of(itemRequest1, itemRequest2);
 
     private final OrderRequest request =
-            OrderRequest.builder().voucherId(1).orderItemRequests(itemRequest).build();
+            OrderRequest.builder().voucherId(1).items(itemRequest).build();
 
     @Test
     @DisplayName("TC1: Tạo hóa đơn thành công không có voucher")
