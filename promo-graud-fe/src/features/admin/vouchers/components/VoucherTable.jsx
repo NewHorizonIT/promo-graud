@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
-import { Eye, Trash2, Send } from "lucide-react";
-import VoucherStatusBadge from "./VoucherStatusBadge";
+import { Link } from 'react-router-dom';
+import { Eye, Trash2, Send } from 'lucide-react';
+import VoucherStatusBadge from './VoucherStatusBadge';
 
 function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("vi-VN");
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN');
 }
 
 export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) {
@@ -15,7 +15,9 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
           🎫
         </div>
         <p className="text-sm font-semibold text-text-primary">Chưa có voucher nào</p>
-        <p className="text-xs text-text-muted mt-1">Tạo voucher mới từ một campaign đang hoạt động</p>
+        <p className="text-xs text-text-muted mt-1">
+          Tạo voucher mới từ một campaign đang hoạt động
+        </p>
       </div>
     );
   }
@@ -26,26 +28,44 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
         <table className="w-full text-sm">
           <thead className="bg-surface-muted border-b border-border">
             <tr>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Mã</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Loại</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Trạng thái</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Còn lại / Tổng</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Hết hạn</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Kênh</th>
-              <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Thao tác</th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Mã
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Loại
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Còn lại / Tổng
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Hết hạn
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Kênh
+              </th>
+              <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Thao tác
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {vouchers.map((v) => (
               <tr key={v.id} className="hover:bg-surface-muted/40 transition-colors">
-                <td className="py-3 px-4 font-mono text-xs font-semibold text-text-primary">{v.code}</td>
+                <td className="py-3 px-4 font-mono text-xs font-semibold text-text-primary">
+                  {v.code}
+                </td>
                 <td className="py-3 px-4">
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-sm ${
-                    v.type === "generic"
-                      ? "bg-primary-light text-primary"
-                      : "bg-surface-muted text-text-secondary"
-                  }`}>
-                    {v.type === "generic" ? "Generic" : "Unique"}
+                  <span
+                    className={`px-2 py-0.5 text-xs font-semibold rounded-sm ${
+                      v.type === 'generic'
+                        ? 'bg-primary-light text-primary'
+                        : 'bg-surface-muted text-text-secondary'
+                    }`}
+                  >
+                    {v.type === 'generic' ? 'Generic' : 'Unique'}
                   </span>
                 </td>
                 <td className="py-3 px-4">
@@ -56,7 +76,9 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                     <div className="w-20 h-1.5 bg-border rounded-full overflow-hidden">
                       <div
                         className="bg-primary h-full rounded-full"
-                        style={{ width: `${v.quantity > 0 ? (v.quantity_remain / v.quantity) * 100 : 0}%` }}
+                        style={{
+                          width: `${v.quantity > 0 ? (v.quantity_remain / v.quantity) * 100 : 0}%`,
+                        }}
                       />
                     </div>
                     <span className="text-xs text-text-muted">
@@ -64,8 +86,12 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-xs text-text-secondary">{formatDate(v.expired_at)}</td>
-                <td className="py-3 px-4 text-xs text-text-secondary capitalize">{v.distribution_channel}</td>
+                <td className="py-3 px-4 text-xs text-text-secondary">
+                  {formatDate(v.expired_at)}
+                </td>
+                <td className="py-3 px-4 text-xs text-text-secondary capitalize">
+                  {v.distribution_channel}
+                </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center justify-end gap-1">
                     <Link

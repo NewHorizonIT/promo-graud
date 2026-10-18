@@ -1,6 +1,6 @@
-import { ShoppingCart, Heart, Eye } from "lucide-react";
-import { useCart } from "../hooks/useCart";
-import { formatCurrency } from "../utils/format";
+import { ShoppingCart, Heart, Eye } from 'lucide-react';
+import { useCart } from '../hooks/useCart';
+import { formatCurrency } from '../utils/format';
 
 export default function ProductCard({ product, onDetail }) {
   const { addToCart, cart } = useCart();
@@ -63,19 +63,21 @@ export default function ProductCard({ product, onDetail }) {
         </h3>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-primary font-bold text-base">{formatCurrency(product.price)}</span>
-          <span className="text-text-muted line-through text-xs">{formatCurrency(product.price * 1.25)}</span>
+          <span className="text-text-muted line-through text-xs">
+            {formatCurrency(product.price * 1.25)}
+          </span>
         </div>
         <button
           type="button"
           onClick={handleAddToCart}
           className={`w-full mt-1 py-2 border rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer ${
             isAlreadyInCart
-              ? "border-emerald-500 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-              : "border-primary text-primary hover:bg-primary hover:text-white"
+              ? 'border-emerald-500 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+              : 'border-primary text-primary hover:bg-primary hover:text-white'
           }`}
         >
           <ShoppingCart size={15} />
-          {isAlreadyInCart ? "Đã trong giỏ" : "Thêm vào giỏ"}
+          {isAlreadyInCart ? 'Đã trong giỏ' : 'Thêm vào giỏ'}
         </button>
       </div>
     </div>

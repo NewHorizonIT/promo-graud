@@ -1,5 +1,5 @@
-import { useId } from "react";
-import { formatCurrency, formatShortCurrency } from "../../../utils/format";
+import { useId } from 'react';
+import { formatCurrency } from '../../../utils/format';
 
 export default function PriceRangeSlider({
   min = 0,
@@ -96,8 +96,8 @@ export default function PriceRangeSlider({
           onClick={() => handlePreset(min, 200000)}
           className={`px-2 py-1 text-[11px] font-medium rounded-lg border transition-all text-left ${
             minVal === min && maxVal === 200000
-              ? "bg-primary-light border-primary text-primary"
-              : "border-border text-text-secondary hover:bg-surface-muted"
+              ? 'bg-primary-light border-primary text-primary'
+              : 'border-border text-text-secondary hover:bg-surface-muted'
           }`}
         >
           Dưới 200K
@@ -107,8 +107,8 @@ export default function PriceRangeSlider({
           onClick={() => handlePreset(200000, 500000)}
           className={`px-2 py-1 text-[11px] font-medium rounded-lg border transition-all text-left ${
             minVal === 200000 && maxVal === 500000
-              ? "bg-primary-light border-primary text-primary"
-              : "border-border text-text-secondary hover:bg-surface-muted"
+              ? 'bg-primary-light border-primary text-primary'
+              : 'border-border text-text-secondary hover:bg-surface-muted'
           }`}
         >
           200K - 500K
@@ -118,8 +118,8 @@ export default function PriceRangeSlider({
           onClick={() => handlePreset(500000, 1000000)}
           className={`px-2 py-1 text-[11px] font-medium rounded-lg border transition-all text-left ${
             minVal === 500000 && maxVal === 1000000
-              ? "bg-primary-light border-primary text-primary"
-              : "border-border text-text-secondary hover:bg-surface-muted"
+              ? 'bg-primary-light border-primary text-primary'
+              : 'border-border text-text-secondary hover:bg-surface-muted'
           }`}
         >
           500K - 1M
@@ -129,8 +129,8 @@ export default function PriceRangeSlider({
           onClick={() => handlePreset(1000000, max)}
           className={`px-2 py-1 text-[11px] font-medium rounded-lg border transition-all text-left ${
             minVal === 1000000 && maxVal === max
-              ? "bg-primary-light border-primary text-primary"
-              : "border-border text-text-secondary hover:bg-surface-muted"
+              ? 'bg-primary-light border-primary text-primary'
+              : 'border-border text-text-secondary hover:bg-surface-muted'
           }`}
         >
           Trên 1M

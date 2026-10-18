@@ -1,5 +1,5 @@
-import { Minus, Plus, Trash2 } from "lucide-react";
-import { formatCurrency } from "../../../utils/format";
+import { Minus, Plus, Trash2 } from 'lucide-react';
+import { formatCurrency } from '../../../utils/format';
 
 export default function CartItem({ item, onUpdateQuantity, onRemove }) {
   const lineTotal = (item.price || 0) * (item.quantity || 1);
@@ -10,15 +10,9 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div className="w-20 h-20 rounded-xl bg-surface-muted overflow-hidden shrink-0 border border-border">
           {item.images ? (
-            <img
-              src={item.images}
-              alt={item.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={item.images} alt={item.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-3xl">
-              👕
-            </div>
+            <div className="w-full h-full flex items-center justify-center text-3xl">👕</div>
           )}
         </div>
 
@@ -32,7 +26,8 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
             {item.name}
           </h4>
           <p className="text-xs text-text-muted mt-1">
-            Đơn giá: <span className="font-medium text-text-primary">{formatCurrency(item.price)}</span>
+            Đơn giá:{' '}
+            <span className="font-medium text-text-primary">{formatCurrency(item.price)}</span>
           </p>
         </div>
       </div>
@@ -65,9 +60,7 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
 
         {/* Subtotal */}
         <div className="text-right min-w-[90px]">
-          <span className="text-sm font-bold text-primary">
-            {formatCurrency(lineTotal)}
-          </span>
+          <span className="text-sm font-bold text-primary">{formatCurrency(lineTotal)}</span>
         </div>
 
         {/* Remove button */}

@@ -1,14 +1,14 @@
-import { Link } from "react-router-dom";
-import { Pencil, Trash2, Eye } from "lucide-react";
-import CampaignStatusBadge from "./CampaignStatusBadge";
-import { formatCurrency } from "../../../../utils/format";
+import { Link } from 'react-router-dom';
+import { Pencil, Trash2, Eye } from 'lucide-react';
+import CampaignStatusBadge from './CampaignStatusBadge';
+import { formatCurrency } from '../../../../utils/format';
 
 function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("vi-VN");
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN');
 }
 
-export default function CampaignTable({ campaigns = [], onDelete, onStatusChange }) {
+export default function CampaignTable({ campaigns = [], onDelete }) {
   if (!campaigns.length) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center bg-surface border border-border rounded-xl">
@@ -27,11 +27,21 @@ export default function CampaignTable({ campaigns = [], onDelete, onStatusChange
         <table className="w-full text-sm">
           <thead className="bg-surface-muted border-b border-border">
             <tr>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Tên Campaign</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Trạng thái</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Thời gian</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Ngân sách</th>
-              <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">Thao tác</th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Tên Campaign
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Trạng thái
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Thời gian
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Ngân sách
+              </th>
+              <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                Thao tác
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">

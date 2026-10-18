@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import ProductCard from "../../../components/ProductCard";
-import { fetchProducts } from "../../products/services/productService";
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ProductCard from '../../../components/ProductCard';
+import { fetchProducts } from '../../products/services/productService';
 
 export default function TrendingProducts({ onDetail }) {
   const [products, setProducts] = useState([]);
@@ -11,13 +11,13 @@ export default function TrendingProducts({ onDetail }) {
   const ITEMS_PER_PAGE = 4;
 
   useEffect(() => {
-    fetchProducts({ limit: 12, offset: 0, name: "" })
+    fetchProducts({ limit: 12, offset: 0, name: '' })
       .then((data) => {
         if (data?.result?.data) {
           setProducts(data.result.data);
         }
       })
-      .catch((err) => console.error("Failed to fetch products:", err))
+      .catch((err) => console.error('Failed to fetch products:', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -76,7 +76,7 @@ export default function TrendingProducts({ onDetail }) {
                       type="button"
                       onClick={() => setPage(i)}
                       className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                        i === page ? "bg-primary w-6" : "bg-border w-2.5 hover:bg-text-muted"
+                        i === page ? 'bg-primary w-6' : 'bg-border w-2.5 hover:bg-text-muted'
                       }`}
                       aria-label={`Trang ${i + 1}`}
                     />

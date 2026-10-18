@@ -1,5 +1,5 @@
-import { ShoppingBag, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ShoppingBag, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function EmptyCart() {
   return (
@@ -8,12 +8,11 @@ export default function EmptyCart() {
         <ShoppingBag size={44} />
       </div>
 
-      <h2 className="text-2xl font-bold text-text-primary mb-2">
-        Giỏ hàng của bạn đang trống
-      </h2>
+      <h2 className="text-2xl font-bold text-text-primary mb-2">Giỏ hàng của bạn đang trống</h2>
 
       <p className="text-sm text-text-muted max-w-md mb-8 leading-relaxed">
-        Bạn chưa thêm sản phẩm nào vào giỏ hàng. Hãy khám phá ngay các bộ sưu tập thời trang hot nhất hôm nay!
+        Bạn chưa thêm sản phẩm nào vào giỏ hàng. Hãy khám phá ngay các bộ sưu tập thời trang hot
+        nhất hôm nay!
       </p>
 
       <Link

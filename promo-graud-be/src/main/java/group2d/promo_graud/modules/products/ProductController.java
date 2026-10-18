@@ -1,6 +1,8 @@
 package group2d.promo_graud.modules.products;
 
-import group2d.promo_graud.modules.products.entity.TypeOfProduct;
+import java.math.BigDecimal;
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
@@ -22,11 +24,9 @@ import lombok.experimental.FieldDefaults;
 
 import group2d.promo_graud.modules.products.dto.ProductRequest;
 import group2d.promo_graud.modules.products.dto.ProductResponse;
+import group2d.promo_graud.modules.products.entity.TypeOfProduct;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -44,7 +44,8 @@ public class ProductController {
             @RequestParam(required = false) String name,
             @RequestParam(defaultValue = "10") int limit,
             @RequestParam(defaultValue = "0") int offset) {
-        Page<ProductResponse> pages = productService.getProducts(typeId, minPrice, maxPrice, name,limit, offset);
+        Page<ProductResponse> pages =
+                productService.getProducts(typeId, minPrice, maxPrice, name, limit, offset);
         PaginatedResponse<ProductResponse> result =
                 PaginatedResponse.<ProductResponse>builder()
                         .data(pages.getContent())
@@ -101,13 +102,13 @@ public class ProductController {
                 ApiResponse.<Void>builder().code(200).message("Xóa sản phẩm thành công").build());
     }
 
-  @GetMapping("/type")
-  public ResponseEntity<ApiResponse<List<TypeOfProduct>>> getTypes() {
-    return ResponseEntity.ok(
-      ApiResponse.<List<TypeOfProduct>>builder()
-        .code(200)
-        .result(productService.getTypes())
-        .message("Lấy danh sách loại sản phẩm thành công")
-        .build());
-  }
+    @GetMapping("/type")
+    public ResponseEntity<ApiResponse<List<TypeOfProduct>>> getTypes() {
+        return ResponseEntity.ok(
+                ApiResponse.<List<TypeOfProduct>>builder()
+                        .code(200)
+                        .result(productService.getTypes())
+                        .message("Lấy danh sách loại sản phẩm thành công")
+                        .build());
+    }
 }

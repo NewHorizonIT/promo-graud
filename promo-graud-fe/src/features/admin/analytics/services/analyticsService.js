@@ -1,4 +1,4 @@
-import { adminFetch } from "../../services/adminApi.js";
+import { adminFetch } from '../../services/adminApi.js';
 
 export const getCampaignStats = (campaignId) =>
   adminFetch(`/analytics/campaigns/${campaignId}/stats`);

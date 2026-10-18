@@ -1,20 +1,20 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import FraudStatCards from "../../features/admin/fraud/components/FraudStatCards";
-import FraudLogTable from "../../features/admin/fraud/components/FraudLogTable";
-import { getFraudLogs, getFraudStats } from "../../features/admin/fraud/services/fraudService";
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import FraudStatCards from '../../features/admin/fraud/components/FraudStatCards';
+import FraudLogTable from '../../features/admin/fraud/components/FraudLogTable';
+import { getFraudLogs, getFraudStats } from '../../features/admin/fraud/services/fraudService';
 
 const REASON_FILTERS = [
-  { value: "",                  label: "Tất cả" },
-  { value: "multiple_accounts", label: "Multi-Account" },
-  { value: "vpn_detected",      label: "VPN Detected" },
-  { value: "bot_script",        label: "Bot Script" },
+  { value: '', label: 'Tất cả' },
+  { value: 'multiple_accounts', label: 'Multi-Account' },
+  { value: 'vpn_detected', label: 'VPN Detected' },
+  { value: 'bot_script', label: 'Bot Script' },
 ];
 
 export default function FraudPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const reason = searchParams.get("reason") ?? "";
-  const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+  const reason = searchParams.get('reason') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState(null);
@@ -61,8 +61,8 @@ export default function FraudPage() {
             onClick={() => setSearchParams(f.value ? { reason: f.value } : {})}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               reason === f.value
-                ? "bg-surface text-text-primary shadow-level-1"
-                : "text-text-muted hover:text-text-primary"
+                ? 'bg-surface text-text-primary shadow-level-1'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             {f.label}
@@ -93,8 +93,8 @@ export default function FraudPage() {
                 onClick={() => setSearchParams({ ...(reason ? { reason } : {}), page: String(pg) })}
                 className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
                   pg === page
-                    ? "bg-primary text-white shadow-glow"
-                    : "border border-border bg-surface text-text-secondary hover:bg-surface-muted"
+                    ? 'bg-primary text-white shadow-glow'
+                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
                 }`}
               >
                 {pg}

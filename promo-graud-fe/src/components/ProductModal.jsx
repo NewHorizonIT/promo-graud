@@ -1,7 +1,7 @@
-import { useEffect } from "react";
-import { X, ShoppingCart } from "lucide-react";
-import { useCart } from "../hooks/useCart";
-import { formatCurrency } from "../utils/format";
+import { useEffect } from 'react';
+import { X, ShoppingCart } from 'lucide-react';
+import { useCart } from '../hooks/useCart';
+import { formatCurrency } from '../utils/format';
 
 export default function ProductModal({ product, onClose }) {
   const { addToCart, cart } = useCart();
@@ -9,13 +9,13 @@ export default function ProductModal({ product, onClose }) {
 
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handler);
-    document.body.style.overflow = "hidden";
+    window.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener("keydown", handler);
-      document.body.style.overflow = "";
+      window.removeEventListener('keydown', handler);
+      document.body.style.overflow = '';
     };
   }, [onClose]);
 
@@ -61,7 +61,9 @@ export default function ProductModal({ product, onClose }) {
 
           <div className="flex items-baseline gap-3 mt-auto pt-4 border-t border-border">
             <span className="text-3xl font-bold text-primary">{formatCurrency(product.price)}</span>
-            <span className="text-text-muted line-through text-sm">{formatCurrency(product.price * 1.25)}</span>
+            <span className="text-text-muted line-through text-sm">
+              {formatCurrency(product.price * 1.25)}
+            </span>
           </div>
 
           <button
@@ -69,12 +71,12 @@ export default function ProductModal({ product, onClose }) {
             onClick={handleAddToCart}
             className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
               isAlreadyInCart
-                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                : "bg-primary hover:bg-primary-hover text-white hover:shadow-glow"
+                ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                : 'bg-primary hover:bg-primary-hover text-white hover:shadow-glow'
             }`}
           >
             <ShoppingCart size={18} />
-            {isAlreadyInCart ? "Đã có trong giỏ hàng" : "Thêm vào giỏ hàng"}
+            {isAlreadyInCart ? 'Đã có trong giỏ hàng' : 'Thêm vào giỏ hàng'}
           </button>
         </div>
       </div>

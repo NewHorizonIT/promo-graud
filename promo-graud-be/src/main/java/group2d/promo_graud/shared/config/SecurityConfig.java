@@ -3,6 +3,7 @@ package group2d.promo_graud.shared.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -25,11 +26,9 @@ public class SecurityConfig {
         "/api/v1/auth/logout",
         "/api/v1/auth/refresh"
     };
-  private final String[] publicEndpointsGet = {
-    "/api/v1/vouchers",
-    "/api/v1/products",
-    "/api/v1/products/type"
-  };
+    private final String[] publicEndpointsGet = {
+        "/api/v1/vouchers", "/api/v1/products", "/api/v1/products/type"
+    };
     private CustomJwtDecoder customJwtDecoder;
 
     public SecurityConfig(CustomJwtDecoder customJwtDecoder) {
@@ -40,11 +39,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) {
         httpSecurity.authorizeHttpRequests(
                 request ->
-                        request
-                                // cấu hình những API nào được phép truy cập mà KHÔNG cần đăng nhập
-                                .requestMatchers(HttpMethod.POST, publicEndpoints)
+                        request.requestMatchers(HttpMethod.POST, publicEndpoints)
                                 .permitAll()
-                                // tất cả request còn lại đều bắt buộc phải được authentication
+                                .requestMatchers(HttpMethod.GET, publicEndpointsGet)
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated());
 
@@ -72,6 +70,7 @@ public class SecurityConfig {
                                 // 401 Unauthorized
                                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
+        httpSecurity.cors(Customizer.withDefaults());
         return httpSecurity.build();
     }
 

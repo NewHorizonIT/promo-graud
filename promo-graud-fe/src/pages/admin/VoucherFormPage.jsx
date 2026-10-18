@@ -1,21 +1,23 @@
-import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { ChevronLeft } from "lucide-react";
-import VoucherForm from "../../features/admin/vouchers/components/VoucherForm";
-import { createVoucher } from "../../features/admin/vouchers/services/voucherService";
-import { getCampaigns, getRules } from "../../features/admin/campaigns/services/campaignService";
+import { useEffect, useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ChevronLeft } from 'lucide-react';
+import VoucherForm from '../../features/admin/vouchers/components/VoucherForm';
+import { createVoucher } from '../../features/admin/vouchers/services/voucherService';
+import { getCampaigns, getRules } from '../../features/admin/campaigns/services/campaignService';
 
 export default function VoucherFormPage() {
   const navigate = useNavigate();
   const [allRules, setAllRules] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   useEffect(() => {
     getCampaigns({ page_size: 100 }).then(async (res) => {
       if (!res?.data?.items) return;
       const rulePromises = res.data.items.map((c) =>
-        getRules(c.id).then((r) => (r?.data ?? []).map((rule) => ({ ...rule, campaignName: c.name })))
+        getRules(c.id).then((r) =>
+          (r?.data ?? []).map((rule) => ({ ...rule, campaignName: c.name })),
+        ),
       );
       const results = await Promise.all(rulePromises);
       setAllRules(results.flat());
@@ -24,13 +26,16 @@ export default function VoucherFormPage() {
 
   const handleSubmit = async (body) => {
     setLoading(true);
-    setError("");
+    setError('');
     try {
       const res = await createVoucher(body);
-      if (res?.success === false) { setError(res.message ?? "Có lỗi xảy ra."); return; }
-      navigate("/admin/vouchers");
+      if (res?.success === false) {
+        setError(res.message ?? 'Có lỗi xảy ra.');
+        return;
+      }
+      navigate('/admin/vouchers');
     } catch {
-      setError("Không thể kết nối server.");
+      setError('Không thể kết nối server.');
     } finally {
       setLoading(false);
     }
@@ -38,7 +43,10 @@ export default function VoucherFormPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      <Link to="/admin/vouchers" className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors">
+      <Link
+        to="/admin/vouchers"
+        className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+      >
         <ChevronLeft size={16} /> Quay lại danh sách
       </Link>
 

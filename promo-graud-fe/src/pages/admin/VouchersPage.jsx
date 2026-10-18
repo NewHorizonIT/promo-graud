@@ -1,20 +1,24 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { Plus } from "lucide-react";
-import VoucherTable from "../../features/admin/vouchers/components/VoucherTable";
-import DistributeModal from "../../features/admin/distribution/components/DistributeModal";
-import { getVouchers, deleteVoucher, distributeVoucher } from "../../features/admin/vouchers/services/voucherService";
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+import VoucherTable from '../../features/admin/vouchers/components/VoucherTable';
+import DistributeModal from '../../features/admin/distribution/components/DistributeModal';
+import {
+  getVouchers,
+  deleteVoucher,
+  distributeVoucher,
+} from '../../features/admin/vouchers/services/voucherService';
 
 const TYPE_FILTERS = [
-  { value: "", label: "Tất cả" },
-  { value: "generic", label: "Generic" },
-  { value: "unique", label: "Unique" },
+  { value: '', label: 'Tất cả' },
+  { value: 'generic', label: 'Generic' },
+  { value: 'unique', label: 'Unique' },
 ];
 
 export default function VouchersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const type = searchParams.get("type") ?? "";
-  const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+  const type = searchParams.get('type') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
   const [vouchers, setVouchers] = useState([]);
   const [total, setTotal] = useState(0);
@@ -24,7 +28,7 @@ export default function VouchersPage() {
 
   const PAGE_SIZE = 20;
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     const params = { page, page_size: PAGE_SIZE };
     if (type) params.type = type;
@@ -36,9 +40,11 @@ export default function VouchersPage() {
         }
       })
       .finally(() => setLoading(false));
-  };
+  }, [type, page]);
 
-  useEffect(() => { load(); }, [type, page]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleDelete = async (voucher) => {
     if (!confirm(`Xóa voucher "${voucher.code}"?`)) return;
@@ -80,8 +86,8 @@ export default function VouchersPage() {
             onClick={() => setSearchParams(f.value ? { type: f.value } : {})}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               type === f.value
-                ? "bg-surface text-text-primary shadow-level-1"
-                : "text-text-muted hover:text-text-primary"
+                ? 'bg-surface text-text-primary shadow-level-1'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             {f.label}
@@ -114,8 +120,8 @@ export default function VouchersPage() {
                 onClick={() => setSearchParams({ ...(type ? { type } : {}), page: String(pg) })}
                 className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
                   pg === page
-                    ? "bg-primary text-white shadow-glow"
-                    : "border border-border bg-surface text-text-secondary hover:bg-surface-muted"
+                    ? 'bg-primary text-white shadow-glow'
+                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
                 }`}
               >
                 {pg}

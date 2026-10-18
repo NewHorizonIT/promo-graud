@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
-import { ShoppingCart, Bell, User, Search, LogOut, LogIn, X } from "lucide-react";
-import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { getStoredToken, logout } from "../../features/auth/services/authService";
-import { useCart } from "../../hooks/useCart";
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Bell, User, Search, LogOut, LogIn, X, Sun, Moon } from 'lucide-react';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useLogout } from '../../features/auth/hooks/useAuth';
+import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
+import { useCart } from '../../hooks/useCart';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -10,15 +12,16 @@ export default function Header() {
   const [searchParams] = useSearchParams();
   const { cartCount, handleLogoutCart } = useCart();
 
-  const token = getStoredToken();
-  const [logoutLoading, setLogoutLoading] = useState(false);
-  const [headerKeyword, setHeaderKeyword] = useState("");
+  const token = useAuthStore((s) => s.token);
+  const { theme, toggle: toggleTheme } = useThemeStore();
+  const { mutate: doLogout, isPending: logoutLoading } = useLogout();
+  const [headerKeyword, setHeaderKeyword] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   // Sync keyword with URL if on /products page
   useEffect(() => {
-    if (location.pathname === "/products") {
-      const urlQuery = searchParams.get("name") || searchParams.get("search") || "";
+    if (location.pathname === '/products') {
+      const urlQuery = searchParams.get('name') || searchParams.get('search') || '';
       setHeaderKeyword(urlQuery);
     }
   }, [location.pathname, searchParams]);
@@ -29,23 +32,18 @@ export default function Header() {
     if (query) {
       navigate(`/products?name=${encodeURIComponent(query)}`);
     } else {
-      navigate("/products");
+      navigate('/products');
     }
     setShowMobileSearch(false);
   };
 
-  const handleLogout = async () => {
-    setLogoutLoading(true);
-    try {
-      await logout(token);
-    } catch {
-      // Ignored
-    } finally {
-      // Xóa sạch thông tin giỏ hàng trong localStorage khi đăng xuất
-      handleLogoutCart();
-      setLogoutLoading(false);
-      navigate("/login");
-    }
+  const handleLogout = () => {
+    doLogout(undefined, {
+      onSettled: () => {
+        handleLogoutCart();
+        navigate('/login');
+      },
+    });
   };
 
   return (
@@ -60,7 +58,9 @@ export default function Header() {
             <Link
               to="/"
               className={`text-sm font-semibold transition-colors ${
-                location.pathname === "/" ? "text-primary" : "text-text-secondary hover:text-primary"
+                location.pathname === '/'
+                  ? 'text-primary'
+                  : 'text-text-secondary hover:text-primary'
               }`}
             >
               Trang chủ
@@ -68,7 +68,9 @@ export default function Header() {
             <Link
               to="/products"
               className={`text-sm font-semibold transition-colors ${
-                location.pathname === "/products" ? "text-primary" : "text-text-secondary hover:text-primary"
+                location.pathname === '/products'
+                  ? 'text-primary'
+                  : 'text-text-secondary hover:text-primary'
               }`}
             >
               Sản phẩm
@@ -120,6 +122,16 @@ export default function Header() {
             {showMobileSearch ? <X size={20} /> : <Search size={20} />}
           </button>
 
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Chuyển sang sáng' : 'Chuyển sang tối'}
+            className="p-2 rounded-full hover:bg-surface-muted text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+
           {/* Cart Icon (Luôn hiển thị với badge số lượng động) */}
           <Link
             to="/cart"
@@ -129,7 +141,7 @@ export default function Header() {
             <ShoppingCart size={21} />
             {cartCount > 0 && (
               <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
-                {cartCount > 99 ? "99+" : cartCount}
+                {cartCount > 99 ? '99+' : cartCount}
               </span>
             )}
           </Link>
@@ -143,13 +155,13 @@ export default function Header() {
               >
                 <Bell size={20} />
               </button>
-              <button
-                type="button"
+              <Link
+                to="/profile"
                 className="p-2 rounded-full hover:bg-surface-muted text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-                aria-label="Tài khoản"
+                aria-label="Trang cá nhân"
               >
                 <User size={20} />
-              </button>
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
@@ -158,7 +170,7 @@ export default function Header() {
               >
                 <LogOut size={16} />
                 <span className="hidden sm:inline">
-                  {logoutLoading ? "Đang đăng xuất..." : "Đăng xuất"}
+                  {logoutLoading ? 'Đang đăng xuất...' : 'Đăng xuất'}
                 </span>
               </button>
             </>

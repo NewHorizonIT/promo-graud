@@ -1,5 +1,5 @@
-import { useNavigate, Link } from "react-router-dom";
-import LoginForm from "../../features/auth/components/LoginForm";
+import { useNavigate, Link } from 'react-router-dom';
+import LoginForm from '../../features/auth/components/LoginForm';
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function AdminLoginPage() {
           <p className="mt-3 text-sm text-text-secondary">Đăng nhập vào Admin Panel</p>
         </div>
 
-        <LoginForm onSuccess={() => navigate("/admin")} />
+        <LoginForm onSuccess={() => navigate('/admin')} />
 
         <p className="text-center text-xs text-text-muted mt-6">
           © {new Date().getFullYear()} PromoGuard. All rights reserved.

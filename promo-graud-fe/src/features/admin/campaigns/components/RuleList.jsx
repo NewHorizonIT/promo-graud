@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { Plus, Pencil, Trash2 } from "lucide-react";
-import RuleForm from "./RuleForm";
+import { useState } from 'react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import RuleForm from './RuleForm';
 
 const RULE_TYPE_LABELS = {
-  giam_truc_tiep: "Giảm trực tiếp",
-  giam_phan_tram: "Giảm %",
-  mua_x_tang_y:   "Mua X tặng Y",
-  tiered:         "Tiered",
+  giam_truc_tiep: 'Giảm trực tiếp',
+  giam_phan_tram: 'Giảm %',
+  mua_x_tang_y: 'Mua X tặng Y',
+  tiered: 'Tiered',
 };
 
-export default function RuleList({ campaignId, rules = [], onAdd, onEdit, onDelete }) {
+export default function RuleList({ rules = [], onAdd, onEdit, onDelete }) {
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
 
@@ -46,7 +46,9 @@ export default function RuleList({ campaignId, rules = [], onAdd, onEdit, onDele
 
       {/* Rule rows */}
       {rules.length === 0 && !showForm && (
-        <p className="text-sm text-text-muted py-4 text-center">Chưa có rule nào cho campaign này.</p>
+        <p className="text-sm text-text-muted py-4 text-center">
+          Chưa có rule nào cho campaign này.
+        </p>
       )}
 
       <div className="space-y-2">
@@ -55,7 +57,11 @@ export default function RuleList({ campaignId, rules = [], onAdd, onEdit, onDele
             {editTarget?.id === rule.id ? (
               <div className="bg-surface-muted border border-border rounded-xl p-4">
                 <p className="text-sm font-semibold text-text-primary mb-3">Sửa Rule</p>
-                <RuleForm initial={rule} onSubmit={handleEdit} onCancel={() => setEditTarget(null)} />
+                <RuleForm
+                  initial={rule}
+                  onSubmit={handleEdit}
+                  onCancel={() => setEditTarget(null)}
+                />
               </div>
             ) : (
               <div className="flex items-center justify-between px-4 py-3 bg-surface border border-border rounded-xl hover:shadow-level-1 transition-shadow">
@@ -67,7 +73,9 @@ export default function RuleList({ campaignId, rules = [], onAdd, onEdit, onDele
                     </span>
                     <span className="text-xs text-text-muted">Giá trị: {rule.value}</span>
                     {rule.min_order_value && (
-                      <span className="text-xs text-text-muted">Đơn tối thiểu: {rule.min_order_value.toLocaleString("vi-VN")}đ</span>
+                      <span className="text-xs text-text-muted">
+                        Đơn tối thiểu: {rule.min_order_value.toLocaleString('vi-VN')}đ
+                      </span>
                     )}
                   </div>
                 </div>

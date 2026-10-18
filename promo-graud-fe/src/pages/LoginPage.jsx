@@ -1,11 +1,11 @@
-import { useNavigate, Link } from "react-router-dom";
-import LoginForm from "../features/auth/components/LoginForm";
+import { useNavigate, Link } from 'react-router-dom';
+import LoginForm from '../features/auth/components/LoginForm';
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
-    navigate("/");
+    navigate('/');
   };
 
   return (
@@ -22,9 +22,7 @@ export default function LoginPage() {
           <Link to="/" className="inline-block text-3xl font-bold tracking-tight">
             Promo<span className="text-primary">Wear</span>
           </Link>
-          <p className="mt-2 text-sm text-text-secondary">
-            Đăng nhập để khám phá ưu đãi độc quyền
-          </p>
+          <p className="mt-2 text-sm text-text-secondary">Đăng nhập để khám phá ưu đãi độc quyền</p>
         </div>
 
         {/* Feature Login Form */}

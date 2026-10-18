@@ -1,20 +1,23 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
-import { Plus } from "lucide-react";
-import CampaignTable from "../../features/admin/campaigns/components/CampaignTable";
-import { getCampaigns, deleteCampaign } from "../../features/admin/campaigns/services/campaignService";
+import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+import CampaignTable from '../../features/admin/campaigns/components/CampaignTable';
+import {
+  getCampaigns,
+  deleteCampaign,
+} from '../../features/admin/campaigns/services/campaignService';
 
 const STATUS_FILTERS = [
-  { value: "", label: "Tất cả" },
-  { value: "chua_dien_ra", label: "Chưa diễn ra" },
-  { value: "dang_dien_ra", label: "Đang diễn ra" },
-  { value: "da_dong",      label: "Đã đóng" },
+  { value: '', label: 'Tất cả' },
+  { value: 'chua_dien_ra', label: 'Chưa diễn ra' },
+  { value: 'dang_dien_ra', label: 'Đang diễn ra' },
+  { value: 'da_dong', label: 'Đã đóng' },
 ];
 
 export default function CampaignsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const status = searchParams.get("status") ?? "";
-  const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+  const status = searchParams.get('status') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
   const [campaigns, setCampaigns] = useState([]);
   const [total, setTotal] = useState(0);
@@ -22,7 +25,7 @@ export default function CampaignsPage() {
 
   const PAGE_SIZE = 20;
 
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     const params = { page, page_size: PAGE_SIZE };
     if (status) params.status = status;
@@ -34,9 +37,11 @@ export default function CampaignsPage() {
         }
       })
       .finally(() => setLoading(false));
-  };
+  }, [status, page]);
 
-  useEffect(() => { load(); }, [status, page]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleDelete = async (campaign) => {
     if (!confirm(`Xóa campaign "${campaign.name}"?`)) return;
@@ -76,8 +81,8 @@ export default function CampaignsPage() {
             onClick={() => setFilter(f.value)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               status === f.value
-                ? "bg-surface text-text-primary shadow-level-1"
-                : "text-text-muted hover:text-text-primary"
+                ? 'bg-surface text-text-primary shadow-level-1'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             {f.label}
@@ -108,8 +113,8 @@ export default function CampaignsPage() {
                 onClick={() => setSearchParams({ ...(status ? { status } : {}), page: String(pg) })}
                 className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
                   pg === page
-                    ? "bg-primary text-white shadow-glow"
-                    : "border border-border bg-surface text-text-secondary hover:bg-surface-muted"
+                    ? 'bg-primary text-white shadow-glow'
+                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
                 }`}
               >
                 {pg}

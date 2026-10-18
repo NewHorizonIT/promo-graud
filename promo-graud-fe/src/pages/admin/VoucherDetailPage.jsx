@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, Send, Trash2 } from "lucide-react";
-import VoucherStatusBadge from "../../features/admin/vouchers/components/VoucherStatusBadge";
-import DistributeModal from "../../features/admin/distribution/components/DistributeModal";
-import { getVoucher, deleteVoucher, distributeVoucher } from "../../features/admin/vouchers/services/voucherService";
-import { formatCurrency } from "../../utils/format";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ChevronLeft, Send, Trash2 } from 'lucide-react';
+import VoucherStatusBadge from '../../features/admin/vouchers/components/VoucherStatusBadge';
+import DistributeModal from '../../features/admin/distribution/components/DistributeModal';
+import {
+  getVoucher,
+  deleteVoucher,
+  distributeVoucher,
+} from '../../features/admin/vouchers/services/voucherService';
+import { useNavigate } from 'react-router-dom';
 
 function formatDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("vi-VN");
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN');
 }
 
 export default function VoucherDetailPage() {
@@ -22,7 +25,9 @@ export default function VoucherDetailPage() {
 
   useEffect(() => {
     getVoucher(id)
-      .then((res) => { if (res?.data) setVoucher(res.data); })
+      .then((res) => {
+        if (res?.data) setVoucher(res.data);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -39,25 +44,31 @@ export default function VoucherDetailPage() {
   const handleDelete = async () => {
     if (!confirm(`Xóa voucher "${voucher?.code}"?`)) return;
     await deleteVoucher(id);
-    navigate("/admin/vouchers");
+    navigate('/admin/vouchers');
   };
 
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2].map((i) => <div key={i} className="h-20 bg-surface-muted rounded-xl animate-pulse" />)}
+        {[1, 2].map((i) => (
+          <div key={i} className="h-20 bg-surface-muted rounded-xl animate-pulse" />
+        ))}
       </div>
     );
   }
 
   if (!voucher) return <p className="text-sm text-text-muted">Không tìm thấy voucher.</p>;
 
-  const remainPercent = voucher.quantity > 0 ? (voucher.quantity_remain / voucher.quantity) * 100 : 0;
+  const remainPercent =
+    voucher.quantity > 0 ? (voucher.quantity_remain / voucher.quantity) * 100 : 0;
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <Link to="/admin/vouchers" className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors">
+        <Link
+          to="/admin/vouchers"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+        >
           <ChevronLeft size={16} /> Danh sách Vouchers
         </Link>
         <div className="flex items-center gap-2">
@@ -90,11 +101,11 @@ export default function VoucherDetailPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
-            { label: "Loại", value: voucher.type === "generic" ? "Generic" : "Unique" },
-            { label: "Rule ID", value: `#${voucher.rule_id}` },
-            { label: "Kênh", value: voucher.distribution_channel },
-            { label: "Hết hạn", value: formatDate(voucher.expired_at) },
-            { label: "Giới hạn / user", value: voucher.limit_client ?? "Không giới hạn" },
+            { label: 'Loại', value: voucher.type === 'generic' ? 'Generic' : 'Unique' },
+            { label: 'Rule ID', value: `#${voucher.rule_id}` },
+            { label: 'Kênh', value: voucher.distribution_channel },
+            { label: 'Hết hạn', value: formatDate(voucher.expired_at) },
+            { label: 'Giới hạn / user', value: voucher.limit_client ?? 'Không giới hạn' },
           ].map(({ label, value }) => (
             <div key={label} className="bg-surface-muted rounded-xl p-3">
               <p className="text-xs text-text-muted mb-0.5">{label}</p>
@@ -107,7 +118,9 @@ export default function VoucherDetailPage() {
         <div className="mt-5">
           <div className="flex justify-between text-xs text-text-muted mb-1.5">
             <span>Lượt sử dụng</span>
-            <span>{voucher.quantity_remain} / {voucher.quantity} còn lại</span>
+            <span>
+              {voucher.quantity_remain} / {voucher.quantity} còn lại
+            </span>
           </div>
           <div className="h-2 bg-border rounded-full overflow-hidden">
             <div

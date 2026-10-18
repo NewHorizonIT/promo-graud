@@ -1,29 +1,37 @@
-import { useState, useEffect } from "react";
-import { Filter, RotateCcw, Check } from "lucide-react";
-import PriceRangeSlider from "./PriceRangeSlider";
-import { PRICE_FILTER_CONFIG } from "../../../config/constants";
+import { useState, useEffect } from 'react';
+import { Filter, RotateCcw, Check } from 'lucide-react';
+import PriceRangeSlider from './PriceRangeSlider';
+import { PRICE_FILTER_CONFIG } from '../../../config/constants';
 
 export default function ProductFilterSidebar({
   types = [],
-  currentFilters = { typeId: "", minPrice: "", maxPrice: "" },
+  currentFilters = { typeId: '', minPrice: '', maxPrice: '' },
   onApply,
   onReset,
 }) {
   const { MIN, MAX, STEP } = PRICE_FILTER_CONFIG;
 
   // Local draft state for filters – only applied when clicking "Áp dụng"
-  const [draftTypeId, setDraftTypeId] = useState(currentFilters.typeId || "");
+  const [draftTypeId, setDraftTypeId] = useState(currentFilters.typeId || '');
   const [draftPriceRange, setDraftPriceRange] = useState([
-    currentFilters.minPrice !== "" && currentFilters.minPrice !== undefined ? Number(currentFilters.minPrice) : MIN,
-    currentFilters.maxPrice !== "" && currentFilters.maxPrice !== undefined ? Number(currentFilters.maxPrice) : MAX,
+    currentFilters.minPrice !== '' && currentFilters.minPrice !== undefined
+      ? Number(currentFilters.minPrice)
+      : MIN,
+    currentFilters.maxPrice !== '' && currentFilters.maxPrice !== undefined
+      ? Number(currentFilters.maxPrice)
+      : MAX,
   ]);
 
   // Sync draft state if currentFilters changed from outside
   useEffect(() => {
-    setDraftTypeId(currentFilters.typeId || "");
+    setDraftTypeId(currentFilters.typeId || '');
     setDraftPriceRange([
-      currentFilters.minPrice !== "" && currentFilters.minPrice !== undefined ? Number(currentFilters.minPrice) : MIN,
-      currentFilters.maxPrice !== "" && currentFilters.maxPrice !== undefined ? Number(currentFilters.maxPrice) : MAX,
+      currentFilters.minPrice !== '' && currentFilters.minPrice !== undefined
+        ? Number(currentFilters.minPrice)
+        : MIN,
+      currentFilters.maxPrice !== '' && currentFilters.maxPrice !== undefined
+        ? Number(currentFilters.maxPrice)
+        : MAX,
     ]);
   }, [currentFilters.typeId, currentFilters.minPrice, currentFilters.maxPrice, MIN, MAX]);
 
@@ -31,21 +39,19 @@ export default function ProductFilterSidebar({
     e?.preventDefault();
     onApply?.({
       typeId: draftTypeId,
-      minPrice: draftPriceRange[0] !== MIN ? draftPriceRange[0] : "",
-      maxPrice: draftPriceRange[1] !== MAX ? draftPriceRange[1] : "",
+      minPrice: draftPriceRange[0] !== MIN ? draftPriceRange[0] : '',
+      maxPrice: draftPriceRange[1] !== MAX ? draftPriceRange[1] : '',
     });
   };
 
   const handleReset = () => {
-    setDraftTypeId("");
+    setDraftTypeId('');
     setDraftPriceRange([MIN, MAX]);
     onReset?.();
   };
 
   const isFiltered =
-    Boolean(draftTypeId) ||
-    draftPriceRange[0] !== MIN ||
-    draftPriceRange[1] !== MAX;
+    Boolean(draftTypeId) || draftPriceRange[0] !== MIN || draftPriceRange[1] !== MAX;
 
   return (
     <aside className="w-full md:w-64 flex-shrink-0">
@@ -80,13 +86,15 @@ export default function ProductFilterSidebar({
                 type="radio"
                 name="productType"
                 value=""
-                checked={draftTypeId === ""}
-                onChange={() => setDraftTypeId("")}
+                checked={draftTypeId === ''}
+                onChange={() => setDraftTypeId('')}
                 className="w-4 h-4 accent-primary cursor-pointer"
               />
-              <span className={`text-sm group-hover:text-text-primary ${
-                draftTypeId === "" ? "font-semibold text-primary" : "text-text-secondary"
-              }`}>
+              <span
+                className={`text-sm group-hover:text-text-primary ${
+                  draftTypeId === '' ? 'font-semibold text-primary' : 'text-text-secondary'
+                }`}
+              >
                 Tất cả loại
               </span>
             </label>
@@ -108,7 +116,7 @@ export default function ProductFilterSidebar({
                   />
                   <span
                     className={`text-sm group-hover:text-text-primary flex-1 ${
-                      isSelected ? "font-semibold text-primary" : "text-text-secondary"
+                      isSelected ? 'font-semibold text-primary' : 'text-text-secondary'
                     }`}
                   >
                     {t.type}

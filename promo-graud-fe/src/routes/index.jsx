@@ -1,20 +1,21 @@
-import { Routes, Route } from "react-router-dom";
-import MainLayout from "../layouts/MainLayout";
-import AdminLayout from "../layouts/AdminLayout";
-import HomePage from "../pages/HomePage";
-import LoginPage from "../pages/LoginPage";
-import ProductsPage from "../pages/ProductsPage";
-import CartPage from "../pages/CartPage";
-import AdminLoginPage from "../pages/admin/AdminLoginPage";
-import DashboardPage from "../pages/admin/DashboardPage";
-import CampaignsPage from "../pages/admin/CampaignsPage";
-import CampaignDetailPage from "../pages/admin/CampaignDetailPage";
-import CampaignFormPage from "../pages/admin/CampaignFormPage";
-import VouchersPage from "../pages/admin/VouchersPage";
-import VoucherDetailPage from "../pages/admin/VoucherDetailPage";
-import VoucherFormPage from "../pages/admin/VoucherFormPage";
-import DistributionPage from "../pages/admin/DistributionPage";
-import FraudPage from "../pages/admin/FraudPage";
+import { Routes, Route } from 'react-router-dom';
+import MainLayout from '../layouts/MainLayout';
+import AdminLayout from '../layouts/AdminLayout';
+import HomePage from '../pages/HomePage';
+import LoginPage from '../pages/LoginPage';
+import ProductsPage from '../pages/ProductsPage';
+import CartPage from '../pages/CartPage';
+import ProfilePage from '../pages/ProfilePage';
+import AdminLoginPage from '../pages/admin/AdminLoginPage';
+import DashboardPage from '../pages/admin/DashboardPage';
+import CampaignsPage from '../pages/admin/CampaignsPage';
+import CampaignDetailPage from '../pages/admin/CampaignDetailPage';
+import CampaignFormPage from '../pages/admin/CampaignFormPage';
+import VouchersPage from '../pages/admin/VouchersPage';
+import VoucherDetailPage from '../pages/admin/VoucherDetailPage';
+import VoucherFormPage from '../pages/admin/VoucherFormPage';
+import DistributionPage from '../pages/admin/DistributionPage';
+import FraudPage from '../pages/admin/FraudPage';
 
 export default function AppRoutes() {
   return (
@@ -25,6 +26,7 @@ export default function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="cart" element={<CartPage />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
 
       {/* ── Admin standalone (no layout) ── */}

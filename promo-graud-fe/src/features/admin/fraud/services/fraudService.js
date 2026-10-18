@@ -1,4 +1,4 @@
-import { adminFetch } from "../../services/adminApi.js";
+import { adminFetch } from '../../services/adminApi.js';
 
 export const getFraudLogs = (params = {}) =>
   adminFetch(`/fraud-logs?${new URLSearchParams(params)}`);

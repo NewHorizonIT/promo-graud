@@ -1,4 +1,4 @@
-import { API_BASE } from "../../../config/constants";
+import { API_BASE } from '../../../config/constants';
 
 export async function fetchProducts({
   limit = 16,
@@ -14,20 +14,20 @@ export async function fetchProducts({
     offset: String(offset),
   });
 
-  if (typeId !== undefined && typeId !== null && typeId !== "") {
-    params.set("typeId", typeId);
+  if (typeId !== undefined && typeId !== null && typeId !== '') {
+    params.set('typeId', typeId);
   }
-  if (minPrice !== undefined && minPrice !== null && minPrice !== "") {
-    params.set("minPrice", minPrice);
+  if (minPrice !== undefined && minPrice !== null && minPrice !== '') {
+    params.set('minPrice', minPrice);
   }
-  if (maxPrice !== undefined && maxPrice !== null && maxPrice !== "") {
-    params.set("maxPrice", maxPrice);
+  if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
+    params.set('maxPrice', maxPrice);
   }
 
   // Sử dụng tham số `name` để tìm kiếm sản phẩm theo tên (hỗ trợ cả alias `search` nếu có)
-  const searchKeyword = (name ?? search ?? "").trim();
-  if (searchKeyword !== "") {
-    params.set("name", searchKeyword);
+  const searchKeyword = (name ?? search ?? '').trim();
+  if (searchKeyword !== '') {
+    params.set('name', searchKeyword);
   }
 
   const res = await fetch(`${API_BASE}/products?${params}`);

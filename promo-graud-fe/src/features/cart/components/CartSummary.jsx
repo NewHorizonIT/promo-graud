@@ -1,42 +1,38 @@
-import { useState } from "react";
-import { ArrowRight, ShieldCheck, Tag } from "lucide-react";
-import { formatCurrency } from "../../../utils/format";
+import { useState } from 'react';
+import { ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { formatCurrency } from '../../../utils/format';
 
-export default function CartSummary({
-  subtotal,
-  onCheckout,
-  checkoutLoading = false,
-}) {
-  const [voucherCode, setVoucherCode] = useState("");
+export default function CartSummary({ subtotal, onCheckout, checkoutLoading = false }) {
+  const [voucherCode, setVoucherCode] = useState('');
   const [appliedVoucher, setAppliedVoucher] = useState(null);
-  const [voucherError, setVoucherError] = useState("");
+  const [voucherError, setVoucherError] = useState('');
 
   // Miễn phí vận chuyển với đơn từ 500k, ngược lại phí 30k
   const shippingFee = subtotal >= 500000 || subtotal === 0 ? 0 : 30000;
 
   const handleApplyVoucher = (e) => {
     e.preventDefault();
-    setVoucherError("");
+    setVoucherError('');
     const code = voucherCode.trim().toUpperCase();
     if (!code) return;
 
-    if (code === "PROMO10" || code === "PROMOWEAR") {
+    if (code === 'PROMO10' || code === 'PROMOWEAR') {
       setAppliedVoucher({
         code,
         discountPercent: 10,
         amount: Math.round(subtotal * 0.1),
       });
-    } else if (code === "FREESHIP") {
+    } else if (code === 'FREESHIP') {
       setAppliedVoucher({
         code,
         amount: shippingFee,
       });
     } else {
-      setVoucherError("Mã giảm giá không hợp lệ hoặc đã hết hạn.");
+      setVoucherError('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
     }
   };
 
-  const discountAmount = appliedVoucher ? (appliedVoucher.amount || 0) : 0;
+  const discountAmount = appliedVoucher ? appliedVoucher.amount || 0 : 0;
   const grandTotal = Math.max(0, subtotal + shippingFee - discountAmount);
 
   return (
@@ -93,9 +89,7 @@ export default function CartSummary({
             Áp dụng
           </button>
         </div>
-        {voucherError && (
-          <p className="text-xs text-error-text mt-1">{voucherError}</p>
-        )}
+        {voucherError && <p className="text-xs text-error-text mt-1">{voucherError}</p>}
         {subtotal < 500000 && subtotal > 0 && (
           <p className="text-[11px] text-text-muted">
             💡 Mua thêm <b>{formatCurrency(500000 - subtotal)}</b> để được miễn phí vận chuyển!

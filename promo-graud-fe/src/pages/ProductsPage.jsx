@@ -1,24 +1,24 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
-import { SlidersHorizontal, X, ChevronLeft, ChevronRight, Tag } from "lucide-react";
-import ProductCard from "../components/ProductCard";
-import ProductModal from "../components/ProductModal";
-import ProductFilterSidebar from "../features/products/components/ProductFilterSidebar";
-import ProductSearchBar from "../features/products/components/ProductSearchBar";
-import ProductSkeleton from "../features/products/components/ProductSkeleton";
-import { fetchProducts, fetchProductTypes } from "../features/products/services/productService";
-import { DEFAULT_PAGE_LIMIT } from "../config/constants";
-import { formatCurrency } from "../utils/format";
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import ProductCard from '../components/ProductCard';
+import ProductModal from '../components/ProductModal';
+import ProductFilterSidebar from '../features/products/components/ProductFilterSidebar';
+import ProductSearchBar from '../features/products/components/ProductSearchBar';
+import ProductSkeleton from '../features/products/components/ProductSkeleton';
+import { fetchProducts, fetchProductTypes } from '../features/products/services/productService';
+import { DEFAULT_PAGE_LIMIT } from '../config/constants';
+import { formatCurrency } from '../utils/format';
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Read current active params from URL
-  const searchNameFromUrl = searchParams.get("name") || searchParams.get("search") || "";
-  const typeIdFromUrl = searchParams.get("typeId") || "";
-  const minPriceFromUrl = searchParams.get("minPrice") || "";
-  const maxPriceFromUrl = searchParams.get("maxPrice") || "";
-  const pageFromUrl = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+  const searchNameFromUrl = searchParams.get('name') || searchParams.get('search') || '';
+  const typeIdFromUrl = searchParams.get('typeId') || '';
+  const minPriceFromUrl = searchParams.get('minPrice') || '';
+  const maxPriceFromUrl = searchParams.get('maxPrice') || '';
+  const pageFromUrl = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
 
   // Applied filter state (fetch ONLY happens when these change)
   const [appliedFilters, setAppliedFilters] = useState({
@@ -44,16 +44,16 @@ export default function ProductsPage() {
       .then((data) => {
         if (data?.result) setTypes(data.result);
       })
-      .catch((err) => console.error("Error fetching product types:", err));
+      .catch((err) => console.error('Error fetching product types:', err));
   }, []);
 
   // Sync state if URL query params changed (e.g., navigated from Header search)
   useEffect(() => {
-    const urlName = searchParams.get("name") || searchParams.get("search") || "";
-    const urlTypeId = searchParams.get("typeId") || "";
-    const urlMin = searchParams.get("minPrice") || "";
-    const urlMax = searchParams.get("maxPrice") || "";
-    const urlPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const urlName = searchParams.get('name') || searchParams.get('search') || '';
+    const urlTypeId = searchParams.get('typeId') || '';
+    const urlMin = searchParams.get('minPrice') || '';
+    const urlMax = searchParams.get('maxPrice') || '';
+    const urlPage = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
 
     setSearchName(urlName);
     setAppliedFilters({
@@ -87,7 +87,7 @@ export default function ProductsPage() {
         }
       })
       .catch((err) => {
-        console.error("Error loading products:", err);
+        console.error('Error loading products:', err);
         setProducts([]);
         setMeta({ totalItems: 0, totalPages: 1 });
       })
@@ -114,9 +114,9 @@ export default function ProductsPage() {
   // Called when user clicks "Áp dụng" on filter sidebar
   const handleApplyFilters = ({ typeId, minPrice, maxPrice }) => {
     const nextFilters = {
-      typeId: typeId || "",
-      minPrice: minPrice ? String(minPrice) : "",
-      maxPrice: maxPrice ? String(maxPrice) : "",
+      typeId: typeId || '',
+      minPrice: minPrice ? String(minPrice) : '',
+      maxPrice: maxPrice ? String(maxPrice) : '',
     };
     setAppliedFilters(nextFilters);
     setPage(1);
@@ -126,7 +126,7 @@ export default function ProductsPage() {
 
   // Called when user clicks "Xóa bộ lọc"
   const handleResetFilters = () => {
-    const clearedFilters = { typeId: "", minPrice: "", maxPrice: "" };
+    const clearedFilters = { typeId: '', minPrice: '', maxPrice: '' };
     setAppliedFilters(clearedFilters);
     setPage(1);
     updateUrlParams(clearedFilters, searchName, 1);
@@ -142,9 +142,9 @@ export default function ProductsPage() {
 
   // Clear search keyword
   const handleClearSearch = () => {
-    setSearchName("");
+    setSearchName('');
     setPage(1);
-    updateUrlParams(appliedFilters, "", 1);
+    updateUrlParams(appliedFilters, '', 1);
   };
 
   // Active filter label helpers
@@ -154,10 +154,7 @@ export default function ProductsPage() {
   }, [appliedFilters.typeId, types]);
 
   const hasActiveFilters = Boolean(
-    appliedFilters.typeId ||
-    appliedFilters.minPrice ||
-    appliedFilters.maxPrice ||
-    searchName
+    appliedFilters.typeId || appliedFilters.minPrice || appliedFilters.maxPrice || searchName,
   );
 
   const startIdx = (page - 1) * DEFAULT_PAGE_LIMIT + 1;
@@ -171,9 +168,11 @@ export default function ProductsPage() {
           <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">Danh mục sản phẩm</h1>
           <p className="text-sm text-text-muted mt-1">
             {!loading && meta.totalItems > 0 ? (
-              <>Hiển thị {startIdx}–{endIdx} trong số <b>{meta.totalItems}</b> sản phẩm</>
+              <>
+                Hiển thị {startIdx}–{endIdx} trong số <b>{meta.totalItems}</b> sản phẩm
+              </>
             ) : (
-              "Khám phá các sản phẩm thời trang chất lượng và ưu đãi hấp dẫn"
+              'Khám phá các sản phẩm thời trang chất lượng và ưu đãi hấp dẫn'
             )}
           </p>
         </div>
@@ -221,7 +220,7 @@ export default function ProductsPage() {
               Loại: <b>{activeTypeName}</b>
               <button
                 type="button"
-                onClick={() => handleApplyFilters({ ...appliedFilters, typeId: "" })}
+                onClick={() => handleApplyFilters({ ...appliedFilters, typeId: '' })}
                 className="hover:text-primary ml-1"
                 title="Bỏ loại này"
               >
@@ -232,10 +231,16 @@ export default function ProductsPage() {
 
           {(appliedFilters.minPrice || appliedFilters.maxPrice) && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-muted border border-border text-text-primary rounded-full">
-              Giá: <b>{appliedFilters.minPrice ? formatCurrency(appliedFilters.minPrice) : "0 ₫"} - {appliedFilters.maxPrice ? formatCurrency(appliedFilters.maxPrice) : "Tối đa"}</b>
+              Giá:{' '}
+              <b>
+                {appliedFilters.minPrice ? formatCurrency(appliedFilters.minPrice) : '0 ₫'} -{' '}
+                {appliedFilters.maxPrice ? formatCurrency(appliedFilters.maxPrice) : 'Tối đa'}
+              </b>
               <button
                 type="button"
-                onClick={() => handleApplyFilters({ ...appliedFilters, minPrice: "", maxPrice: "" })}
+                onClick={() =>
+                  handleApplyFilters({ ...appliedFilters, minPrice: '', maxPrice: '' })
+                }
                 className="hover:text-primary ml-1"
                 title="Bỏ lọc giá"
               >
@@ -313,7 +318,8 @@ export default function ProductsPage() {
                 Không tìm thấy sản phẩm nào
               </h3>
               <p className="text-sm text-text-muted max-w-md mb-5">
-                Rất tiếc, không có sản phẩm nào phù hợp với bộ lọc và từ khóa hiện tại. Bạn vui lòng thử điều chỉnh hoặc xóa bộ lọc.
+                Rất tiếc, không có sản phẩm nào phù hợp với bộ lọc và từ khóa hiện tại. Bạn vui lòng
+                thử điều chỉnh hoặc xóa bộ lọc.
               </p>
               {hasActiveFilters && (
                 <button
@@ -336,7 +342,7 @@ export default function ProductsPage() {
                   const prevPage = Math.max(1, page - 1);
                   setPage(prevPage);
                   updateUrlParams(appliedFilters, searchName, prevPage);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 disabled={page <= 1}
                 className="p-2 rounded-xl border border-border bg-surface hover:bg-surface-muted disabled:opacity-30 disabled:pointer-events-none transition-all"
@@ -347,11 +353,7 @@ export default function ProductsPage() {
 
               {Array.from({ length: meta.totalPages }, (_, i) => i + 1).map((pg) => {
                 // Show condensed page numbers if total pages is large
-                if (
-                  pg === 1 ||
-                  pg === meta.totalPages ||
-                  (pg >= page - 2 && pg <= page + 2)
-                ) {
+                if (pg === 1 || pg === meta.totalPages || (pg >= page - 2 && pg <= page + 2)) {
                   return (
                     <button
                       key={pg}
@@ -359,13 +361,13 @@ export default function ProductsPage() {
                       onClick={() => {
                         setPage(pg);
                         updateUrlParams(appliedFilters, searchName, pg);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all
                         ${
                           pg === page
-                            ? "bg-primary text-white shadow-glow"
-                            : "border border-border bg-surface text-text-secondary hover:bg-surface-muted"
+                            ? 'bg-primary text-white shadow-glow'
+                            : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
                         }`}
                     >
                       {pg}
@@ -388,7 +390,7 @@ export default function ProductsPage() {
                   const nextPage = Math.min(meta.totalPages, page + 1);
                   setPage(nextPage);
                   updateUrlParams(appliedFilters, searchName, nextPage);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 disabled={page >= meta.totalPages}
                 className="p-2 rounded-xl border border-border bg-surface hover:bg-surface-muted disabled:opacity-30 disabled:pointer-events-none transition-all"
@@ -403,10 +405,7 @@ export default function ProductsPage() {
 
       {/* Product Detail Modal */}
       {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-        />
+        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       )}
     </div>
   );

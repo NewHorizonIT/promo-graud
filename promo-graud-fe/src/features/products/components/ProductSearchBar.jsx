@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Search, X } from 'lucide-react';
 
-export default function ProductSearchBar({ value = "", onSearch, placeholder = "Tìm kiếm theo tên sản phẩm..." }) {
+export default function ProductSearchBar({
+  value = '',
+  onSearch,
+  placeholder = 'Tìm kiếm theo tên sản phẩm...',
+}) {
   const [searchTerm, setSearchTerm] = useState(value);
 
   useEffect(() => {
@@ -14,8 +18,8 @@ export default function ProductSearchBar({ value = "", onSearch, placeholder = "
   };
 
   const handleClear = () => {
-    setSearchTerm("");
-    onSearch?.("");
+    setSearchTerm('');
+    onSearch?.('');
   };
 
   return (

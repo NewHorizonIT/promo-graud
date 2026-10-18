@@ -1,16 +1,17 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Trash2, CheckCircle2, Lock, LogIn } from "lucide-react";
-import { useCart } from "../hooks/useCart";
-import { getStoredToken } from "../features/auth/services/authService";
-import CartItem from "../features/cart/components/CartItem";
-import CartSummary from "../features/cart/components/CartSummary";
-import EmptyCart from "../features/cart/components/EmptyCart";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Trash2, CheckCircle2, Lock, LogIn } from 'lucide-react';
+import { useCart } from '../hooks/useCart';
+import { useAuthStore } from '../store/authStore';
+import CartItem from '../features/cart/components/CartItem';
+import CartSummary from '../features/cart/components/CartSummary';
+import EmptyCart from '../features/cart/components/EmptyCart';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const token = getStoredToken();
-  const { cart, cartCount, cartTotal, updateQuantity, removeFromCart, clearCart, showToast } = useCart();
+  const token = useAuthStore((s) => s.token);
+  const { cart, cartCount, cartTotal, updateQuantity, removeFromCart, clearCart, showToast } =
+    useCart();
 
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -22,9 +23,7 @@ export default function CartPage() {
         <div className="w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-6">
           <Lock size={36} />
         </div>
-        <h2 className="text-2xl font-bold text-text-primary mb-2">
-          Yêu cầu đăng nhập
-        </h2>
+        <h2 className="text-2xl font-bold text-text-primary mb-2">Yêu cầu đăng nhập</h2>
         <p className="text-sm text-text-muted mb-8 leading-relaxed">
           Vui lòng đăng nhập tài khoản PromoWear để xem và quản lý giỏ hàng của bạn.
         </p>
@@ -37,7 +36,7 @@ export default function CartPage() {
           </Link>
           <button
             type="button"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate('/login')}
             className="flex-1 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold transition-all hover:shadow-glow flex items-center justify-center gap-2 cursor-pointer"
           >
             <LogIn size={16} />
@@ -55,11 +54,10 @@ export default function CartPage() {
         <div className="w-20 h-20 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-6">
           <CheckCircle2 size={44} />
         </div>
-        <h2 className="text-2xl font-bold text-text-primary mb-2">
-          Đặt hàng thành công!
-        </h2>
+        <h2 className="text-2xl font-bold text-text-primary mb-2">Đặt hàng thành công!</h2>
         <p className="text-sm text-text-muted max-w-sm mb-8 leading-relaxed">
-          Cảm ơn bạn đã mua sắm tại PromoWear. Chúng tôi sẽ chuẩn bị và giao hàng cho bạn trong thời gian sớm nhất.
+          Cảm ơn bạn đã mua sắm tại PromoWear. Chúng tôi sẽ chuẩn bị và giao hàng cho bạn trong thời
+          gian sớm nhất.
         </p>
         <Link
           to="/products"
@@ -83,7 +81,7 @@ export default function CartPage() {
       setCheckoutLoading(false);
       clearCart();
       setCheckoutSuccess(true);
-      showToast("Đặt hàng thành công! Cảm ơn bạn.", "success", 4000);
+      showToast('Đặt hàng thành công! Cảm ơn bạn.', 'success', 4000);
     }, 800);
   };
 
@@ -93,9 +91,7 @@ export default function CartPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">
-              Giỏ hàng của bạn
-            </h1>
+            <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">Giỏ hàng của bạn</h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary-light text-primary">
               {cartCount} sản phẩm
             </span>
@@ -119,9 +115,9 @@ export default function CartPage() {
           <button
             type="button"
             onClick={() => {
-              if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?")) {
+              if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?')) {
                 clearCart();
-                showToast("Đã xóa toàn bộ giỏ hàng", "info");
+                showToast('Đã xóa toàn bộ giỏ hàng', 'info');
               }
             }}
             className="flex items-center gap-1.5 text-sm font-medium text-text-muted hover:text-error-text transition-colors cursor-pointer"

@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import DistributionLogTable from "../../features/admin/distribution/components/DistributionLogTable";
-import { getDistributionLogs } from "../../features/admin/distribution/services/distributionService";
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import DistributionLogTable from '../../features/admin/distribution/components/DistributionLogTable';
+import { getDistributionLogs } from '../../features/admin/distribution/services/distributionService';
 
 const STATUS_FILTERS = [
-  { value: "", label: "Tất cả" },
-  { value: "pending", label: "Đang gửi" },
-  { value: "success", label: "Thành công" },
-  { value: "failed",  label: "Thất bại" },
+  { value: '', label: 'Tất cả' },
+  { value: 'pending', label: 'Đang gửi' },
+  { value: 'success', label: 'Thành công' },
+  { value: 'failed', label: 'Thất bại' },
 ];
 
 export default function DistributionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const status = searchParams.get("status") ?? "";
-  const page = Math.max(1, Number(searchParams.get("page") ?? 1));
+  const status = searchParams.get('status') ?? '';
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
   const [logs, setLogs] = useState([]);
   const [total, setTotal] = useState(0);
@@ -50,8 +50,8 @@ export default function DistributionPage() {
             onClick={() => setSearchParams(f.value ? { status: f.value } : {})}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               status === f.value
-                ? "bg-surface text-text-primary shadow-level-1"
-                : "text-text-muted hover:text-text-primary"
+                ? 'bg-surface text-text-primary shadow-level-1'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             {f.label}
@@ -80,8 +80,8 @@ export default function DistributionPage() {
                 onClick={() => setSearchParams({ ...(status ? { status } : {}), page: String(pg) })}
                 className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
                   pg === page
-                    ? "bg-primary text-white shadow-glow"
-                    : "border border-border bg-surface text-text-secondary hover:bg-surface-muted"
+                    ? 'bg-primary text-white shadow-glow'
+                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
                 }`}
               >
                 {pg}

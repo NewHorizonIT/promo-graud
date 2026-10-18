@@ -1,38 +1,18 @@
-import { API_BASE } from "../../../config/constants";
-
-export const TOKEN_STORAGE_KEY = "authToken";
-
-export function getStoredToken() {
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
-}
-
-export function setStoredToken(token) {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
-}
-
-export function removeStoredToken() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-}
+import axiosInstance from '../../../lib/axiosInstance';
+import { useAuthStore } from '../../../store/authStore';
 
 export async function login(username, password) {
-  const res = await fetch(`${API_BASE}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-  return res.json();
+  const { data } = await axiosInstance.post('/auth/login', { username, password });
+  return data; // { code, message, result: { token, valid } }
 }
 
-export async function logout(token) {
+export async function logout() {
+  const token = useAuthStore.getState().token;
   try {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token }),
-    });
-  } catch (err) {
-    console.error("Logout request error:", err);
+    await axiosInstance.post('/auth/logout', { token });
+  } catch {
+    // logout vẫn clear local dù request fail
   } finally {
-    removeStoredToken();
+    useAuthStore.getState().clearAuth();
   }
 }

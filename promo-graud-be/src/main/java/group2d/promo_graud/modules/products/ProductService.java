@@ -1,5 +1,8 @@
 package group2d.promo_graud.modules.products;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,9 +21,6 @@ import group2d.promo_graud.modules.products.repository.ProductRepository;
 import group2d.promo_graud.modules.products.repository.TypeOfProductRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -29,14 +29,19 @@ public class ProductService {
     ProductRepository productRepository;
     TypeOfProductRepository typeOfProductRepository;
 
-  public Page<ProductResponse> getProducts(
-    Integer typeId, BigDecimal minPrice, BigDecimal maxPrice,String name, int limit, int offset) {
-    Pageable pageable = PageRequest.of(offset / limit, limit);
-    String keyword = name == null ? "" : name.trim();
-    return productRepository
-      .getAll(typeId, minPrice, maxPrice,keyword, pageable)
-      .map(this::toResponse);
-  }
+    public Page<ProductResponse> getProducts(
+            Integer typeId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String name,
+            int limit,
+            int offset) {
+        Pageable pageable = PageRequest.of(offset / limit, limit);
+        String keyword = name == null ? "" : name.trim();
+        return productRepository
+                .getAll(typeId, minPrice, maxPrice, keyword, pageable)
+                .map(this::toResponse);
+    }
 
     public ProductResponse getProductById(Integer id) {
         Product product =
@@ -110,8 +115,8 @@ public class ProductService {
                 .build();
     }
 
-    //Get type of product
+    // Get type of product
     public List<TypeOfProduct> getTypes() {
-      return typeOfProductRepository.findAll(Sort.by("id"));
+        return typeOfProductRepository.findAll(Sort.by("id"));
     }
 }

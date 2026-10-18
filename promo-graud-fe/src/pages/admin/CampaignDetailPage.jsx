@@ -1,22 +1,25 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ChevronLeft, Pencil } from "lucide-react";
-import CampaignStatusBadge from "../../features/admin/campaigns/components/CampaignStatusBadge";
-import RuleList from "../../features/admin/campaigns/components/RuleList";
+import { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ChevronLeft, Pencil } from 'lucide-react';
+import CampaignStatusBadge from '../../features/admin/campaigns/components/CampaignStatusBadge';
+import RuleList from '../../features/admin/campaigns/components/RuleList';
 import {
-  getCampaign, updateCampaignStatus,
-  getRules, createRule, updateRule, deleteRule,
-} from "../../features/admin/campaigns/services/campaignService";
-import { getCampaignStats, getCampaignTimeline } from "../../features/admin/analytics/services/analyticsService";
-import { formatCurrency } from "../../utils/format";
+  getCampaign,
+  getRules,
+  createRule,
+  updateRule,
+  deleteRule,
+} from '../../features/admin/campaigns/services/campaignService';
+import { getCampaignStats } from '../../features/admin/analytics/services/analyticsService';
+import { formatCurrency } from '../../utils/format';
 
-const TABS = ["Thông tin", "Rules", "Analytics"];
+const TABS = ['Thông tin', 'Rules', 'Analytics'];
 
 function StatItem({ label, value }) {
   return (
     <div className="bg-surface-muted rounded-xl p-4">
       <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-2xl font-bold text-text-primary">{value ?? "—"}</p>
+      <p className="text-2xl font-bold text-text-primary">{value ?? '—'}</p>
     </div>
   );
 }
@@ -30,23 +33,30 @@ export default function CampaignDetailPage() {
   const [loading, setLoading] = useState(true);
 
   const loadCampaign = () =>
-    getCampaign(id).then((r) => { if (r?.data) setCampaign(r.data); });
+    getCampaign(id).then((r) => {
+      if (r?.data) setCampaign(r.data);
+    });
 
   const loadRules = () =>
-    getRules(id).then((r) => { if (r?.data) setRules(r.data); });
+    getRules(id).then((r) => {
+      if (r?.data) setRules(r.data);
+    });
 
   const loadStats = () =>
-    getCampaignStats(id).then((r) => { if (r?.data) setStats(r.data); });
+    getCampaignStats(id).then((r) => {
+      if (r?.data) setStats(r.data);
+    });
 
   useEffect(() => {
-    Promise.all([loadCampaign(), loadRules(), loadStats()])
-      .finally(() => setLoading(false));
-  }, [id]);
+    Promise.all([loadCampaign(), loadRules(), loadStats()]).finally(() => setLoading(false));
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
       <div className="space-y-4">
-        {[1, 2, 3].map((i) => <div key={i} className="h-20 bg-surface-muted rounded-xl animate-pulse" />)}
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 bg-surface-muted rounded-xl animate-pulse" />
+        ))}
       </div>
     );
   }
@@ -59,7 +69,10 @@ export default function CampaignDetailPage() {
     <div className="space-y-5">
       {/* Breadcrumb + actions */}
       <div className="flex items-center justify-between">
-        <Link to="/admin/campaigns" className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors">
+        <Link
+          to="/admin/campaigns"
+          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+        >
           <ChevronLeft size={16} /> Danh sách Campaigns
         </Link>
         <Link
@@ -83,18 +96,22 @@ export default function CampaignDetailPage() {
           <div>
             <p className="text-xs text-text-muted mb-0.5">Bắt đầu</p>
             <p className="text-sm font-medium text-text-primary">
-              {campaign.start_time ? new Date(campaign.start_time).toLocaleDateString("vi-VN") : "—"}
+              {campaign.start_time
+                ? new Date(campaign.start_time).toLocaleDateString('vi-VN')
+                : '—'}
             </p>
           </div>
           <div>
             <p className="text-xs text-text-muted mb-0.5">Kết thúc</p>
             <p className="text-sm font-medium text-text-primary">
-              {campaign.end_time ? new Date(campaign.end_time).toLocaleDateString("vi-VN") : "—"}
+              {campaign.end_time ? new Date(campaign.end_time).toLocaleDateString('vi-VN') : '—'}
             </p>
           </div>
           <div>
             <p className="text-xs text-text-muted mb-0.5">Ngân sách</p>
-            <p className="text-sm font-medium text-text-primary">{formatCurrency(campaign.promotion_budget)}</p>
+            <p className="text-sm font-medium text-text-primary">
+              {formatCurrency(campaign.promotion_budget)}
+            </p>
           </div>
         </div>
       </div>
@@ -108,8 +125,8 @@ export default function CampaignDetailPage() {
             onClick={() => setTab(i)}
             className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
               tab === i
-                ? "bg-surface text-text-primary shadow-level-1"
-                : "text-text-muted hover:text-text-primary"
+                ? 'bg-surface text-text-primary shadow-level-1'
+                : 'text-text-muted hover:text-text-primary'
             }`}
           >
             {t}
@@ -120,7 +137,9 @@ export default function CampaignDetailPage() {
       {/* Tab content */}
       {tab === 0 && (
         <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
-          <p className="text-sm text-text-secondary">Thông tin chi tiết campaign đã hiển thị ở trên.</p>
+          <p className="text-sm text-text-secondary">
+            Thông tin chi tiết campaign đã hiển thị ở trên.
+          </p>
         </div>
       )}
 
@@ -129,9 +148,20 @@ export default function CampaignDetailPage() {
           <RuleList
             campaignId={id}
             rules={rules}
-            onAdd={async (body) => { await createRule(id, body); loadRules(); }}
-            onEdit={async (ruleId, body) => { await updateRule(id, ruleId, body); loadRules(); }}
-            onDelete={async (ruleId) => { if (confirm("Xóa rule này?")) { await deleteRule(id, ruleId); loadRules(); } }}
+            onAdd={async (body) => {
+              await createRule(id, body);
+              loadRules();
+            }}
+            onEdit={async (ruleId, body) => {
+              await updateRule(id, ruleId, body);
+              loadRules();
+            }}
+            onDelete={async (ruleId) => {
+              if (confirm('Xóa rule này?')) {
+                await deleteRule(id, ruleId);
+                loadRules();
+              }
+            }}
           />
         </div>
       )}

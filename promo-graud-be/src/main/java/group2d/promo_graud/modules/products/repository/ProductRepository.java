@@ -14,22 +14,21 @@ import group2d.promo_graud.modules.products.entity.Product;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
-  Page<Product> findAllByIsDeletedFalse(Pageable pageable);
+    Page<Product> findAllByIsDeletedFalse(Pageable pageable);
 
-  Optional<Product> findByIdAndIsDeletedFalse(Integer id);
+    Optional<Product> findByIdAndIsDeletedFalse(Integer id);
 
-  @Query(
-    "SELECT p FROM Product p "
-      + "WHERE p.isDeleted = false "
-      + "AND (:typeId IS NULL OR p.typeOfProduct.id = :typeId) "
-      + "AND (:minPrice IS NULL OR p.price >= :minPrice) "
-      + "AND (:maxPrice IS NULL OR p.price <= :maxPrice) "
-      + "AND (:name = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')))")
-  Page<Product> getAll(
-    @Param("typeId") Integer typeId,
-    @Param("minPrice") BigDecimal minPrice,
-    @Param("maxPrice") BigDecimal maxPrice,
-    @Param("name") String name,
-    Pageable pageable);
+    @Query(
+            "SELECT p FROM Product p "
+                    + "WHERE p.isDeleted = false "
+                    + "AND (:typeId IS NULL OR p.typeOfProduct.id = :typeId) "
+                    + "AND (:minPrice IS NULL OR p.price >= :minPrice) "
+                    + "AND (:maxPrice IS NULL OR p.price <= :maxPrice) "
+                    + "AND (:name = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%')))")
+    Page<Product> getAll(
+            @Param("typeId") Integer typeId,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("name") String name,
+            Pageable pageable);
 }
-
