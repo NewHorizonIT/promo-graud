@@ -258,4 +258,13 @@ public class VoucherService {
         String random = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         return StringUtils.hasText(prefix) ? prefix + "-" + random : random;
     }
+
+    public VoucherResponse getVoucherById(Integer id) {
+        Voucher voucher =
+                voucherRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(VoucherErrorCode.NOT_EXIST));
+
+        return VoucherResponse.fromEntity(voucher);
+    }
 }

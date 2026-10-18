@@ -66,4 +66,15 @@ public class VoucherController {
                         .result(voucherService.getJobStatus(jobId))
                         .build());
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<VoucherResponse>> getVoucherById(@PathVariable Integer id) {
+        VoucherResponse voucher = voucherService.getVoucherById(id);
+        return ResponseEntity.ok(
+                ApiResponse.<VoucherResponse>builder()
+                        .code(200)
+                        .result(voucher)
+                        .message("Lấy chi tiết voucher thành công")
+                        .build());
+    }
 }
