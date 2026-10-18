@@ -14,4 +14,6 @@ public interface UserVoucherRepository extends JpaRepository<UserVoucher, Intege
     public Optional<UserVoucher> findByUserIdAndVoucherId(Integer userId, Integer voucherId);
 
     public Page<UserVoucher> findAllByUserId(Integer userId, Pageable pageable);
+
+    public boolean existsByUserIdAndVoucherId(Integer userId, Integer voucherId);
 }

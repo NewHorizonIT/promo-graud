@@ -82,13 +82,14 @@ public class VoucherServiceUnitTest {
                             eq(VoucherType.GENERIC),
                             eq(VoucherStatus.ACTIVE),
                             eq(10),
+                            isNull(),
                             eq(DistributionChannel.WEBHOOK),
                             any(Pageable.class)))
                     .thenReturn(pagedResponse);
 
             // Act (truyền chữ thường để test luôn việc toUpperCase())
             PaginatedResponse<VoucherResponse> result =
-                    voucherService.getAll("generic", "active", 10, "webhook", 1, 5);
+                    voucherService.getAll("generic", "active", 10, "webhook", null, 1, 5);
 
             // Assert
             assertNotNull(result);
@@ -100,7 +101,7 @@ public class VoucherServiceUnitTest {
 
             // page truyền vào là 1-based, xuống repository phải là 0-based
             ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
-            verify(voucherRepository).getAll(any(), any(), any(), any(), captor.capture());
+            verify(voucherRepository).getAll(any(), any(), any(), any(), any(), captor.capture());
             assertEquals(0, captor.getValue().getPageNumber());
             assertEquals(5, captor.getValue().getPageSize());
         }
@@ -110,12 +111,12 @@ public class VoucherServiceUnitTest {
         void getAll_Success_NullFilters() {
             // Arrange
             when(voucherRepository.getAll(
-                            isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                            isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
                     .thenReturn(Page.empty());
 
             // Act
             PaginatedResponse<VoucherResponse> result =
-                    voucherService.getAll(null, null, null, null, 1, 10);
+                    voucherService.getAll(null, null, null, null, null, 1, 10);
 
             // Assert
             assertNotNull(result);
@@ -127,7 +128,7 @@ public class VoucherServiceUnitTest {
         void getAll_Fail_InvalidType() {
             assertThrows(
                     IllegalArgumentException.class,
-                    () -> voucherService.getAll("abc", null, null, null, 1, 10));
+                    () -> voucherService.getAll("abc", null, null, null, null, 1, 10));
             verifyNoInteractions(voucherRepository);
         }
 
@@ -136,7 +137,7 @@ public class VoucherServiceUnitTest {
         void getAll_Fail_InvalidStatus() {
             assertThrows(
                     IllegalArgumentException.class,
-                    () -> voucherService.getAll(null, "abc", null, null, 1, 10));
+                    () -> voucherService.getAll(null, "abc", null, null, null, 1, 10));
             verifyNoInteractions(voucherRepository);
         }
 
@@ -145,7 +146,7 @@ public class VoucherServiceUnitTest {
         void getAll_Fail_InvalidDistributionChannel() {
             assertThrows(
                     IllegalArgumentException.class,
-                    () -> voucherService.getAll(null, null, null, "abc", 1, 10));
+                    () -> voucherService.getAll(null, null, null, "abc", null, 1, 10));
             verifyNoInteractions(voucherRepository);
         }
     }
