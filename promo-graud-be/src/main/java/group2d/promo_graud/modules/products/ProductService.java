@@ -1,8 +1,12 @@
 package group2d.promo_graud.modules.products;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import lombok.AccessLevel;
@@ -25,13 +29,18 @@ public class ProductService {
     ProductRepository productRepository;
     TypeOfProductRepository typeOfProductRepository;
 
-    public Page<ProductResponse> getProducts(Integer typeId, int limit, int offset) {
+    public Page<ProductResponse> getProducts(
+            Integer typeId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String name,
+            int limit,
+            int offset) {
         Pageable pageable = PageRequest.of(offset / limit, limit);
-        Page<Product> page =
-                typeId != null
-                        ? productRepository.findAllByTypeOfProductId(typeId, pageable)
-                        : productRepository.findAllByIsDeletedFalse(pageable);
-        return page.map(this::toResponse);
+        String keyword = name == null ? "" : name.trim();
+        return productRepository
+                .getAll(typeId, minPrice, maxPrice, keyword, pageable)
+                .map(this::toResponse);
     }
 
     public ProductResponse getProductById(Integer id) {
@@ -104,5 +113,10 @@ public class ProductService {
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .build();
+    }
+
+    // Get type of product
+    public List<TypeOfProduct> getTypes() {
+        return typeOfProductRepository.findAll(Sort.by("id"));
     }
 }
