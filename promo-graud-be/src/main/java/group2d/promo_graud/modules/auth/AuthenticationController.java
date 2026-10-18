@@ -52,7 +52,7 @@ public class AuthenticationController {
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(
                         ApiResponse.<AuthenticationResponse>builder()
-                                .code(201)
+                                .code(200)
                                 .message("Login thành công")
                                 .result(response)
                                 .build());
@@ -64,7 +64,7 @@ public class AuthenticationController {
         IntrospectResponse introspectResponse = authenticationService.introspect(request);
         return ResponseEntity.ok(
                 ApiResponse.<IntrospectResponse>builder()
-                        .code(201)
+                        .code(200)
                         .message("Kiểm tra token thành công")
                         .result(introspectResponse)
                         .build());
@@ -96,7 +96,7 @@ public class AuthenticationController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
-                .body(ApiResponse.<Void>builder().code(201).message("Logout thành công").build());
+                .body(ApiResponse.<Void>builder().code(200).message("Logout thành công").build());
     }
 
     @PostMapping("/refresh")
@@ -130,7 +130,7 @@ public class AuthenticationController {
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(
                         ApiResponse.<AuthenticationResponse>builder()
-                                .code(201)
+                                .code(200)
                                 .message("Refresh token thành công")
                                 .result(response)
                                 .build());

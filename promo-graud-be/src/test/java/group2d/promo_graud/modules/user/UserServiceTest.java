@@ -4,12 +4,16 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +42,11 @@ class UserServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private UserService userService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     @DisplayName("TC1: Tạo User thành công")
@@ -79,7 +88,8 @@ class UserServiceTest {
         assertEquals("huy", response.getUsername());
         assertEquals("huy@gmail.com", response.getEmail());
         assertEquals(RoleEnum.USER, response.getRole());
-        assertEquals(typeOfUser, response.getTypeOfUser());
+        assertEquals(typeOfUser.getId(), response.getTypeOfUserId());
+        assertEquals(typeOfUser.getType(), response.getTypeOfUserType());
 
         verify(typeOfUserRepository).findById(1);
         verify(passwordEncoder).encode("123456");
@@ -107,6 +117,11 @@ class UserServiceTest {
     @Test
     @DisplayName("TC3: Cập nhật User thành công")
     void updateUserSuccess() {
+        SecurityContextHolder.getContext()
+                .setAuthentication(
+                        new UsernamePasswordAuthenticationToken(
+                                "huy", null, List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+
         Integer id = 1;
         TypeOfUser typeOfUser =
                 TypeOfUser.builder()
@@ -155,7 +170,8 @@ class UserServiceTest {
         assertEquals("huy123", response.getUsername());
         assertEquals("new@gmail.com", response.getEmail());
         assertEquals(RoleEnum.USER, response.getRole());
-        assertEquals(typeOfUser, response.getTypeOfUser());
+        assertEquals(typeOfUser.getId(), response.getTypeOfUserId());
+        assertEquals(typeOfUser.getType(), response.getTypeOfUserType());
 
         verify(userRepository).findById(id);
         verify(passwordEncoder).encode("newPassword");

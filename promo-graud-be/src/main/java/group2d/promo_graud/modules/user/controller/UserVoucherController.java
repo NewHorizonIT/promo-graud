@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +37,6 @@ public class UserVoucherController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse<List<UserVoucherResponse>>> findAll(
             @Valid @RequestBody UserVoucherRequest request) {
         List<UserVoucherResponse> response = userVoucherService.findAll();

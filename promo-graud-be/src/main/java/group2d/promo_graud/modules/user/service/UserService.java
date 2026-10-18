@@ -4,11 +4,14 @@ import java.util.List;
 
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
+import group2d.promo_graud.modules.auth.AuthErrorCode;
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
@@ -44,10 +47,19 @@ public class UserService {
     }
 
     public UserResponse updateUser(UserRequest request, Integer id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         User user =
                 userRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+
+        boolean isAdmin =
+                auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && !user.getUsername().equals(auth.getName())) {
+            throw new AppException(AuthErrorCode.UNAUTHORIZED);
+        }
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -68,7 +80,8 @@ public class UserService {
         return userRepository.findAll().stream().map(this::mapToUserResponse).toList();
     }
 
-    @PostAuthorize("authentication.getName() == returnObject.username")
+    @PostAuthorize(
+            "hasAuthority('ROLE_ADMIN') or authentication.getName() == returnObject.username")
     public UserResponse findUserById(Integer id) {
         User user =
                 userRepository
@@ -78,13 +91,15 @@ public class UserService {
     }
 
     public UserResponse mapToUserResponse(User user) {
+        TypeOfUser typeOfUser = user.getTypeOfUser();
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .isDelete(user.getIsDeleted())
-                .typeOfUser(user.getTypeOfUser())
+                .typeOfUserId(typeOfUser != null ? typeOfUser.getId() : null)
+                .typeOfUserType(typeOfUser != null ? typeOfUser.getType() : null)
                 .createdAt(user.getCreatedAt())
                 .updateAt(user.getUpdatedAt())
                 .build();

@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import group2d.promo_graud.modules.user.entity.TypeOfUser;
 import group2d.promo_graud.modules.user.enums.RoleEnum;
+import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Data
 @Builder
@@ -17,9 +17,9 @@ public class UserResponse {
     Integer id;
     String username;
     String email;
-    String password;
     RoleEnum role;
-    TypeOfUser typeOfUser;
+    Integer typeOfUserId;
+    UserTypeEnum typeOfUserType;
     Boolean isDelete;
     LocalDateTime createdAt;
     LocalDateTime updateAt;
