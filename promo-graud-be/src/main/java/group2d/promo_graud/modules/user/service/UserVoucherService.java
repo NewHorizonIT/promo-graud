@@ -17,6 +17,7 @@ import group2d.promo_graud.modules.user.dto.response.UserVoucherResponse;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.entity.UserVoucher;
 import group2d.promo_graud.modules.user.error.UserErrorCode;
+import group2d.promo_graud.modules.user.error.UserVoucherErrorCode;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
 import group2d.promo_graud.modules.voucher.Voucher;
@@ -35,6 +36,10 @@ public class UserVoucherService {
     public UserVoucherResponse create(UserVoucherRequest request) {
         User user = getUser();
         Voucher voucher = getVoucher(request.getVoucherId());
+        if (userVoucherRepository.existsByUserIdAndVoucherId(user.getId(), voucher.getId())) {
+            throw new AppException(UserVoucherErrorCode.USER_VOUCHER_ALREADY_CLAIMED);
+        }
+
         UserVoucher userVoucher =
                 UserVoucher.builder()
                         .user(user)

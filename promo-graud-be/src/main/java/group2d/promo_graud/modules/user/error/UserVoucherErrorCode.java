@@ -17,7 +17,8 @@ import group2d.promo_graud.shared.exception.BaseErrorCode;
 @NoArgsConstructor
 public enum UserVoucherErrorCode implements BaseErrorCode {
     USER_VOUCHER_NOT_EXISTS(1600, "User_Voucher not exists", HttpStatus.BAD_REQUEST),
-    USER_VOUCHER_ALREADY_USED(1600, "User_Voucherd đã được sử dụng", HttpStatus.BAD_REQUEST);
+    USER_VOUCHER_ALREADY_USED(1600, "User_Voucherd đã được sử dụng", HttpStatus.BAD_REQUEST),
+    USER_VOUCHER_ALREADY_CLAIMED(1602, "Bạn đã lưu voucher này rồi", HttpStatus.CONFLICT);
     int code;
     String message;
     HttpStatusCode statusCode;

@@ -28,10 +28,12 @@ public class VoucherController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Integer ruleId,
             @RequestParam(required = false) String distributionChannel,
+            @RequestParam(required = false) Integer campaignId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int pageSize) {
         return ResponseEntity.ok(
-                voucherService.getAll(type, status, ruleId, distributionChannel, page, pageSize));
+                voucherService.getAll(
+                        type, status, ruleId, distributionChannel, campaignId, page, pageSize));
     }
 
     @PostMapping

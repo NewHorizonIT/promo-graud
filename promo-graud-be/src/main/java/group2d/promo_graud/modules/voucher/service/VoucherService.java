@@ -57,6 +57,7 @@ public class VoucherService {
             String status,
             Integer ruleId,
             String distributionChannel,
+            Integer campaignId,
             int page,
             int pageSize) {
 
@@ -72,7 +73,8 @@ public class VoucherService {
         Pageable pageable = PageRequest.of(page - 1, pageSize);
 
         Page<Voucher> result =
-                voucherRepository.getAll(typeEnum, statusEnum, ruleId, channelEnum, pageable);
+                voucherRepository.getAll(
+                        typeEnum, statusEnum, ruleId, campaignId, channelEnum, pageable);
 
         return PaginatedResponse.<VoucherResponse>builder()
                 .data(result.getContent().stream().map(VoucherResponse::fromEntity).toList())
