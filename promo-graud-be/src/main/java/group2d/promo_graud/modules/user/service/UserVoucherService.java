@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ public class UserVoucherService {
         return mapToUserVoucherResponse(userVoucherRepository.save(userVoucher));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<UserVoucherResponse> findAll() {
         List<UserVoucher> list = userVoucherRepository.findAll();
         return list.stream().map(this::mapToUserVoucherResponse).toList();
