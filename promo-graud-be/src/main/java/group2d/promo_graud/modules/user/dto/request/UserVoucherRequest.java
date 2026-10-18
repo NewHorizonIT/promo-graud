@@ -18,7 +18,6 @@ import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserVoucherRequest {
 
-    @NotNull(message = "user_id không được null")
     Integer userId;
 
     @NotNull(message = "voucher_id không được null")

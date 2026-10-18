@@ -40,13 +40,7 @@ public class UserVoucherService {
             throw new AppException(UserVoucherErrorCode.USER_VOUCHER_ALREADY_CLAIMED);
         }
 
-        UserVoucher userVoucher =
-                UserVoucher.builder()
-                        .user(user)
-                        .voucher(voucher)
-                        .collectedAt(request.getCollectedAt())
-                        .status(request.getStatus())
-                        .build();
+        UserVoucher userVoucher = UserVoucher.builder().user(user).voucher(voucher).build();
         return mapToUserVoucherResponse(userVoucherRepository.save(userVoucher));
     }
 
