@@ -6,6 +6,8 @@ import LoginPage from '../pages/LoginPage';
 import ProductsPage from '../pages/ProductsPage';
 import CartPage from '../pages/CartPage';
 import ProfilePage from '../pages/ProfilePage';
+import VoucherCollectionPage from '../pages/VoucherCollectionPage';
+import ProtectedRoute from './ProtectedRoute';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
 import DashboardPage from '../pages/admin/DashboardPage';
 import CampaignsPage from '../pages/admin/CampaignsPage';
@@ -27,6 +29,14 @@ export default function AppRoutes() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="profile" element={<ProfilePage />} />
+        <Route
+          path="vouchers"
+          element={
+            <ProtectedRoute>
+              <VoucherCollectionPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* ── Admin standalone (no layout) ── */}
