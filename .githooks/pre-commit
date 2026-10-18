@@ -11,8 +11,19 @@ fi
 
 echo "[pre-commit] Formatting Java files with Spotless..."
 cd "$ROOT/promo-graud-be"
+
+# Stash unstaged changes to avoid accidentally staging them
+git stash --quiet --keep-index --include-untracked || true
+
 ./mvnw spotless:apply -q
 
+echo "[pre-commit] Running Checkstyle..."
+./mvnw checkstyle:check -q
+
+# Pop stash
+git stash pop --quiet || true
+
+# Re-stage only the originally staged Java files
 cd "$ROOT"
 for f in $STAGED_JAVA; do
     git add "$f"
