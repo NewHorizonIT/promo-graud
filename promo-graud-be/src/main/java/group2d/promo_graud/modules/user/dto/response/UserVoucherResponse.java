@@ -5,9 +5,8 @@ import java.time.LocalDateTime;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 
 @Data
 @Builder
@@ -16,8 +15,8 @@ import group2d.promo_graud.modules.voucher.Voucher;
 @NoArgsConstructor
 public class UserVoucherResponse {
     Integer id;
-    User user;
-    Voucher voucher;
+    Integer userId;
+    VoucherResponse voucher;
     LocalDateTime collectedAt;
     UserVoucherStatus status;
 }
