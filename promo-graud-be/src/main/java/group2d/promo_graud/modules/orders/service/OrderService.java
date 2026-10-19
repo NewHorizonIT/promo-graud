@@ -9,6 +9,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -220,11 +225,14 @@ public class OrderService {
         }
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<OrderResponse> findAll() {
         List<Order> listOder = orderRepository.findAll();
         return listOder.stream().map(this::mapToOrderResponse).toList();
     }
 
+    @PostAuthorize(
+            "hasAuthority('ROLE_ADMIN') or returnObject.user.username == authentication.name")
     public OrderResponse findById(Integer id) {
         Order order =
                 orderRepository
@@ -233,6 +241,7 @@ public class OrderService {
         return mapToOrderResponse(order);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<OrderResponse> filterByTime(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
             throw new IllegalArgumentException("Khoảng thời gian không hợp lệ");
@@ -246,6 +255,14 @@ public class OrderService {
                 .toList();
     }
 
+    public Page<OrderResponse> findByUserId(Integer userId, Integer page, Integer limit) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, limit));
+
+        Page<Order> orders = orderRepository.findByUserId(userId, pageable);
+
+        return orders.map(this::mapToOrderResponse);
+    }
+
     public OrderResponse mapToOrderResponse(Order order) {
         return OrderResponse.builder()
                 .id(order.getId())
@@ -255,5 +272,11 @@ public class OrderService {
                 .totalPrice(order.getTotalPrice())
                 .finalPrice(order.getFinalPrice())
                 .build();
+    }
+
+    public BigDecimal getTotalSpending(Integer userId) {
+        BigDecimal totalSpending = orderRepository.sumFinalPriceByUserId(userId);
+
+        return totalSpending;
     }
 }

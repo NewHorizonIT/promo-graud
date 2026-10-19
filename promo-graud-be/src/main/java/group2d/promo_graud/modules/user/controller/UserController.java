@@ -72,7 +72,7 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getMe(@AuthenticationPrincipal Jwt jwt) {
         Integer userId = ((Number) jwt.getClaim("userId")).intValue();
-        UserResponse userResponse = userService.findUserById(userId);
+        UserResponse userResponse = userService.getMyProfile(userId);
         return ResponseEntity.ok(
                 ApiResponse.<UserResponse>builder()
                         .code(200)

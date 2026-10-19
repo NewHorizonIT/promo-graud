@@ -1,5 +1,6 @@
 package group2d.promo_graud.modules.user.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.*;
@@ -23,4 +24,5 @@ public class UserResponse {
     Boolean isDelete;
     LocalDateTime createdAt;
     LocalDateTime updateAt;
+    BigDecimal totalSpending;
 }
