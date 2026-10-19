@@ -1,6 +1,8 @@
 package group2d.promo_graud.modules.orders.dto.response;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -21,4 +23,6 @@ public class OrderResponse {
     BigDecimal finalPrice;
     Voucher voucher;
     OrderStatus status;
+    LocalDateTime createdAt;
+    List<OrderItemResponse> items;
 }

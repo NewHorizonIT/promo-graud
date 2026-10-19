@@ -1,5 +1,16 @@
-import { useState, useEffect } from 'react';
-import { ShoppingCart, Bell, User, Search, LogOut, LogIn, X, Sun, Moon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  ShoppingCart,
+  Bell,
+  Search,
+  LogOut,
+  LogIn,
+  X,
+  Sun,
+  Moon,
+  User,
+  History,
+} from 'lucide-react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLogout } from '../../features/auth/hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
@@ -13,18 +24,30 @@ export default function Header() {
   const { cartCount, handleLogoutCart } = useCart();
 
   const token = useAuthStore((s) => s.token);
+  const userName = useAuthStore((s) => s.userName);
   const { theme, toggle: toggleTheme } = useThemeStore();
   const { mutate: doLogout, isPending: logoutLoading } = useLogout();
   const [headerKeyword, setHeaderKeyword] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Sync keyword with URL if on /products page
   useEffect(() => {
     if (location.pathname === '/products') {
       const urlQuery = searchParams.get('name') || searchParams.get('search') || '';
       setHeaderKeyword(urlQuery);
     }
   }, [location.pathname, searchParams]);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -45,6 +68,8 @@ export default function Header() {
       },
     });
   };
+
+  const initials = userName?.[0]?.toUpperCase() ?? 'U';
 
   return (
     <header className="sticky top-0 z-50 w-full bg-surface border-b border-border shadow-sm">
@@ -132,7 +157,7 @@ export default function Header() {
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           </button>
 
-          {/* Cart Icon (Luôn hiển thị với badge số lượng động) */}
+          {/* Cart */}
           <Link
             to="/cart"
             className="relative p-2 rounded-full hover:bg-surface-muted text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
@@ -155,24 +180,56 @@ export default function Header() {
               >
                 <Bell size={20} />
               </button>
-              <Link
-                to="/profile"
-                className="p-2 rounded-full hover:bg-surface-muted text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-                aria-label="Trang cá nhân"
-              >
-                <User size={20} />
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                disabled={logoutLoading}
-                className="ml-1 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold text-text-secondary hover:text-error-text hover:bg-error-bg transition-all duration-200 disabled:opacity-60 cursor-pointer"
-              >
-                <LogOut size={16} />
-                <span className="hidden sm:inline">
-                  {logoutLoading ? 'Đang đăng xuất...' : 'Đăng xuất'}
-                </span>
-              </button>
+
+              {/* Avatar dropdown */}
+              <div ref={dropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen((o) => !o)}
+                  aria-label="Tài khoản"
+                  className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold hover:bg-primary/20 transition-colors cursor-pointer select-none"
+                >
+                  {initials}
+                </button>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-surface border border-border rounded-xl shadow-level-2 z-50 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-border">
+                      <p className="text-sm font-semibold text-text-primary truncate">{userName}</p>
+                    </div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors"
+                    >
+                      <User size={16} />
+                      Thông tin cá nhân
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors"
+                    >
+                      <History size={16} />
+                      Lịch sử mua hàng
+                    </Link>
+                    <div className="border-t border-border">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          handleLogout();
+                        }}
+                        disabled={logoutLoading}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-error-bg hover:text-error-text transition-colors disabled:opacity-60 cursor-pointer"
+                      >
+                        <LogOut size={16} />
+                        {logoutLoading ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <Link

@@ -6,6 +6,7 @@ import LoginPage from '../pages/LoginPage';
 import ProductsPage from '../pages/ProductsPage';
 import CartPage from '../pages/CartPage';
 import ProfilePage from '../pages/ProfilePage';
+import OrderHistoryPage from '../pages/OrderHistoryPage';
 import VoucherCollectionPage from '../pages/VoucherCollectionPage';
 import ProtectedRoute from './ProtectedRoute';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
@@ -28,7 +29,22 @@ export default function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="cart" element={<CartPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders"
+          element={
+            <ProtectedRoute>
+              <OrderHistoryPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="vouchers"
           element={
