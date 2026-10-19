@@ -3,6 +3,9 @@ package group2d.promo_graud.modules.orders;
 import java.time.LocalDate;
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -11,7 +14,9 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
+import group2d.promo_graud.modules.orders.dto.request.OrderPreviewRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
+import group2d.promo_graud.modules.orders.dto.response.OrderPreviewResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
 import group2d.promo_graud.modules.orders.service.OrderService;
 import group2d.promo_graud.shared.dto.ApiResponse;
@@ -25,14 +30,20 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-            @RequestBody OrderRequest request) {
-        OrderResponse orderResponse = orderService.createOrder(request);
+            @RequestBody OrderRequest request, HttpServletRequest httpRequest) {
+        String ipAddress = extractIp(httpRequest);
+        OrderResponse orderResponse = orderService.createOrder(request, ipAddress);
         return ResponseEntity.ok(
                 ApiResponse.<OrderResponse>builder()
                         .code(201)
                         .message("Create order success")
                         .result(orderResponse)
                         .build());
+    }
+
+    private String extractIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        return (forwarded != null) ? forwarded.split(",")[0].trim() : request.getRemoteAddr();
     }
 
     @GetMapping
@@ -92,6 +103,18 @@ public class OrderController {
                         .code(200)
                         .message("Lấy lịch sử đơn hàng thành công")
                         .result(result)
+                        .build());
+    }
+
+    @PostMapping("/preview")
+    public ResponseEntity<ApiResponse<OrderPreviewResponse>> previewOrder(
+            @Valid @RequestBody OrderPreviewRequest request) {
+        OrderPreviewResponse preview = orderService.previewOrder(request);
+        return ResponseEntity.ok(
+                ApiResponse.<OrderPreviewResponse>builder()
+                        .code(200)
+                        .message("Preview đơn hàng thành công")
+                        .result(preview)
                         .build());
     }
 }

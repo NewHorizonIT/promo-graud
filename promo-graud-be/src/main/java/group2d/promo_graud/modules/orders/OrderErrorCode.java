@@ -13,7 +13,8 @@ import group2d.promo_graud.shared.exception.BaseErrorCode;
 @AllArgsConstructor
 @NoArgsConstructor
 public enum OrderErrorCode implements BaseErrorCode {
-    ORDER_NOT_EXISTS(1300, "Order not exists", HttpStatus.BAD_REQUEST);
+    ORDER_NOT_EXISTS(1300, "Order not exists", HttpStatus.BAD_REQUEST),
+    ORDER_ITEMS_NOT_FOUND(1301, "Order items không tìm thấy", HttpStatus.NOT_FOUND);
     int code;
     String message;
     HttpStatusCode statusCode;

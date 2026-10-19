@@ -6,15 +6,17 @@ import { useAuthStore } from '../store/authStore';
 import CartItem from '../features/cart/components/CartItem';
 import CartSummary from '../features/cart/components/CartSummary';
 import EmptyCart from '../features/cart/components/EmptyCart';
+import { createOrder } from '../features/checkout/services/checkoutService';
+import { formatCurrency } from '../utils/format';
 
 export default function CartPage() {
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token);
-  const { cart, cartCount, cartTotal, updateQuantity, removeFromCart, clearCart, showToast } =
-    useCart();
+  const { cart, cartCount, updateQuantity, removeFromCart, clearCart, showToast } = useCart();
 
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [orderResult, setOrderResult] = useState(null); // { id, finalPrice }
 
   // 1. Kiểm tra chưa đăng nhập
   if (!token) {
@@ -55,17 +57,41 @@ export default function CartPage() {
           <CheckCircle2 size={44} />
         </div>
         <h2 className="text-2xl font-bold text-text-primary mb-2">Đặt hàng thành công!</h2>
-        <p className="text-sm text-text-muted max-w-sm mb-8 leading-relaxed">
+        <p className="text-sm text-text-muted max-w-sm leading-relaxed">
           Cảm ơn bạn đã mua sắm tại PromoWear. Chúng tôi sẽ chuẩn bị và giao hàng cho bạn trong thời
           gian sớm nhất.
         </p>
-        <Link
-          to="/products"
-          onClick={() => setCheckoutSuccess(false)}
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold text-sm transition-all hover:shadow-glow"
-        >
-          Tiếp tục mua sắm
-        </Link>
+
+        {orderResult && (
+          <div className="mt-6 w-full bg-surface-muted rounded-2xl px-6 py-4 space-y-2 text-sm">
+            <div className="flex justify-between text-text-secondary">
+              <span>Mã đơn hàng</span>
+              <span className="font-bold text-text-primary font-mono">#{orderResult.id}</span>
+            </div>
+            <div className="flex justify-between text-text-secondary border-t border-border pt-2">
+              <span>Tổng thanh toán</span>
+              <span className="font-bold text-primary text-base">
+                {formatCurrency(orderResult.finalPrice)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 mt-8 w-full">
+          <Link
+            to="/orders"
+            className="flex-1 py-3 px-4 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-muted transition-colors text-center"
+          >
+            Xem đơn hàng
+          </Link>
+          <Link
+            to="/products"
+            onClick={() => setCheckoutSuccess(false)}
+            className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-semibold text-sm transition-all hover:shadow-glow"
+          >
+            Tiếp tục mua sắm
+          </Link>
+        </div>
       </div>
     );
   }
@@ -75,14 +101,20 @@ export default function CartPage() {
     return <EmptyCart />;
   }
   // 4. Xử lý đặt hàng
-  const handleCheckout = () => {
+  const handleCheckout = async (voucherId) => {
     setCheckoutLoading(true);
-    setTimeout(() => {
-      setCheckoutLoading(false);
+    try {
+      const order = await createOrder({ voucherId, items: cart });
       clearCart();
+      setOrderResult({ id: order.id, finalPrice: order.finalPrice });
       setCheckoutSuccess(true);
       showToast('Đặt hàng thành công! Cảm ơn bạn.', 'success', 4000);
-    }, 800);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại.';
+      showToast(msg, 'error', 4000);
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   return (
@@ -144,11 +176,7 @@ export default function CartPage() {
 
         {/* Order Summary */}
         <div className="lg:col-span-4">
-          <CartSummary
-            subtotal={cartTotal}
-            onCheckout={handleCheckout}
-            checkoutLoading={checkoutLoading}
-          />
+          <CartSummary items={cart} onCheckout={handleCheckout} checkoutLoading={checkoutLoading} />
         </div>
       </div>
     </div>

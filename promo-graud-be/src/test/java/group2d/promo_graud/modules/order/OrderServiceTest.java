@@ -38,6 +38,7 @@ import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
 import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.VoucherRedemptionRepository;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 
@@ -61,6 +62,8 @@ public class OrderServiceTest {
     @Mock private TransactionTemplate transactionTemplate;
 
     @Mock private UserRepository userRepository;
+
+    @Mock private VoucherRedemptionRepository voucherRedemptionRepository;
 
     @InjectMocks private OrderService orderService;
 
@@ -108,7 +111,7 @@ public class OrderServiceTest {
                             return callback.doInTransaction(null);
                         });
         request.setVoucherId(null);
-        OrderResponse response = orderService.createOrder(request);
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1");
 
         assertNotNull(response);
         assertEquals(0, BigDecimal.valueOf(800_000).compareTo(response.getTotalPrice()));
@@ -158,7 +161,7 @@ public class OrderServiceTest {
                         });
         when(distributedLockService.tryLock(eq("lock:voucher:1"), anyString(), eq(10L)))
                 .thenReturn(true);
-        OrderResponse response = orderService.createOrder(request);
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1");
 
         assertNotNull(response);
         assertEquals(response.getVoucher().getQuantityRemain(), 9);
