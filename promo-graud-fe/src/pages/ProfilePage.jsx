@@ -1,12 +1,13 @@
-import { User, Mail, Shield, Crown, Calendar, Hash } from 'lucide-react';
+import { User, Mail, Shield, Crown, Calendar, Hash, TrendingUp } from 'lucide-react';
 import { useMe } from '../features/user/hooks/useUser';
+import { useTypeOfUsers } from '../features/user/hooks/useTypeOfUsers';
+import { formatCurrency } from '../utils/format';
 
 const TIER_STYLE = {
   GOLD: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   SILVER: 'bg-slate-100  text-slate-600  dark:bg-slate-700/40  dark:text-slate-300',
   BRONZE: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   NORMAL: 'bg-surface-muted text-text-secondary',
-  ALL: 'bg-primary/10 text-primary',
 };
 
 const TIER_LABEL = {
@@ -14,7 +15,6 @@ const TIER_LABEL = {
   SILVER: 'Silver',
   BRONZE: 'Bronze',
   NORMAL: 'Thành viên',
-  ALL: 'Tất cả',
 };
 
 function formatDate(iso) {
@@ -48,6 +48,7 @@ function Skeleton() {
           <div className="h-4 w-20 rounded-full bg-surface-muted" />
         </div>
       </div>
+      <div className="h-20 rounded-2xl bg-surface-muted mb-4" />
       <div className="bg-surface rounded-2xl border border-border divide-y divide-border">
         {[...Array(5)].map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-6 py-4">
@@ -63,6 +64,7 @@ function Skeleton() {
 
 export default function ProfilePage() {
   const { data: user, isLoading, isError } = useMe();
+  const { data: typeOfUsers } = useTypeOfUsers();
 
   if (isLoading) return <Skeleton />;
 
@@ -77,13 +79,23 @@ export default function ProfilePage() {
 
   const initials = user.username?.[0]?.toUpperCase() ?? 'U';
   const tierStyle = TIER_STYLE[user.typeOfUserType] ?? TIER_STYLE.NORMAL;
-  const tierLabel = TIER_LABEL[user.typeOfUserType] ?? user.typeOfUserType;
+  const tierLabel = TIER_LABEL[user.typeOfUserType] ?? TIER_LABEL.NORMAL;
+
+  // Progress bar
+  const tiers = [...(typeOfUsers ?? [])].sort((a, b) => Number(a.threshold) - Number(b.threshold));
+  const currentTier = tiers.find((t) => t.type === user.typeOfUserType);
+  const nextTier = tiers.find((t) => Number(t.threshold) > Number(currentTier?.threshold ?? -1));
+  const totalSpending = Number(user.totalSpending ?? 0);
+  const progressPercent = nextTier
+    ? Math.min(100, (totalSpending / Number(nextTier.threshold)) * 100)
+    : 100;
+  const remaining = nextTier ? Math.max(0, Number(nextTier.threshold) - totalSpending) : 0;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
+    <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
       {/* ── Header card ── */}
-      <div className="flex items-center gap-5 mb-8">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold select-none">
+      <div className="flex items-center gap-5">
+        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary text-3xl font-bold select-none shrink-0">
           {initials}
         </div>
         <div className="space-y-1.5">
@@ -104,6 +116,33 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ── Progress bar ── */}
+      {typeOfUsers && currentTier && (
+        <div className="bg-surface rounded-2xl border border-border px-6 py-5">
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingUp size={16} className="text-primary" />
+            <span className="text-sm font-semibold text-text-primary">Hạng thành viên</span>
+          </div>
+          <div className="flex items-center justify-between text-xs text-text-secondary mb-2">
+            <span>{formatCurrency(totalSpending)}</span>
+            {nextTier ? (
+              <span>
+                Còn <span className="font-semibold text-primary">{formatCurrency(remaining)}</span>{' '}
+                để lên hạng {TIER_LABEL[nextTier.type] ?? nextTier.type}
+              </span>
+            ) : (
+              <span className="font-semibold text-primary">Hạng cao nhất</span>
+            )}
+          </div>
+          <div className="h-2 rounded-full bg-surface-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── Info rows ── */}
       <div

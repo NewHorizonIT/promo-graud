@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -25,6 +26,7 @@ import group2d.promo_graud.modules.orders.OrderErrorCode;
 import group2d.promo_graud.modules.orders.OrderStatus;
 import group2d.promo_graud.modules.orders.dto.request.OrderItemRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
+import group2d.promo_graud.modules.orders.dto.response.OrderItemResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
 import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.orders.entity.OrderItem;
@@ -255,6 +257,7 @@ public class OrderService {
                 .toList();
     }
 
+    @EntityGraph(attributePaths = {"items", "items.product"})
     public Page<OrderResponse> findByUserId(Integer userId, Integer page, Integer limit) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, limit));
 
@@ -264,6 +267,18 @@ public class OrderService {
     }
 
     public OrderResponse mapToOrderResponse(Order order) {
+        List<OrderItemResponse> itemResponses =
+                order.getItems().stream()
+                        .map(
+                                item ->
+                                        OrderItemResponse.builder()
+                                                .id(item.getId())
+                                                .productName(item.getProduct().getName())
+                                                .quantity(item.getQuantity())
+                                                .price(item.getPrice())
+                                                .build())
+                        .toList();
+
         return OrderResponse.builder()
                 .id(order.getId())
                 .user(order.getUser())
@@ -271,6 +286,8 @@ public class OrderService {
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice())
                 .finalPrice(order.getFinalPrice())
+                .createdAt(order.getCreatedAt())
+                .items(itemResponses)
                 .build();
     }
 
