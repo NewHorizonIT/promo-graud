@@ -12,8 +12,7 @@ import { formatCurrency } from '../utils/format';
 export default function CartPage() {
   const navigate = useNavigate();
   const token = useAuthStore((s) => s.token);
-  const { cart, cartCount, cartTotal, updateQuantity, removeFromCart, clearCart, showToast } =
-    useCart();
+  const { cart, cartCount, updateQuantity, removeFromCart, clearCart, showToast } = useCart();
 
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
