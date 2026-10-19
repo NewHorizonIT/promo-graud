@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.auth.AuthErrorCode;
+import group2d.promo_graud.modules.orders.service.OrderService;
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
@@ -28,6 +29,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final TypeOfUserRepository typeOfUserRepository;
     private final PasswordEncoder passwordEncoder;
+    private final OrderService orderService;
 
     public UserResponse createUser(UserRequest request) {
         TypeOfUser typeOfUser =
@@ -88,6 +90,17 @@ public class UserService {
                         .findById(id)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
         return mapToUserResponse(user);
+    }
+
+    public UserResponse getMyProfile(Integer id) {
+        User user =
+                userRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+
+        UserResponse response = mapToUserResponse(user);
+        response.setTotalSpending(orderService.getTotalSpending(id));
+        return response;
     }
 
     public UserResponse mapToUserResponse(User user) {
