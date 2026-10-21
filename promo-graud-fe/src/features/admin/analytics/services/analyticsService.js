@@ -1,7 +1,13 @@
-import { adminFetch } from '../../services/adminApi.js';
+import axiosInstance from '../../../../lib/axiosInstance';
 
-export const getCampaignStats = (campaignId) =>
-  adminFetch(`/analytics/campaigns/${campaignId}/stats`);
+export const getCampaignStats = async (campaignId) => {
+  const { data } = await axiosInstance.get(`/analytics/campaigns/${campaignId}/stats`);
+  return data.result;
+};
 
-export const getCampaignTimeline = (campaignId, params = {}) =>
-  adminFetch(`/analytics/campaigns/${campaignId}/timeline?${new URLSearchParams(params)}`);
+export const getCampaignTimeline = async (campaignId, params = {}) => {
+  const { data } = await axiosInstance.get(`/analytics/campaigns/${campaignId}/timeline`, {
+    params,
+  });
+  return data.result;
+};

@@ -54,10 +54,10 @@ export default function CampaignTable({ campaigns = [], onDelete }) {
                   <CampaignStatusBadge status={c.status} />
                 </td>
                 <td className="py-3 px-4 text-text-secondary text-xs">
-                  {formatDate(c.start_time)} → {formatDate(c.end_time)}
+                  {formatDate(c.startTime)} → {formatDate(c.endTime)}
                 </td>
                 <td className="py-3 px-4 font-medium text-text-primary">
-                  {formatCurrency(c.promotion_budget)}
+                  {formatCurrency(c.promotionBudget)}
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center justify-end gap-1">

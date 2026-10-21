@@ -2,19 +2,21 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import VoucherForm from '../../features/admin/vouchers/components/VoucherForm';
-import { createVoucher } from '../../features/admin/vouchers/services/voucherService';
+import { useCreateVoucher } from '../../features/admin/vouchers/hooks/useAdminVouchers';
 import { getCampaigns, getRules } from '../../features/admin/campaigns/services/campaignService';
 
 export default function VoucherFormPage() {
   const navigate = useNavigate();
   const [allRules, setAllRules] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const createMutation = useCreateVoucher();
+
   useEffect(() => {
-    getCampaigns({ page_size: 100 }).then(async (res) => {
-      if (!res?.data?.items) return;
-      const rulePromises = res.data.items.map((c) =>
+    getCampaigns({ pageSize: 100 }).then(async (res) => {
+      const campaigns = res?.data ?? [];
+      if (!campaigns.length) return;
+      const rulePromises = campaigns.map((c) =>
         getRules(c.id).then((r) =>
           (r?.data ?? []).map((rule) => ({ ...rule, campaignName: c.name })),
         ),
@@ -24,21 +26,12 @@ export default function VoucherFormPage() {
     });
   }, []);
 
-  const handleSubmit = async (body) => {
-    setLoading(true);
+  const handleSubmit = (body) => {
     setError('');
-    try {
-      const res = await createVoucher(body);
-      if (res?.success === false) {
-        setError(res.message ?? 'Có lỗi xảy ra.');
-        return;
-      }
-      navigate('/admin/vouchers');
-    } catch {
-      setError('Không thể kết nối server.');
-    } finally {
-      setLoading(false);
-    }
+    createMutation.mutate(body, {
+      onSuccess: () => navigate('/admin/vouchers'),
+      onError: (err) => setError(err?.response?.data?.message ?? 'Có lỗi xảy ra.'),
+    });
   };
 
   return (
@@ -59,7 +52,7 @@ export default function VoucherFormPage() {
           </div>
         )}
 
-        <VoucherForm rules={allRules} onSubmit={handleSubmit} loading={loading} />
+        <VoucherForm rules={allRules} onSubmit={handleSubmit} loading={createMutation.isPending} />
       </div>
     </div>
   );

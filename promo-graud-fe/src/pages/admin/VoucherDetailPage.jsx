@@ -1,14 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Send, Trash2 } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ChevronLeft, Trash2 } from 'lucide-react';
 import VoucherStatusBadge from '../../features/admin/vouchers/components/VoucherStatusBadge';
-import DistributeModal from '../../features/admin/distribution/components/DistributeModal';
-import {
-  getVoucher,
-  deleteVoucher,
-  distributeVoucher,
-} from '../../features/admin/vouchers/services/voucherService';
-import { useNavigate } from 'react-router-dom';
+import { useAdminVoucher, useDeleteVoucher } from '../../features/admin/vouchers/hooks/useAdminVouchers';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -18,36 +11,15 @@ function formatDate(iso) {
 export default function VoucherDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [voucher, setVoucher] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showDistribute, setShowDistribute] = useState(false);
-  const [distributeLoading, setDistributeLoading] = useState(false);
+  const { data: voucher, isLoading } = useAdminVoucher(id);
+  const deleteMutation = useDeleteVoucher();
 
-  useEffect(() => {
-    getVoucher(id)
-      .then((res) => {
-        if (res?.data) setVoucher(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [id]);
-
-  const handleDistribute = async (body) => {
-    setDistributeLoading(true);
-    try {
-      await distributeVoucher(id, body);
-      setShowDistribute(false);
-    } finally {
-      setDistributeLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!confirm(`Xóa voucher "${voucher?.code}"?`)) return;
-    await deleteVoucher(id);
-    navigate('/admin/vouchers');
+    deleteMutation.mutate(id, { onSuccess: () => navigate('/admin/vouchers') });
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
@@ -74,13 +46,6 @@ export default function VoucherDetailPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setShowDistribute(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all hover:shadow-glow cursor-pointer"
-          >
-            <Send size={14} /> Phân phối
-          </button>
-          <button
-            type="button"
             onClick={handleDelete}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-text-secondary hover:text-error-text hover:bg-error-bg rounded-xl transition-all cursor-pointer"
           >
@@ -89,7 +54,6 @@ export default function VoucherDetailPage() {
         </div>
       </div>
 
-      {/* Main info */}
       <div className="bg-surface border border-border rounded-2xl p-6 shadow-level-1">
         <div className="flex items-start justify-between gap-4 mb-5">
           <div>
@@ -101,7 +65,7 @@ export default function VoucherDetailPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Loại', value: voucher.type === 'generic' ? 'Generic' : 'Unique' },
+            { label: 'Loại', value: voucher.type === 'GENERIC' ? 'Generic' : 'Unique' },
             { label: 'Rule ID', value: `#${voucher.rule_id}` },
             { label: 'Kênh', value: voucher.distribution_channel },
             { label: 'Hết hạn', value: formatDate(voucher.expired_at) },
@@ -114,7 +78,6 @@ export default function VoucherDetailPage() {
           ))}
         </div>
 
-        {/* Usage bar */}
         <div className="mt-5">
           <div className="flex justify-between text-xs text-text-muted mb-1.5">
             <span>Lượt sử dụng</span>
@@ -131,14 +94,6 @@ export default function VoucherDetailPage() {
         </div>
       </div>
 
-      {showDistribute && (
-        <DistributeModal
-          voucher={voucher}
-          onSubmit={handleDistribute}
-          onClose={() => setShowDistribute(false)}
-          loading={distributeLoading}
-        />
-      )}
     </div>
   );
 }
