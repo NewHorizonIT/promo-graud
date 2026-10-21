@@ -1,7 +1,10 @@
 import { useSearchParams, Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import VoucherTable from '../../features/admin/vouchers/components/VoucherTable';
-import { useAdminVouchers, useDeleteVoucher } from '../../features/admin/vouchers/hooks/useAdminVouchers';
+import {
+  useAdminVouchers,
+  useDeleteVoucher,
+} from '../../features/admin/vouchers/hooks/useAdminVouchers';
 
 const TYPE_FILTERS = [
   { value: '', label: 'Tất cả' },
@@ -65,10 +68,7 @@ export default function VouchersPage() {
           ))}
         </div>
       ) : (
-        <VoucherTable
-          vouchers={vouchers}
-          onDelete={handleDelete}
-        />
+        <VoucherTable vouchers={vouchers} onDelete={handleDelete} />
       )}
 
       {totalPages > 1 && (
@@ -92,7 +92,6 @@ export default function VouchersPage() {
           })}
         </div>
       )}
-
     </div>
   );
 }

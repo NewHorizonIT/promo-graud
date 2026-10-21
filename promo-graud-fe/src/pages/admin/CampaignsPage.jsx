@@ -81,9 +81,7 @@ export default function CampaignsPage() {
               <button
                 key={pg}
                 type="button"
-                onClick={() =>
-                  setSearchParams({ ...(status ? { status } : {}), page: String(pg) })
-                }
+                onClick={() => setSearchParams({ ...(status ? { status } : {}), page: String(pg) })}
                 className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
                   pg === page
                     ? 'bg-primary text-white shadow-glow'

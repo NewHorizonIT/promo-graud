@@ -1,7 +1,10 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import VoucherStatusBadge from '../../features/admin/vouchers/components/VoucherStatusBadge';
-import { useAdminVoucher, useDeleteVoucher } from '../../features/admin/vouchers/hooks/useAdminVouchers';
+import {
+  useAdminVoucher,
+  useDeleteVoucher,
+} from '../../features/admin/vouchers/hooks/useAdminVouchers';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -93,7 +96,6 @@ export default function VoucherDetailPage() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

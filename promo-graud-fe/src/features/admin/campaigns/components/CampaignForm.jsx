@@ -60,7 +60,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
   };
 
   const budgetDisplayValue = budgetFocused
-    ? (form.promotion_budget || '')
+    ? form.promotion_budget || ''
     : formatBudget(form.promotion_budget);
 
   const inputClass =
@@ -97,9 +97,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
             onChange={(e) => set('start_time', e.target.value)}
             className={`${inputClass} ${errors.start_time ? errorClass : ''}`}
           />
-          {errors.start_time && (
-            <p className="mt-1 text-xs text-error-text">{errors.start_time}</p>
-          )}
+          {errors.start_time && <p className="mt-1 text-xs text-error-text">{errors.start_time}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -111,9 +109,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
             onChange={(e) => set('end_time', e.target.value)}
             className={`${inputClass} ${errors.end_time ? errorClass : ''}`}
           />
-          {errors.end_time && (
-            <p className="mt-1 text-xs text-error-text">{errors.end_time}</p>
-          )}
+          {errors.end_time && <p className="mt-1 text-xs text-error-text">{errors.end_time}</p>}
         </div>
       </div>
 

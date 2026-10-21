@@ -7,7 +7,9 @@ function StatCard({ label, value, icon: Icon, iconClass, to }) {
   const inner = (
     <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1 hover:shadow-level-2 transition-shadow">
       <div className="flex items-center gap-3 mb-3">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconClass}`}>
+        <div
+          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconClass}`}
+        >
           <Icon size={18} />
         </div>
         <span className="text-xs font-semibold text-text-muted uppercase tracking-wide">

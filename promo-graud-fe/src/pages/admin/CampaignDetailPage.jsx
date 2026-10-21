@@ -4,7 +4,11 @@ import { ChevronLeft, Pencil } from 'lucide-react';
 import CampaignStatusBadge from '../../features/admin/campaigns/components/CampaignStatusBadge';
 import RuleList from '../../features/admin/campaigns/components/RuleList';
 import { useCampaign } from '../../features/admin/campaigns/hooks/useCampaigns';
-import { useRules, useCreateRule, useDeleteRule } from '../../features/admin/campaigns/hooks/useRules';
+import {
+  useRules,
+  useCreateRule,
+  useDeleteRule,
+} from '../../features/admin/campaigns/hooks/useRules';
 import { useCampaignStats } from '../../features/admin/analytics/hooks/useAnalytics';
 import { formatCurrency } from '../../utils/format';
 
