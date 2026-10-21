@@ -240,9 +240,25 @@ public class OrderService {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public List<OrderResponse> findAll() {
-        List<Order> listOder = orderRepository.findAll();
-        return listOder.stream().map(this::mapToOrderResponse).toList();
+    public Page<OrderResponse> findAll(
+            Integer page, Integer size, OrderStatus status, String username) {
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size));
+        boolean hasStatus = status != null;
+        boolean hasUsername = username != null && !username.isBlank();
+        if (hasStatus && hasUsername) {
+            return orderRepository
+                    .findByStatusAndUserUsernameContainingIgnoreCase(status, username, pageable)
+                    .map(this::mapToOrderResponse);
+        }
+        if (hasStatus) {
+            return orderRepository.findByStatus(status, pageable).map(this::mapToOrderResponse);
+        }
+        if (hasUsername) {
+            return orderRepository
+                    .findByUserUsernameContainingIgnoreCase(username, pageable)
+                    .map(this::mapToOrderResponse);
+        }
+        return orderRepository.findAll(pageable).map(this::mapToOrderResponse);
     }
 
     @PostAuthorize(

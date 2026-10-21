@@ -47,13 +47,27 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> findAll() {
-        List<OrderResponse> listOrder = orderService.findAll();
+    public ResponseEntity<ApiResponse<PaginatedResponse<OrderResponse>>> findAll(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) String username) {
+        Page<OrderResponse> ordersPage = orderService.findAll(page, size, status, username);
+
+        PaginatedResponse<OrderResponse> result =
+                PaginatedResponse.<OrderResponse>builder()
+                        .data(ordersPage.getContent())
+                        .page(page)
+                        .size(size)
+                        .totalItems(ordersPage.getTotalElements())
+                        .totalPages(ordersPage.getTotalPages())
+                        .build();
+
         return ResponseEntity.ok(
-                ApiResponse.<List<OrderResponse>>builder()
+                ApiResponse.<PaginatedResponse<OrderResponse>>builder()
                         .code(200)
                         .message("Find all orders success")
-                        .result(listOrder)
+                        .result(result)
                         .build());
     }
 

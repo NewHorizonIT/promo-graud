@@ -17,6 +17,8 @@ import CampaignFormPage from '../pages/admin/CampaignFormPage';
 import VouchersPage from '../pages/admin/VouchersPage';
 import VoucherDetailPage from '../pages/admin/VoucherDetailPage';
 import VoucherFormPage from '../pages/admin/VoucherFormPage';
+import OrdersPage from '../pages/admin/OrdersPage';
+import OrderDetailPage from '../pages/admin/OrderDetailPage';
 
 export default function AppRoutes() {
   return (
@@ -66,6 +68,8 @@ export default function AppRoutes() {
         <Route path="vouchers" element={<VouchersPage />} />
         <Route path="vouchers/new" element={<VoucherFormPage />} />
         <Route path="vouchers/:id" element={<VoucherDetailPage />} />
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="orders/:id" element={<OrderDetailPage />} />
       </Route>
     </Routes>
   );
