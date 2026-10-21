@@ -1,19 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const EMPTY = { name: '', start_time: '', end_time: '', promotion_budget: '' };
+
+function formatBudget(raw) {
+  if (!raw) return '';
+  const n = Number(raw);
+  if (isNaN(n)) return raw;
+  return n.toLocaleString('en-US');
+}
 
 export default function CampaignForm({ initial = EMPTY, onSubmit, loading = false }) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
+  const [budgetFocused, setBudgetFocused] = useState(false);
+
+  // Sync khi initial thay đổi (edit mode load async)
+  useEffect(() => {
+    if (initial && initial !== EMPTY) setForm(initial);
+  }, [initial]);
 
   const set = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: '' }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = 'Tên campaign không được để trống';
+    else if (form.name.trim().length < 5) e.name = 'Tên campaign phải ít nhất 5 ký tự';
+    else if (form.name.trim().length > 100) e.name = 'Tên campaign không quá 100 ký tự';
     if (!form.start_time) e.start_time = 'Chọn ngày bắt đầu';
     if (!form.end_time) e.end_time = 'Chọn ngày kết thúc';
     if (form.start_time && form.end_time && form.end_time <= form.start_time)
@@ -25,21 +40,33 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const e2 = validate();
-    if (Object.keys(e2).length) {
-      setErrors(e2);
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
       return;
     }
+    const toBeDate = (val) => val.slice(0, 16).replace('T', ' ') + ':00';
     onSubmit?.({
       name: form.name.trim(),
-      start_time: form.start_time,
-      end_time: form.end_time,
-      promotion_budget: Number(form.promotion_budget),
+      startTime: toBeDate(form.start_time),
+      endTime: toBeDate(form.end_time),
+      promotionBudget: Number(form.promotion_budget),
     });
   };
 
+  const handleBudgetChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '');
+    set('promotion_budget', raw);
+  };
+
+  const budgetDisplayValue = budgetFocused
+    ? form.promotion_budget || ''
+    : formatBudget(form.promotion_budget);
+
   const inputClass =
     'w-full h-11 px-4 rounded-xl border border-border bg-surface-muted text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all';
+
+  const errorClass = 'border-error-text focus:border-error-text focus:ring-error-text/20';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -53,7 +80,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
           value={form.name}
           onChange={(e) => set('name', e.target.value)}
           placeholder="VD: Flash Sale Tháng 10"
-          className={`${inputClass} ${errors.name ? 'border-error-text' : ''}`}
+          className={`${inputClass} ${errors.name ? errorClass : ''}`}
         />
         {errors.name && <p className="mt-1 text-xs text-error-text">{errors.name}</p>}
       </div>
@@ -68,7 +95,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
             type="datetime-local"
             value={form.start_time}
             onChange={(e) => set('start_time', e.target.value)}
-            className={`${inputClass} ${errors.start_time ? 'border-error-text' : ''}`}
+            className={`${inputClass} ${errors.start_time ? errorClass : ''}`}
           />
           {errors.start_time && <p className="mt-1 text-xs text-error-text">{errors.start_time}</p>}
         </div>
@@ -80,7 +107,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
             type="datetime-local"
             value={form.end_time}
             onChange={(e) => set('end_time', e.target.value)}
-            className={`${inputClass} ${errors.end_time ? 'border-error-text' : ''}`}
+            className={`${inputClass} ${errors.end_time ? errorClass : ''}`}
           />
           {errors.end_time && <p className="mt-1 text-xs text-error-text">{errors.end_time}</p>}
         </div>
@@ -89,16 +116,23 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
       {/* Budget */}
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1.5">
-          Ngân sách (VNĐ) <span className="text-error-text">*</span>
+          Ngân sách <span className="text-error-text">*</span>
         </label>
-        <input
-          type="number"
-          min={0}
-          value={form.promotion_budget}
-          onChange={(e) => set('promotion_budget', e.target.value)}
-          placeholder="VD: 50000000"
-          className={`${inputClass} ${errors.promotion_budget ? 'border-error-text' : ''}`}
-        />
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={budgetDisplayValue}
+            onChange={handleBudgetChange}
+            onFocus={() => setBudgetFocused(true)}
+            onBlur={() => setBudgetFocused(false)}
+            placeholder="VD: 50000000"
+            className={`${inputClass} pr-14 ${errors.promotion_budget ? errorClass : ''}`}
+          />
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-text-muted pointer-events-none">
+            VNĐ
+          </span>
+        </div>
         {errors.promotion_budget && (
           <p className="mt-1 text-xs text-error-text">{errors.promotion_budget}</p>
         )}

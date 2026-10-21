@@ -1,13 +1,28 @@
-import { adminFetch } from '../../services/adminApi.js';
+import axiosInstance from '../../../../lib/axiosInstance';
 
-export const getVouchers = (params = {}) => adminFetch(`/vouchers?${new URLSearchParams(params)}`);
+export const getVouchers = async (params = {}) => {
+  const { data } = await axiosInstance.get('/vouchers', { params });
+  return data; // PaginatedResponse: { data: [], page, size, totalItems, totalPages }
+};
 
-export const getVoucher = (id) => adminFetch(`/vouchers/${id}`);
+export const getVoucher = async (id) => {
+  const { data } = await axiosInstance.get(`/vouchers/${id}`);
+  return data.result;
+};
 
-export const createVoucher = (body) =>
-  adminFetch('/vouchers', { method: 'POST', body: JSON.stringify(body) });
+export const createVoucher = async (body) => {
+  const { data } = await axiosInstance.post('/vouchers', body);
+  return data.result;
+};
 
-export const deleteVoucher = (id) => adminFetch(`/vouchers/${id}`, { method: 'DELETE' });
+// BE chưa implement DELETE /vouchers/{id}
+export const deleteVoucher = async (id) => {
+  const { data } = await axiosInstance.delete(`/vouchers/${id}`);
+  return data.result;
+};
 
-export const distributeVoucher = (id, body) =>
-  adminFetch(`/vouchers/${id}/distribute`, { method: 'POST', body: JSON.stringify(body) });
+// BE chưa implement POST /vouchers/{id}/distribute
+export const distributeVoucher = async (id, body) => {
+  const { data } = await axiosInstance.post(`/vouchers/${id}/distribute`, body);
+  return data.result;
+};

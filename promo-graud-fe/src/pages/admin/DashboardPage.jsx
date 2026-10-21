@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Megaphone, Ticket, ShieldAlert, TrendingUp, ArrowRight } from 'lucide-react';
-import { getCampaigns } from '../../features/admin/campaigns/services/campaignService';
-import { getVouchers } from '../../features/admin/vouchers/services/voucherService';
-import { getFraudStats } from '../../features/admin/fraud/services/fraudService';
+import { Megaphone, Ticket, TrendingUp, ArrowRight } from 'lucide-react';
+import { useCampaigns } from '../../features/admin/campaigns/hooks/useCampaigns';
+import { useAdminVouchers } from '../../features/admin/vouchers/hooks/useAdminVouchers';
 
 function StatCard({ label, value, icon: Icon, iconClass, to }) {
   const inner = (
@@ -30,27 +28,17 @@ function StatCard({ label, value, icon: Icon, iconClass, to }) {
 }
 
 export default function DashboardPage() {
-  const [campaigns, setCampaigns] = useState([]);
-  const [vouchers, setVouchers] = useState({ total: 0 });
-  const [fraudStats, setFraudStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: campaignsPage, isLoading: cLoading } = useCampaigns({ pageSize: 100 });
+  const { data: vouchersPage, isLoading: vLoading } = useAdminVouchers({ pageSize: 1 });
 
-  useEffect(() => {
-    Promise.all([getCampaigns({ page_size: 100 }), getVouchers({ page_size: 1 }), getFraudStats()])
-      .then(([cRes, vRes, fRes]) => {
-        if (cRes?.data?.items) setCampaigns(cRes.data.items);
-        if (vRes?.data?.total != null) setVouchers({ total: vRes.data.total });
-        if (fRes?.data) setFraudStats(fRes.data);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const activeCampaigns = campaigns.filter((c) => c.status === 'dang_dien_ra').length;
+  const loading = cLoading || vLoading;
+  const campaigns = campaignsPage?.data ?? [];
+  const totalVouchers = vouchersPage?.totalItems ?? 0;
+  const activeCampaigns = campaigns.filter((c) => c.status === 'ACTIVE').length;
 
   return (
     <div className="space-y-6">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="Tổng Campaigns"
           value={loading ? '...' : campaigns.length}
@@ -63,25 +51,17 @@ export default function DashboardPage() {
           value={loading ? '...' : activeCampaigns}
           icon={TrendingUp}
           iconClass="bg-success-bg text-success-text"
-          to="/admin/campaigns?status=dang_dien_ra"
+          to="/admin/campaigns?status=ACTIVE"
         />
         <StatCard
           label="Tổng Vouchers"
-          value={loading ? '...' : vouchers.total}
+          value={loading ? '...' : totalVouchers}
           icon={Ticket}
           iconClass="bg-surface-muted text-text-secondary"
           to="/admin/vouchers"
         />
-        <StatCard
-          label="Fraud Blocks"
-          value={loading ? '...' : (fraudStats?.total_blocked ?? 0)}
-          icon={ShieldAlert}
-          iconClass="bg-error-bg text-error-text"
-          to="/admin/fraud"
-        />
       </div>
 
-      {/* Recent campaigns */}
       <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-base text-text-primary">Campaigns gần đây</h2>

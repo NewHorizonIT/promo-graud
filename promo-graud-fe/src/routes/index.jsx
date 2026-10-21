@@ -17,8 +17,6 @@ import CampaignFormPage from '../pages/admin/CampaignFormPage';
 import VouchersPage from '../pages/admin/VouchersPage';
 import VoucherDetailPage from '../pages/admin/VoucherDetailPage';
 import VoucherFormPage from '../pages/admin/VoucherFormPage';
-import DistributionPage from '../pages/admin/DistributionPage';
-import FraudPage from '../pages/admin/FraudPage';
 
 export default function AppRoutes() {
   return (
@@ -68,8 +66,6 @@ export default function AppRoutes() {
         <Route path="vouchers" element={<VouchersPage />} />
         <Route path="vouchers/new" element={<VoucherFormPage />} />
         <Route path="vouchers/:id" element={<VoucherDetailPage />} />
-        <Route path="distribution" element={<DistributionPage />} />
-        <Route path="fraud" element={<FraudPage />} />
       </Route>
     </Routes>
   );

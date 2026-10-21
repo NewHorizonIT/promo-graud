@@ -1,16 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Pencil } from 'lucide-react';
 import CampaignStatusBadge from '../../features/admin/campaigns/components/CampaignStatusBadge';
 import RuleList from '../../features/admin/campaigns/components/RuleList';
+import { useCampaign } from '../../features/admin/campaigns/hooks/useCampaigns';
 import {
-  getCampaign,
-  getRules,
-  createRule,
-  updateRule,
-  deleteRule,
-} from '../../features/admin/campaigns/services/campaignService';
-import { getCampaignStats } from '../../features/admin/analytics/services/analyticsService';
+  useRules,
+  useCreateRule,
+  useDeleteRule,
+} from '../../features/admin/campaigns/hooks/useRules';
+import { useCampaignStats } from '../../features/admin/analytics/hooks/useAnalytics';
 import { formatCurrency } from '../../utils/format';
 
 const TABS = ['Thông tin', 'Rules', 'Analytics'];
@@ -27,31 +26,16 @@ function StatItem({ label, value }) {
 export default function CampaignDetailPage() {
   const { id } = useParams();
   const [tab, setTab] = useState(0);
-  const [campaign, setCampaign] = useState(null);
-  const [rules, setRules] = useState([]);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  const loadCampaign = () =>
-    getCampaign(id).then((r) => {
-      if (r?.data) setCampaign(r.data);
-    });
+  const { data: campaign, isLoading } = useCampaign(id);
+  const { data: rulesPage } = useRules(id);
+  const { data: stats } = useCampaignStats(id);
+  const createRule = useCreateRule();
+  const deleteRule = useDeleteRule();
 
-  const loadRules = () =>
-    getRules(id).then((r) => {
-      if (r?.data) setRules(r.data);
-    });
+  const rules = rulesPage?.data ?? [];
 
-  const loadStats = () =>
-    getCampaignStats(id).then((r) => {
-      if (r?.data) setStats(r.data);
-    });
-
-  useEffect(() => {
-    Promise.all([loadCampaign(), loadRules(), loadStats()]).finally(() => setLoading(false));
-  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
@@ -67,7 +51,6 @@ export default function CampaignDetailPage() {
 
   return (
     <div className="space-y-5">
-      {/* Breadcrumb + actions */}
       <div className="flex items-center justify-between">
         <Link
           to="/admin/campaigns"
@@ -83,7 +66,6 @@ export default function CampaignDetailPage() {
         </Link>
       </div>
 
-      {/* Campaign header */}
       <div className="bg-surface border border-border rounded-2xl p-6 shadow-level-1">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -96,27 +78,24 @@ export default function CampaignDetailPage() {
           <div>
             <p className="text-xs text-text-muted mb-0.5">Bắt đầu</p>
             <p className="text-sm font-medium text-text-primary">
-              {campaign.start_time
-                ? new Date(campaign.start_time).toLocaleDateString('vi-VN')
-                : '—'}
+              {campaign.startTime ? new Date(campaign.startTime).toLocaleDateString('vi-VN') : '—'}
             </p>
           </div>
           <div>
             <p className="text-xs text-text-muted mb-0.5">Kết thúc</p>
             <p className="text-sm font-medium text-text-primary">
-              {campaign.end_time ? new Date(campaign.end_time).toLocaleDateString('vi-VN') : '—'}
+              {campaign.endTime ? new Date(campaign.endTime).toLocaleDateString('vi-VN') : '—'}
             </p>
           </div>
           <div>
             <p className="text-xs text-text-muted mb-0.5">Ngân sách</p>
             <p className="text-sm font-medium text-text-primary">
-              {formatCurrency(campaign.promotion_budget)}
+              {formatCurrency(campaign.promotionBudget)}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex items-center gap-1 bg-surface-muted p-1 rounded-xl w-fit">
         {TABS.map((t, i) => (
           <button
@@ -134,7 +113,6 @@ export default function CampaignDetailPage() {
         ))}
       </div>
 
-      {/* Tab content */}
       {tab === 0 && (
         <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
           <p className="text-sm text-text-secondary">
@@ -148,19 +126,9 @@ export default function CampaignDetailPage() {
           <RuleList
             campaignId={id}
             rules={rules}
-            onAdd={async (body) => {
-              await createRule(id, body);
-              loadRules();
-            }}
-            onEdit={async (ruleId, body) => {
-              await updateRule(id, ruleId, body);
-              loadRules();
-            }}
-            onDelete={async (ruleId) => {
-              if (confirm('Xóa rule này?')) {
-                await deleteRule(id, ruleId);
-                loadRules();
-              }
+            onAdd={(body) => createRule.mutate({ campaignId: id, body })}
+            onDelete={(ruleId) => {
+              if (confirm('Xóa rule này?')) deleteRule.mutate({ campaignId: id, ruleId });
             }}
           />
         </div>
@@ -169,15 +137,12 @@ export default function CampaignDetailPage() {
       {tab === 2 && (
         <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
           {stats ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                <StatItem label="Mã đã phát" value={stats.total_issued} />
-                <StatItem label="Mã đã dùng" value={stats.total_redeemed} />
-                <StatItem label="Tỷ lệ chuyển đổi" value={`${stats.redemption_rate ?? 0}%`} />
-                <StatItem label="Tổng tiền giảm" value={formatCurrency(stats.total_discount)} />
-                <StatItem label="Doanh thu" value={formatCurrency(stats.total_revenue)} />
-              </div>
-              {/* TODO: RedemptionChart — dùng /analytics/campaigns/{id}/timeline */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <StatItem label="Mã đã phát" value={stats.totalIssued} />
+              <StatItem label="Mã đã dùng" value={stats.totalRedeemed} />
+              <StatItem label="Tỷ lệ chuyển đổi" value={`${stats.redemptionRate ?? 0}%`} />
+              <StatItem label="Tổng tiền giảm" value={formatCurrency(stats.totalDiscount)} />
+              <StatItem label="Doanh thu" value={formatCurrency(stats.totalRevenue)} />
             </div>
           ) : (
             <p className="text-sm text-text-muted">Chưa có dữ liệu thống kê.</p>

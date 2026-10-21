@@ -7,8 +7,6 @@ const PAGE_TITLES = {
   '/admin': 'Dashboard',
   '/admin/campaigns': 'Campaigns',
   '/admin/vouchers': 'Vouchers',
-  '/admin/distribution': 'Distribution Logs',
-  '/admin/fraud': 'Fraud Logs',
 };
 
 export default function AdminTopbar() {

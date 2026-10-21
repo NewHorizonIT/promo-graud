@@ -1,69 +1,43 @@
-import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import CampaignTable from '../../features/admin/campaigns/components/CampaignTable';
-import {
-  getCampaigns,
-  deleteCampaign,
-} from '../../features/admin/campaigns/services/campaignService';
+import { useCampaigns, useDeleteCampaign } from '../../features/admin/campaigns/hooks/useCampaigns';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Tất cả' },
-  { value: 'chua_dien_ra', label: 'Chưa diễn ra' },
-  { value: 'dang_dien_ra', label: 'Đang diễn ra' },
-  { value: 'da_dong', label: 'Đã đóng' },
+  { value: 'UPCOMING', label: 'Chưa diễn ra' },
+  { value: 'ACTIVE', label: 'Đang diễn ra' },
+  { value: 'ENDED', label: 'Đã đóng' },
 ];
+
+const PAGE_SIZE = 20;
 
 export default function CampaignsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get('status') ?? '';
   const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
-  const [campaigns, setCampaigns] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const params = { page, pageSize: PAGE_SIZE, ...(status ? { status } : {}) };
+  const { data, isLoading } = useCampaigns(params);
+  const deleteMutation = useDeleteCampaign();
 
-  const PAGE_SIZE = 20;
+  const campaigns = data?.data ?? [];
+  const total = data?.totalItems ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
-  const load = useCallback(() => {
-    setLoading(true);
-    const params = { page, page_size: PAGE_SIZE };
-    if (status) params.status = status;
-    getCampaigns(params)
-      .then((res) => {
-        if (res?.data) {
-          setCampaigns(res.data.items ?? []);
-          setTotal(res.data.total ?? 0);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [status, page]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const handleDelete = async (campaign) => {
+  const handleDelete = (campaign) => {
     if (!confirm(`Xóa campaign "${campaign.name}"?`)) return;
-    await deleteCampaign(campaign.id);
-    load();
+    deleteMutation.mutate(campaign.id);
   };
 
   const setFilter = (val) => {
-    const next = {};
-    if (val) next.status = val;
-    setSearchParams(next);
+    setSearchParams(val ? { status: val } : {});
   };
-
-  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-text-muted">{total} campaigns</p>
-        </div>
+        <p className="text-sm text-text-muted">{total} campaigns</p>
         <Link
           to="/admin/campaigns/new"
           className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all hover:shadow-glow"
@@ -72,7 +46,6 @@ export default function CampaignsPage() {
         </Link>
       </div>
 
-      {/* Status filter tabs */}
       <div className="flex items-center gap-1 bg-surface-muted p-1 rounded-xl w-fit">
         {STATUS_FILTERS.map((f) => (
           <button
@@ -90,8 +63,7 @@ export default function CampaignsPage() {
         ))}
       </div>
 
-      {/* Table */}
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-2">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="h-14 bg-surface-muted rounded-xl animate-pulse" />
@@ -101,7 +73,6 @@ export default function CampaignsPage() {
         <CampaignTable campaigns={campaigns} onDelete={handleDelete} />
       )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 pt-2">
           {[...Array(totalPages)].map((_, i) => {

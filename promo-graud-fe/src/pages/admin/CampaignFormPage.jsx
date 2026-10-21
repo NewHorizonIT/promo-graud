@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import CampaignForm from '../../features/admin/campaigns/components/CampaignForm';
 import {
-  getCampaign,
-  createCampaign,
-  updateCampaign,
-} from '../../features/admin/campaigns/services/campaignService';
+  useCampaign,
+  useCreateCampaign,
+  useUpdateCampaign,
+} from '../../features/admin/campaigns/hooks/useCampaigns';
 
 export default function CampaignFormPage() {
   const { id } = useParams();
@@ -14,47 +14,50 @@ export default function CampaignFormPage() {
   const isEdit = Boolean(id);
 
   const [initial, setInitial] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [fetchLoading, setFetchLoading] = useState(isEdit);
   const [error, setError] = useState('');
+  const initializedIdRef = useRef(null);
+
+  const { data: campaign, isLoading: fetchLoading } = useCampaign(id);
+  const createMutation = useCreateCampaign();
+  const updateMutation = useUpdateCampaign();
 
   useEffect(() => {
-    if (!isEdit) return;
-    getCampaign(id)
-      .then((res) => {
-        if (res?.data) {
-          const c = res.data;
-          setInitial({
-            name: c.name,
-            start_time: c.start_time?.slice(0, 16) ?? '',
-            end_time: c.end_time?.slice(0, 16) ?? '',
-            promotion_budget: String(c.promotion_budget ?? ''),
-          });
-        }
-      })
-      .finally(() => setFetchLoading(false));
-  }, [id, isEdit]);
-
-  const handleSubmit = async (body) => {
-    setLoading(true);
     setError('');
-    try {
-      const res = isEdit ? await updateCampaign(id, body) : await createCampaign(body);
-      if (res?.success === false) {
-        setError(res.message ?? 'Có lỗi xảy ra.');
-        return;
-      }
-      navigate(isEdit ? `/admin/campaigns/${id}` : '/admin/campaigns');
-    } catch {
-      setError('Không thể kết nối server.');
-    } finally {
-      setLoading(false);
+  }, [id]);
+
+  useEffect(() => {
+    if (!campaign || initializedIdRef.current === id) return;
+    initializedIdRef.current = id;
+    setInitial({
+      name: campaign.name,
+      start_time: campaign.startTime?.slice(0, 16) ?? '',
+      end_time: campaign.endTime?.slice(0, 16) ?? '',
+      promotion_budget: String(campaign.promotionBudget ?? ''),
+    });
+  }, [campaign, id]);
+
+  const loading = createMutation.isPending || updateMutation.isPending;
+
+  const handleSubmit = (body) => {
+    setError('');
+    if (isEdit) {
+      updateMutation.mutate(
+        { id, body },
+        {
+          onSuccess: () => navigate(`/admin/campaigns/${id}`),
+          onError: (err) => setError(err?.response?.data?.message ?? 'Có lỗi xảy ra.'),
+        },
+      );
+    } else {
+      createMutation.mutate(body, {
+        onSuccess: () => navigate('/admin/campaigns'),
+        onError: (err) => setError(err?.response?.data?.message ?? 'Có lỗi xảy ra.'),
+      });
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
-      {/* Breadcrumb */}
       <Link
         to={isEdit ? `/admin/campaigns/${id}` : '/admin/campaigns'}
         className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
@@ -74,7 +77,7 @@ export default function CampaignFormPage() {
           </div>
         )}
 
-        {fetchLoading ? (
+        {isEdit && fetchLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-11 bg-surface-muted rounded-xl animate-pulse" />

@@ -1,4 +1,7 @@
-import { adminFetch } from '../../services/adminApi.js';
+import axiosInstance from '../../../../lib/axiosInstance';
 
-export const getDistributionLogs = (params = {}) =>
-  adminFetch(`/distribution-logs?${new URLSearchParams(params)}`);
+// BE chưa implement GET /distribution-logs
+export const getDistributionLogs = async (params = {}) => {
+  const { data } = await axiosInstance.get('/distribution-logs', { params });
+  return data; // PaginatedResponse
+};
