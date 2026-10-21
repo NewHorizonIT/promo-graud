@@ -23,8 +23,22 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     public List<Order> findByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndIsDeletedFalse(
             LocalDateTime start, LocalDateTime end);
 
+    @Override
     @EntityGraph(attributePaths = {"items", "items.product"})
-    public Page<Order> findByUserId(Integer userId, Pageable pageable);
+    Page<Order> findAll(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"items", "items.product"})
+    Page<Order> findByUserId(Integer userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"items", "items.product"})
+    Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"items", "items.product"})
+    Page<Order> findByUserUsernameContainingIgnoreCase(String username, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"items", "items.product"})
+    Page<Order> findByStatusAndUserUsernameContainingIgnoreCase(
+            OrderStatus status, String username, Pageable pageable);
 
     @Query(
             "SELECT COALESCE(SUM(o.finalPrice), 0) FROM Order o"
