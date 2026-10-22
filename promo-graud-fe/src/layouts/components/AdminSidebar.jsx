@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, Ticket, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Ticket, ShoppingBag, Package } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
   { to: '/admin/vouchers', label: 'Vouchers', icon: Ticket },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { to: '/admin/products', label: 'Products', icon: Package },
 ];
 
 export default function AdminSidebar() {

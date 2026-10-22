@@ -24,6 +24,8 @@ import lombok.experimental.FieldDefaults;
 
 import group2d.promo_graud.modules.products.dto.ProductRequest;
 import group2d.promo_graud.modules.products.dto.ProductResponse;
+import group2d.promo_graud.modules.products.dto.TypeOfProductRequest;
+import group2d.promo_graud.modules.products.dto.TypeOfProductResponse;
 import group2d.promo_graud.modules.products.entity.TypeOfProduct;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
@@ -42,10 +44,10 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String name,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") int page) {
         Page<ProductResponse> pages =
-                productService.getProducts(typeId, minPrice, maxPrice, name, limit, offset);
+                productService.getProducts(typeId, minPrice, maxPrice, name, size, page);
         PaginatedResponse<ProductResponse> result =
                 PaginatedResponse.<ProductResponse>builder()
                         .data(pages.getContent())
@@ -109,6 +111,50 @@ public class ProductController {
                         .code(200)
                         .result(productService.getTypes())
                         .message("Lấy danh sách loại sản phẩm thành công")
+                        .build());
+    }
+
+    @GetMapping("/types")
+    public ResponseEntity<ApiResponse<PaginatedResponse<TypeOfProductResponse>>> getProducts(
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") int page) {
+        Page<TypeOfProductResponse> pages = productService.getTypeProducts(size, page);
+        PaginatedResponse<TypeOfProductResponse> result =
+                PaginatedResponse.<TypeOfProductResponse>builder()
+                        .data(pages.getContent())
+                        .page(pages.getNumber() + 1)
+                        .totalItems(pages.getTotalElements())
+                        .totalPages(pages.getTotalPages())
+                        .build();
+
+        return ResponseEntity.ok(
+                ApiResponse.<PaginatedResponse<TypeOfProductResponse>>builder()
+                        .code(200)
+                        .message("Lấy danh sách loại sản phẩm thành công")
+                        .result(result)
+                        .build());
+    }
+
+    @PostMapping("/type")
+    public ResponseEntity<ApiResponse<TypeOfProductResponse>> createProduct(
+            @RequestBody @Valid TypeOfProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.<TypeOfProductResponse>builder()
+                                .code(201)
+                                .result(productService.createType(request))
+                                .message("Tạo loại sản phẩm thành công")
+                                .build());
+    }
+
+    @PutMapping("/type/{id}")
+    public ResponseEntity<ApiResponse<TypeOfProductResponse>> updateTypeProduct(
+            @PathVariable Integer id, @RequestBody @Valid TypeOfProductRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.<TypeOfProductResponse>builder()
+                        .code(200)
+                        .result(productService.updateType(id, request))
+                        .message("Cập nhật loại sản phẩm thành công")
                         .build());
     }
 }

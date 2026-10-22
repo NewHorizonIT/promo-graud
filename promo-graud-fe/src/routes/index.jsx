@@ -19,6 +19,10 @@ import VoucherDetailPage from '../pages/admin/VoucherDetailPage';
 import VoucherFormPage from '../pages/admin/VoucherFormPage';
 import OrdersPage from '../pages/admin/OrdersPage';
 import OrderDetailPage from '../pages/admin/OrderDetailPage';
+import ProductFormPage from '../pages/admin/ProductFormPage';
+import ProductDetailPage from '../pages/admin/ProductDetailPage';
+import ProductPage from '../pages/admin/ProductPage';
+import ProductTypesPage from '../pages/admin/ProductTypesPage';
 
 export default function AppRoutes() {
   return (
@@ -70,6 +74,11 @@ export default function AppRoutes() {
         <Route path="vouchers/:id" element={<VoucherDetailPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />
+        <Route path="products" element={<ProductPage />} />
+        <Route path="products/new" element={<ProductFormPage />} />
+        <Route path="products/:id" element={<ProductDetailPage />} />
+        <Route path="products/:id/edit" element={<ProductFormPage />} />
+        <Route path="product-types" element={<ProductTypesPage />} />
       </Route>
     </Routes>
   );
