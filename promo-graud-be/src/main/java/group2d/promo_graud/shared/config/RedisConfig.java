@@ -18,8 +18,9 @@ import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Component;
 
-@Configuration
+@Component
 @EnableCaching
 public class RedisConfig {
 
