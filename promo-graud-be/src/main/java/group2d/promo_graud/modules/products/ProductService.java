@@ -15,6 +15,8 @@ import lombok.experimental.FieldDefaults;
 
 import group2d.promo_graud.modules.products.dto.ProductRequest;
 import group2d.promo_graud.modules.products.dto.ProductResponse;
+import group2d.promo_graud.modules.products.dto.TypeOfProductRequest;
+import group2d.promo_graud.modules.products.dto.TypeOfProductResponse;
 import group2d.promo_graud.modules.products.entity.Product;
 import group2d.promo_graud.modules.products.entity.TypeOfProduct;
 import group2d.promo_graud.modules.products.repository.ProductRepository;
@@ -34,9 +36,9 @@ public class ProductService {
             BigDecimal minPrice,
             BigDecimal maxPrice,
             String name,
-            int limit,
-            int offset) {
-        Pageable pageable = PageRequest.of(offset / limit, limit);
+            int size,
+            int page) {
+        Pageable pageable = PageRequest.of(page - 1, size);
         String keyword = name == null ? "" : name.trim();
         return productRepository
                 .getAll(typeId, minPrice, maxPrice, keyword, pageable)
@@ -95,6 +97,28 @@ public class ProductService {
         productRepository.save(product);
     }
 
+    public TypeOfProductResponse createType(TypeOfProductRequest request) {
+        TypeOfProduct typeOfProduct = TypeOfProduct.builder().type(request.getType()).build();
+
+        return toTypeResponse(typeOfProductRepository.save(typeOfProduct));
+    }
+
+    public TypeOfProductResponse updateType(Integer id, TypeOfProductRequest request) {
+        TypeOfProduct type =
+                typeOfProductRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new AppException(ProductErrorCode.PRODUCT_TYPE_NOT_FOUND));
+        type.setType(request.getType());
+        return toTypeResponse(typeOfProductRepository.save(type));
+    }
+
+    public Page<TypeOfProductResponse> getTypeProducts(int size, int page) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return typeOfProductRepository.findAll(pageable).map(this::toTypeResponse);
+    }
+
+    // map cua product entity
     private ProductResponse toResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
@@ -112,6 +136,14 @@ public class ProductService {
                                 : null)
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
+                .build();
+    }
+
+    // map cua type of product entity
+    private TypeOfProductResponse toTypeResponse(TypeOfProduct typeOfProduct) {
+        return TypeOfProductResponse.builder()
+                .id(typeOfProduct.getId())
+                .type(typeOfProduct.getType())
                 .build();
     }
 
