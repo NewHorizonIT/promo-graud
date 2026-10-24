@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.jobrunr.scheduling.JobScheduler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import group2d.promo_graud.modules.campaigns.dto.CampaignRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
 import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
+import group2d.promo_graud.modules.campaigns.service.CampaignService;
 import group2d.promo_graud.shared.exception.AppException;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +35,8 @@ public class CampaignServiceTest {
     @Mock
     // Tạo Repo giả
     private CampaignRepository campaignRepository;
+
+    @Mock private JobScheduler jobScheduler;
 
     @InjectMocks private CampaignService campaignService;
 

@@ -3,7 +3,7 @@ spring:
     job:
       enabled: false
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/promo_graud_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5431/promo_graud_db}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:123456}
 
@@ -17,11 +17,20 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:65473}
+      port: ${REDIS_PORT:6378}
       timeout: 2000ms
 
 server:
   port: ${BACKEND_PORT:8080}
+
+jobrunr:
+  background-job-server:
+    enabled: true
+    worker-count: 2
+    poll-interval: 15
+  dashboard:
+    enabled: false
+    port: 8000
 
 jwt:
   secret: 20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35e214a94
