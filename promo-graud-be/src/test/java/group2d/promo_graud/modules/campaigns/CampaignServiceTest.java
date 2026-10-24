@@ -25,6 +25,7 @@ import group2d.promo_graud.modules.campaigns.dto.CampaignRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
 import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
+import group2d.promo_graud.modules.campaigns.service.CampaignService;
 import group2d.promo_graud.shared.exception.AppException;
 
 @ExtendWith(MockitoExtension.class)
