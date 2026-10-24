@@ -21,7 +21,7 @@ public interface CampaignRepository
     where c.id = :id
     and c.status = :oldStatus
     and c.startTime <= :now
-    """)
+            """)
     int activateByIdStrict(
             @Param("id") Integer id,
             @Param("oldStatus") CampaignStatus oldStatus,
@@ -37,7 +37,7 @@ public interface CampaignRepository
      where c.id = :id
        and c.status = :oldStatus
        and c.endTime <= :now
-    """)
+            """)
     int endByIdStrict(
             @Param("id") Integer id,
             @Param("oldStatus") CampaignStatus oldStatus,
@@ -52,7 +52,7 @@ public interface CampaignRepository
       set c.status = :newStatus
       where c.status = :oldStatus
       and c.endTime < :now
-    """)
+            """)
     int updateStatusForExpired(
             @Param("oldStatus") CampaignStatus oldStatus,
             @Param("newStatus") CampaignStatus newStatus,
@@ -66,7 +66,7 @@ public interface CampaignRepository
      where c.status = :oldStatus
        and c.startTime <= :now
        and c.endTime > :now
-    """)
+            """)
     int activateUpcoming(
             @Param("oldStatus") CampaignStatus oldStatus,
             @Param("newStatus") CampaignStatus newStatus,
