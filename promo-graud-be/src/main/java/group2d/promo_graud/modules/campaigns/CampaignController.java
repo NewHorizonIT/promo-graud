@@ -30,7 +30,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Tạo campaign thành công")
                         .result(response)
                         .build());
@@ -45,7 +45,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Sửa thông tin campaign thành công")
                         .result(response)
                         .build());
@@ -60,7 +60,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Cập nhật status thành công")
                         .result(response)
                         .build());
@@ -92,7 +92,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Xóa thành công chiến dịch")
                         .build());
     }
@@ -103,7 +103,7 @@ public class CampaignController {
         CampaignResponse response = campaignService.getCampaignById(id);
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Lấy chi tiết thông tin chiến dịch thành công")
                         .result(response)
                         .build());
