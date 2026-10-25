@@ -91,10 +91,7 @@ public class CampaignController {
         campaignService.deleteCampaign(id);
 
         return ResponseEntity.ok(
-                ApiResponse.<Void>builder()
-                        .code(200)
-                        .message("Xóa thành công chiến dịch")
-                        .build());
+                ApiResponse.<Void>builder().code(200).message("Xóa thành công chiến dịch").build());
     }
 
     // lấy chi tiết chiến dịch
