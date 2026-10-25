@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class VoucherJobListener implements JobExecutionListener {
-
+    // Thống kê lại khi xong job
     @Override
     public void afterJob(JobExecution je) {
         long requested = je.getJobParameters().getLong("quantity");

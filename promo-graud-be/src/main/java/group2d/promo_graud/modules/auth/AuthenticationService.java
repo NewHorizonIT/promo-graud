@@ -52,6 +52,8 @@ public class AuthenticationService {
     @Value("${jwt.refresh-duration}")
     protected Long refreshDuration;
 
+    // Đăng nhập và trả về access token + refresh token cho người dùng.
+    // tìm user theo username -> so khớp mật khẩu (BCrypt) -> sinh token và refresh token
     public AuthenticationResponse login(AuthenticationRequest request) {
         User user =
                 userRepository
@@ -71,6 +73,9 @@ public class AuthenticationService {
                 .build();
     }
 
+    // Đăng xuất bằng cách vô hiệu hóa cả access token và refresh token.
+    // verify token -> lấy jti và thời gian còn sống -> lưu jti vào blacklist Redis (làm lần lượt
+    // cho token rồi refresh token)
     public void logout(LogoutRequest request) throws JOSEException, ParseException {
         try {
             SignedJWT signedJWT = verifyToken(request.getToken(), false);
@@ -99,6 +104,9 @@ public class AuthenticationService {
         }
     }
 
+    // Kiểm tra access token còn hợp lệ hay không.
+    // gọi verifyToken (chữ ký -> hạn dùng -> blacklist) -> bắt AppException để trả valid true/false
+    // được gọi ở controller và spring filter
     public IntrospectResponse introspect(IntrospectRequest request)
             throws ParseException, JOSEException {
         boolean isValid = true;
@@ -110,6 +118,9 @@ public class AuthenticationService {
         return IntrospectResponse.builder().valid(isValid).build();
     }
 
+    // Cấp cặp token mới từ refresh token còn hạn.
+    // verify refresh token -> đưa refresh token cũ vào blacklist -> tìm user theo subject -> sinh
+    // token và refresh token mới
     public AuthenticationResponse refreshToken(String refreshToken)
             throws ParseException, JOSEException {
         SignedJWT signedJwt = verifyToken(refreshToken, true);
@@ -134,6 +145,8 @@ public class AuthenticationService {
                 .build();
     }
 
+    // Xác thực một token (access hoặc refresh) có hợp lệ hay không.
+    // parse token -> so sánh chữ ký -> kiểm tra hạn dùng -> kiểm tra blacklist trong Redis
     public SignedJWT verifyToken(String token, boolean isRefresh)
             throws JOSEException, ParseException {
         JWSVerifier verifier =
@@ -158,6 +171,9 @@ public class AuthenticationService {
         return signedJwt;
     }
 
+    // Tạo JWT (access hoặc refresh) cho một user.
+    // tính thời gian hết hạn -> dựng claims (subject, jti, scope, userId) -> ký HS512 bằng secret
+    // tương ứng -> serialize ra chuỗi
     public String generateToken(User user, boolean isFresh) {
         Date expirationTime =
                 isFresh
@@ -194,6 +210,8 @@ public class AuthenticationService {
         }
     }
 
+    // Tạo chuỗi scope (quyền) để nhúng vào token.
+    // kiểm tra role khác null -> nối tiền tố "ROLE_" với tên role
     public String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner("");
         if (user.getRole() != null) {

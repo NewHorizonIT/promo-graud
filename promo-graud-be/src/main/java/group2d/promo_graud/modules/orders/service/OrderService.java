@@ -79,6 +79,9 @@ public class OrderService {
     private final UserVoucherRepository userVoucherRepository;
     private final RuleEngine ruleEngine;
 
+    // Điểm vào tạo đơn hàng, rẽ nhánh theo có dùng voucher hay không
+    // không có voucher -> tạo đơn thường; có voucher -> lock Redis theo voucherId -> tạo đơn
+    // voucher -> nhả lock
     public OrderResponse createOrder(OrderRequest request, String ipAddress) {
         if (request.getVoucherId() == null) {
             return createOrderWithOutVoucher(request);
@@ -96,6 +99,9 @@ public class OrderService {
         }
     }
 
+    // Tạo đơn hàng không áp dụng voucher
+    // mở transaction -> lấy user hiện tại -> lưu order -> tạo order item và tính tổng -> finalPrice
+    // = totalPrice
     private OrderResponse createOrderWithOutVoucher(OrderRequest request) {
         return transactionTemplate.execute(
                 status -> {
@@ -116,6 +122,9 @@ public class OrderService {
                 });
     }
 
+    // Tạo đơn hàng có áp dụng voucher (chạy trong lock Redis)
+    // mở transaction -> kiểm tra voucher và userVoucher -> lưu order + item -> tính giảm giá bằng
+    // rule engine -> trừ voucher -> lưu lịch sử redemption
     private OrderResponse createOrderVoucher(OrderRequest request, String ipAddress) {
         return transactionTemplate.execute(
                 status -> {
@@ -165,6 +174,8 @@ public class OrderService {
                 });
     }
 
+    // Lấy user đang đăng nhập
+    // lấy Authentication từ SecurityContext -> tìm user theo username -> không có thì ném lỗi
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return userRepository
@@ -172,6 +183,8 @@ public class OrderService {
                 .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
     }
 
+    // Kiểm tra voucher loại UNIQUE có dùng được không
+    // voucher phải ACTIVE -> userVoucher chưa USED
     public void validateUniqueVoucher(Voucher voucher, UserVoucher userVoucher) {
         if (!voucher.getStatus().equals(VoucherStatus.ACTIVE)) {
             throw new AppException(VoucherErrorCode.INVALID_STATUS);
@@ -181,6 +194,8 @@ public class OrderService {
         }
     }
 
+    // Kiểm tra voucher loại GENERIC có dùng được không
+    // voucher phải ACTIVE -> còn số lượng -> userVoucher chưa USED
     public void validateGenericVoucher(Voucher voucher, UserVoucher userVoucher) {
         if (!voucher.getStatus().equals(VoucherStatus.ACTIVE)) {
             throw new AppException(VoucherErrorCode.INVALID_STATUS);
@@ -193,6 +208,9 @@ public class OrderService {
         }
     }
 
+    // Tạo các order item và tính tổng tiền đơn hàng
+    // lấy sản phẩm theo danh sách id (1 query) -> duyệt từng item: cộng giá x số lượng -> lưu order
+    // item -> gán items vào order
     private BigDecimal createOrderItemAndCalculateTotal(
             Order order, List<OrderItemRequest> requests) {
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -221,6 +239,9 @@ public class OrderService {
         return totalPrice;
     }
 
+    // Đánh dấu voucher đã được sử dụng sau khi đặt đơn
+    // UNIQUE: userVoucher USED + voucher DISABLED; GENERIC: trừ số lượng -> hết thì DISABLED ->
+    // user dùng đủ limitClient thì USED
     private void consumeVoucher(Voucher voucher, UserVoucher userVoucher) {
         if (voucher.getType().equals(VoucherType.UNIQUE)) {
             userVoucher.setStatus(UserVoucherStatus.USED);
@@ -239,6 +260,9 @@ public class OrderService {
         }
     }
 
+    // Admin lấy danh sách đơn hàng có phân trang, lọc theo trạng thái và username
+    // tạo Pageable -> xét có status/username hay không -> gọi query tương ứng -> map sang
+    // OrderResponse
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Page<OrderResponse> findAll(
             Integer page, Integer size, OrderStatus status, String username) {
@@ -261,6 +285,9 @@ public class OrderService {
         return orderRepository.findAll(pageable).map(this::mapToOrderResponse);
     }
 
+    // Lấy chi tiết đơn hàng theo id, chỉ admin hoặc chủ đơn mới xem được
+    // tìm order theo id -> map sang OrderResponse -> @PostAuthorize kiểm tra quyền trên kết quả trả
+    // về
     @PostAuthorize(
             "hasAuthority('ROLE_ADMIN') or returnObject.user.username == authentication.name")
     public OrderResponse findById(Integer id) {
@@ -271,6 +298,9 @@ public class OrderService {
         return mapToOrderResponse(order);
     }
 
+    // Admin lọc đơn hàng theo khoảng ngày
+    // kiểm tra khoảng ngày hợp lệ -> đổi sang [đầu ngày bắt đầu, đầu ngày sau ngày kết thúc) ->
+    // query đơn chưa xóa -> map sang OrderResponse
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public List<OrderResponse> filterByTime(LocalDate startDate, LocalDate endDate) {
         if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
@@ -285,6 +315,8 @@ public class OrderService {
                 .toList();
     }
 
+    // Lấy danh sách đơn hàng của một user có phân trang
+    // tạo Pageable -> query theo userId -> map sang OrderResponse
     public Page<OrderResponse> findByUserId(Integer userId, Integer page, Integer limit) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, limit));
 
@@ -293,6 +325,9 @@ public class OrderService {
         return orders.map(this::mapToOrderResponse);
     }
 
+    // Chuyển entity Order sang OrderResponse
+    // map từng order item sang OrderItemResponse -> build OrderResponse kèm thông tin giá, trạng
+    // thái, danh sách item
     public OrderResponse mapToOrderResponse(Order order) {
         List<OrderItemResponse> itemResponses =
                 order.getItems().stream()
@@ -318,12 +353,17 @@ public class OrderService {
                 .build();
     }
 
+    // Lấy tổng số tiền một user đã chi tiêu
+    // gọi query tính tổng finalPrice theo userId -> trả về kết quả
     public BigDecimal getTotalSpending(Integer userId) {
         BigDecimal totalSpending = orderRepository.sumFinalPriceByUserId(userId);
 
         return totalSpending;
     }
 
+    // Xem trước giá đơn hàng (tạm tính, giảm giá, thành tiền) mà không lưu DB
+    // tính tạm tính từ danh sách sản phẩm -> không có voucher thì trả luôn -> kiểm tra voucher và
+    // userVoucher -> dựng order tạm -> rule engine tính giảm giá
     public OrderPreviewResponse previewOrder(OrderPreviewRequest request) {
         User user = getCurrentUser();
 

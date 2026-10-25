@@ -12,7 +12,9 @@ import group2d.promo_graud.modules.rules.enums.TypeOfRule;
 
 @Component
 public class TieredStrategy implements RuleStrategy {
-
+    // Tính tiền giảm giá theo bậc, đơn càng lớn thì giảm càng nhiều
+    // lấy danh sách tiers từ payload (rỗng thì giảm 0) -> lọc các bậc có min_order_value <= tổng
+    // đơn -> lấy discount_value lớn nhất trong các bậc đạt
     @Override
     @SuppressWarnings("unchecked")
     public BigDecimal calculateDiscount(Order order, RuleCampaign rule) {

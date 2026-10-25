@@ -33,6 +33,7 @@ public class VoucherBatchService {
         this.generateVoucherJob = generateVoucherJob;
     }
 
+    // Điểm vaào để baắt đầu chạy job
     public Long triggerGenerateVoucherJob(VoucherRequest req, RuleCampaign rule) {
         log.info(
                 "operator={}, thread={}", jobOperator.getClass(), Thread.currentThread().getName());

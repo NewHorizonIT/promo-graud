@@ -20,6 +20,9 @@ public class RuleEngine {
     private final StrategyFactory strategyFactory;
     private final EligibilityChecker eligibilityChecker;
 
+    // Áp dụng rule khuyến mãi lên đơn hàng và trả về số tiền giảm (điểm khởi đầu)
+    // kiểm tra đơn/user có đủ điều kiện không (không đủ thì ném RULE_NOT_ELIGIBLE) -> chọn strategy
+    // theo loại rule -> gọi calculateDiscount
     public BigDecimal applyRules(Order order, RuleCampaign rule, User user) {
         if (!eligibilityChecker.isEligible(order, rule, user)) {
             throw new AppException(RuleCampaignErrorCode.RULE_NOT_ELIGIBLE);

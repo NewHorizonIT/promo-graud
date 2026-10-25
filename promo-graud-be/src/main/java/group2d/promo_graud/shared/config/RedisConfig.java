@@ -22,7 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Component
 @EnableCaching
 public class RedisConfig {
-
+    // Chuyên doi du lieu String cho dễ nhìn ở phần lưu trữ (Redis luu du lieu dang byte nhung hien
+    // thi dung kieu du lieu nhu da cau hinh) THU CONG !!!
     @Bean
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory factory) {
         RedisTemplate<String, String> template = new RedisTemplate<>();
@@ -37,6 +38,7 @@ public class RedisConfig {
         return template;
     }
 
+    // Giong o tren nhung TU DONG
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory factory) {
         RedisCacheConfiguration config =

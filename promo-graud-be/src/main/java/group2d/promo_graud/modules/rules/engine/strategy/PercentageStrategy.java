@@ -11,7 +11,9 @@ import group2d.promo_graud.modules.rules.enums.TypeOfRule;
 
 @Component
 public class PercentageStrategy implements RuleStrategy {
-
+    // Tính tiền giảm giá theo phần trăm của tổng đơn, có giới hạn mức giảm tối đa
+    // lấy tổng tiền x phần trăm / 100 (làm tròn 2 số lẻ) -> nếu rule có mức giảm tối đa thì lấy số
+    // nhỏ hơn -> trả về tiền giảm
     @Override
     public BigDecimal calculateDiscount(Order order, RuleCampaign rule) {
         BigDecimal discount =

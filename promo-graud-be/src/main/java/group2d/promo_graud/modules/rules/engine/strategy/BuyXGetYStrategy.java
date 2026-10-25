@@ -15,7 +15,9 @@ import group2d.promo_graud.shared.exception.AppException;
 
 @Component
 public class BuyXGetYStrategy implements RuleStrategy {
-
+    // Tính tiền giảm giá cho chương trình mua X tặng Y
+    // đọc payload x_product, y_product -> kiểm tra thiếu dữ liệu -> tìm X trong đơn và đủ số lượng
+    // -> tính số set và số Y được tặng -> tìm Y trong đơn -> giảm = giá Y x số lượng tặng
     @Override
     @SuppressWarnings("unchecked")
     public BigDecimal calculateDiscount(Order order, RuleCampaign rule) {
