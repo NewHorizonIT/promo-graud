@@ -18,6 +18,7 @@ public class VoucherJobListener implements JobExecutionListener {
 
     private final StringRedisTemplate redisTemplate;
 
+    // Thống kê lại khi xong job
     @Override
     public void afterJob(JobExecution je) {
         long requested = je.getJobParameters().getLong("quantity");
