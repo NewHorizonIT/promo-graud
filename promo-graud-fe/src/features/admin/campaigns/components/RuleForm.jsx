@@ -41,7 +41,13 @@ const PAYLOAD_PLACEHOLDER = {
  * @param {function} props.onCancel
  * @param {boolean} [props.loading]
  */
-export default function RuleForm({ initial = EMPTY, campaigns, onSubmit, onCancel, loading = false }) {
+export default function RuleForm({
+  initial = EMPTY,
+  campaigns,
+  onSubmit,
+  onCancel,
+  loading = false,
+}) {
   const [form, setForm] = useState({ ...EMPTY, ...initial });
 
   const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -109,9 +115,7 @@ export default function RuleForm({ initial = EMPTY, campaigns, onSubmit, onCance
         {/* Campaign selector — only shown when campaigns list is provided */}
         {campaigns && (
           <div className="col-span-2">
-            <label className="block text-xs font-medium text-text-secondary mb-1">
-              Campaign *
-            </label>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Campaign *</label>
             <select
               value={form.campaign_id}
               onChange={(e) => set('campaign_id', e.target.value)}

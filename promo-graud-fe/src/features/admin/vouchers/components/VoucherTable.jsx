@@ -86,9 +86,7 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-xs text-text-secondary">
-                  {formatDate(v.expiredAt)}
-                </td>
+                <td className="py-3 px-4 text-xs text-text-secondary">{formatDate(v.expiredAt)}</td>
                 <td className="py-3 px-4 text-xs text-text-secondary capitalize">
                   {v.distributionChannel}
                 </td>

@@ -17,9 +17,9 @@ const EMPTY = {
   distribution_channel: 'EMAIL',
   prefix: '',
   // targeting — chỉ dùng cho UNIQUE
-  target_mode: 'none',        // 'none' | 'user_type' | 'user_ids'
+  target_mode: 'none', // 'none' | 'user_type' | 'user_ids'
   target_user_type: 'ALL',
-  target_user_ids: '',        // chuỗi IDs cách nhau bởi dấu phẩy
+  target_user_ids: '', // chuỗi IDs cách nhau bởi dấu phẩy
 };
 
 export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loading = false }) {
@@ -32,8 +32,7 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
   };
 
   const isUnique = form.type === 'UNIQUE';
-  const needsQuantity =
-    !isUnique || form.target_mode === 'none';
+  const needsQuantity = !isUnique || form.target_mode === 'none';
 
   const parsedUserIds = form.target_user_ids
     .split(',')
@@ -201,9 +200,7 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             onChange={(e) => set('expired_at', e.target.value)}
             className={`${inputClass} ${errors.expired_at ? 'border-error-text' : ''}`}
           />
-          {errors.expired_at && (
-            <p className="mt-1 text-xs text-error-text">{errors.expired_at}</p>
-          )}
+          {errors.expired_at && <p className="mt-1 text-xs text-error-text">{errors.expired_at}</p>}
         </div>
       </div>
 
@@ -270,9 +267,7 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">
                 User IDs <span className="text-error-text">*</span>
-                <span className="font-normal text-text-muted ml-1">
-                  — cách nhau bởi dấu phẩy
-                </span>
+                <span className="font-normal text-text-muted ml-1">— cách nhau bởi dấu phẩy</span>
               </label>
               <textarea
                 rows={3}
