@@ -43,8 +43,15 @@ public enum VoucherErrorCode implements BaseErrorCode {
             1815,
             "Job finished but the number of generated vouchers is less than requested",
             HttpStatus.MULTI_STATUS),
-    VOUCHER_BUSY(1808, "Voucher busy", HttpStatus.BAD_REQUEST);
-
+    VOUCHER_BUSY(1808, "Voucher busy", HttpStatus.BAD_REQUEST),
+    TARGET_QUANTITY_REQUIRED(
+            1816,
+            "Quantity is required when no user targeting is specified",
+            HttpStatus.BAD_REQUEST),
+    TARGET_USER_LIMIT_EXCEEDED(
+            1817,
+            "Targeted user count exceeds the maximum allowed (500) for synchronous generation",
+            HttpStatus.BAD_REQUEST);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;

@@ -1,12 +1,25 @@
 import { useState } from 'react';
 
+const USER_TYPES = [
+  { value: 'ALL', label: 'Tất cả user' },
+  { value: 'NORMAL', label: 'Bình thường' },
+  { value: 'BRONZE', label: 'Đồng' },
+  { value: 'SILVER', label: 'Bạc' },
+  { value: 'GOLD', label: 'Vàng' },
+];
+
 const EMPTY = {
   rule_id: '',
-  type: 'generic',
+  type: 'GENERIC',
   quantity: '',
   limit_client: '',
   expired_at: '',
-  distribution_channel: 'email',
+  distribution_channel: 'EMAIL',
+  prefix: '',
+  // targeting — chỉ dùng cho UNIQUE
+  target_mode: 'none',        // 'none' | 'user_type' | 'user_ids'
+  target_user_type: 'ALL',
+  target_user_ids: '',        // chuỗi IDs cách nhau bởi dấu phẩy
 };
 
 export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loading = false }) {
@@ -18,11 +31,27 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
+  const isUnique = form.type === 'UNIQUE';
+  const needsQuantity =
+    !isUnique || form.target_mode === 'none';
+
+  const parsedUserIds = form.target_user_ids
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter((n) => n > 0);
+
   const validate = () => {
     const e = {};
     if (!form.rule_id) e.rule_id = 'Chọn rule cho voucher';
-    if (!form.quantity || Number(form.quantity) <= 0) e.quantity = 'Số lượng phải lớn hơn 0';
+    if (needsQuantity && (!form.quantity || Number(form.quantity) <= 0)) {
+      e.quantity = 'Số lượng phải lớn hơn 0';
+    }
     if (!form.expired_at) e.expired_at = 'Chọn ngày hết hạn';
+    if (isUnique && form.target_mode === 'user_ids' && parsedUserIds.length === 0) {
+      e.target_user_ids = 'Nhập ít nhất 1 user ID hợp lệ';
+    }
     return e;
   };
 
@@ -33,14 +62,30 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
       setErrors(errs);
       return;
     }
-    onSubmit?.({
-      rule_id: Number(form.rule_id),
+
+    const body = {
+      ruleId: Number(form.rule_id),
       type: form.type,
-      quantity: Number(form.quantity),
-      limit_client: form.limit_client ? Number(form.limit_client) : undefined,
-      expired_at: form.expired_at,
-      distribution_channel: form.distribution_channel,
-    });
+      prefix: form.prefix ?? '',
+      limitClient: form.limit_client ? Number(form.limit_client) : 1,
+      expiredAt: form.expired_at,
+      distributionChannel: form.distribution_channel,
+    };
+
+    if (needsQuantity) {
+      body.quantity = Number(form.quantity);
+    }
+
+    if (isUnique) {
+      if (form.target_mode === 'user_type') {
+        body.targetUserType = form.target_user_type;
+      } else if (form.target_mode === 'user_ids') {
+        body.targetUserIds = parsedUserIds;
+        body.quantity = parsedUserIds.length;
+      }
+    }
+
+    onSubmit?.(body);
   };
 
   const inputClass =
@@ -61,11 +106,27 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
           <option value="">— Chọn rule —</option>
           {rules.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.name}
+              {r.campaignName ? `[${r.campaignName}] ${r.name}` : r.name}
             </option>
           ))}
         </select>
         {errors.rule_id && <p className="mt-1 text-xs text-error-text">{errors.rule_id}</p>}
+      </div>
+
+      {/* Prefix */}
+      <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          Prefix mã voucher
+          <span className="font-normal text-text-muted ml-1">— tuỳ chọn, VD: SUMMER2026</span>
+        </label>
+        <input
+          type="text"
+          value={form.prefix}
+          onChange={(e) => set('prefix', e.target.value)}
+          placeholder="Để trống → mã ngẫu nhiên 8 ký tự"
+          className={inputClass}
+          maxLength={20}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -79,27 +140,40 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             onChange={(e) => set('type', e.target.value)}
             className={inputClass}
           >
-            <option value="generic">Generic — 1 mã nhiều người dùng</option>
-            <option value="unique">Unique — N mã riêng từng người</option>
+            <option value="GENERIC">Generic — 1 mã nhiều người dùng</option>
+            <option value="UNIQUE">Unique — N mã riêng từng người</option>
           </select>
         </div>
 
-        {/* Quantity */}
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
-            {form.type === 'generic' ? 'Số lượt dùng' : 'Số mã cần sinh'}{' '}
-            <span className="text-error-text">*</span>
-          </label>
-          <input
-            type="number"
-            min={1}
-            value={form.quantity}
-            onChange={(e) => set('quantity', e.target.value)}
-            placeholder="VD: 100"
-            className={`${inputClass} ${errors.quantity ? 'border-error-text' : ''}`}
-          />
-          {errors.quantity && <p className="mt-1 text-xs text-error-text">{errors.quantity}</p>}
-        </div>
+        {/* Quantity — ẩn khi UNIQUE + có targeting tự động */}
+        {needsQuantity ? (
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              {isUnique ? 'Số mã cần sinh' : 'Số lượt dùng'}{' '}
+              <span className="text-error-text">*</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={form.quantity}
+              onChange={(e) => set('quantity', e.target.value)}
+              placeholder="VD: 100"
+              className={`${inputClass} ${errors.quantity ? 'border-error-text' : ''}`}
+            />
+            {errors.quantity && <p className="mt-1 text-xs text-error-text">{errors.quantity}</p>}
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              Số mã cần sinh
+            </label>
+            <div className={`${inputClass} flex items-center text-text-muted italic`}>
+              {form.target_mode === 'user_ids'
+                ? `${parsedUserIds.length} mã (theo danh sách)`
+                : 'Tự động theo số user'}
+            </div>
+          </div>
+        )}
 
         {/* Limit per client */}
         <div>
@@ -127,9 +201,98 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             onChange={(e) => set('expired_at', e.target.value)}
             className={`${inputClass} ${errors.expired_at ? 'border-error-text' : ''}`}
           />
-          {errors.expired_at && <p className="mt-1 text-xs text-error-text">{errors.expired_at}</p>}
+          {errors.expired_at && (
+            <p className="mt-1 text-xs text-error-text">{errors.expired_at}</p>
+          )}
         </div>
       </div>
+
+      {/* ── Targeting — chỉ hiện khi UNIQUE ── */}
+      {isUnique && (
+        <div className="border border-border rounded-xl p-4 space-y-3 bg-surface">
+          <p className="text-sm font-semibold text-text-primary">Đối tượng nhận voucher</p>
+
+          <div className="flex flex-col gap-2">
+            {[
+              { value: 'none', label: 'Không chỉ định — chỉ sinh mã, phân phối sau' },
+              { value: 'user_type', label: 'Theo loại user — phân phối tự động cho 1 loại' },
+              { value: 'user_ids', label: 'Danh sách user — nhập ID cụ thể' },
+            ].map((opt) => (
+              <label
+                key={opt.value}
+                className={`flex items-center gap-3 px-3 py-2.5 border rounded-xl cursor-pointer transition-all ${
+                  form.target_mode === opt.value
+                    ? 'border-primary bg-primary-light'
+                    : 'border-border hover:bg-surface-muted'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="target_mode"
+                  value={opt.value}
+                  checked={form.target_mode === opt.value}
+                  onChange={() => set('target_mode', opt.value)}
+                  className="accent-primary"
+                />
+                <span
+                  className={`text-sm font-medium ${
+                    form.target_mode === opt.value ? 'text-primary' : 'text-text-secondary'
+                  }`}
+                >
+                  {opt.label}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Loại user */}
+          {form.target_mode === 'user_type' && (
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                Loại user <span className="text-error-text">*</span>
+              </label>
+              <select
+                value={form.target_user_type}
+                onChange={(e) => set('target_user_type', e.target.value)}
+                className={inputClass}
+              >
+                {USER_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Danh sách user IDs */}
+          {form.target_mode === 'user_ids' && (
+            <div>
+              <label className="block text-sm font-medium text-text-secondary mb-1.5">
+                User IDs <span className="text-error-text">*</span>
+                <span className="font-normal text-text-muted ml-1">
+                  — cách nhau bởi dấu phẩy
+                </span>
+              </label>
+              <textarea
+                rows={3}
+                value={form.target_user_ids}
+                onChange={(e) => set('target_user_ids', e.target.value)}
+                placeholder="VD: 1, 2, 3, 4, 5"
+                className={`w-full px-4 py-2.5 rounded-xl border bg-surface-muted text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none ${
+                  errors.target_user_ids ? 'border-error-text' : 'border-border'
+                }`}
+              />
+              {parsedUserIds.length > 0 && (
+                <p className="mt-1 text-xs text-text-muted">{parsedUserIds.length} user hợp lệ</p>
+              )}
+              {errors.target_user_ids && (
+                <p className="mt-1 text-xs text-error-text">{errors.target_user_ids}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Distribution channel */}
       <div>
@@ -137,11 +300,14 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
           Kênh phân phối
         </label>
         <div className="flex gap-3">
-          {['email', 'webhook'].map((ch) => (
+          {[
+            { value: 'EMAIL', label: 'Email' },
+            { value: 'WEBHOOK', label: 'Webhook' },
+          ].map((ch) => (
             <label
-              key={ch}
+              key={ch.value}
               className={`flex-1 flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${
-                form.distribution_channel === ch
+                form.distribution_channel === ch.value
                   ? 'border-primary bg-primary-light text-primary'
                   : 'border-border bg-surface hover:bg-surface-muted text-text-secondary'
               }`}
@@ -149,12 +315,12 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
               <input
                 type="radio"
                 name="channel"
-                value={ch}
-                checked={form.distribution_channel === ch}
-                onChange={() => set('distribution_channel', ch)}
+                value={ch.value}
+                checked={form.distribution_channel === ch.value}
+                onChange={() => set('distribution_channel', ch.value)}
                 className="hidden"
               />
-              <span className="text-sm font-semibold capitalize">{ch}</span>
+              <span className="text-sm font-semibold">{ch.label}</span>
             </label>
           ))}
         </div>

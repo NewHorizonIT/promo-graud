@@ -21,6 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
+import group2d.promo_graud.modules.user.entity.User;
+import group2d.promo_graud.modules.user.entity.UserVoucher;
+import group2d.promo_graud.modules.user.enums.UserTypeEnum;
+import group2d.promo_graud.modules.user.repository.UserRepository;
+import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
 import group2d.promo_graud.modules.voucher.Voucher;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
@@ -41,12 +46,14 @@ import group2d.promo_graud.shared.exception.AppException;
 public class VoucherService {
 
     private final VoucherInsertHelper voucherInsertHelper;
-
     private final VoucherBatchService voucherBatchService;
-
     private final VoucherRepository voucherRepository;
     private final RuleCampaignRepository ruleCampaignRepository;
+    private final UserRepository userRepository;
+    private final UserVoucherRepository userVoucherRepository;
     private final JobRepository jobRepository;
+
+    private static final int MAX_TARGETED_USERS = 500;
 
     @Value("${voucher.batch.unique-threshold:50}")
     private int uniqueThreshold;
@@ -161,9 +168,11 @@ public class VoucherService {
                         .findById(request.getRuleId())
                         .orElseThrow(() -> new AppException(RuleCampaignErrorCode.RULE_NOT_EXIST));
 
-        // GENERIC
+        // GENERIC — targeting không áp dụng cho loại này
         if (request.getType() == VoucherType.GENERIC) {
-
+            if (request.getQuantity() == null) {
+                throw new AppException(VoucherErrorCode.TARGET_QUANTITY_REQUIRED);
+            }
             List<Voucher> voucherList = createGeneric(request, rule);
             return CreateVoucherResponse.builder()
                     .generated(voucherList.size())
@@ -171,6 +180,28 @@ public class VoucherService {
                     .status("completed")
                     .jobId(null)
                     .build();
+        }
+
+        // UNIQUE — resolve danh sách user mục tiêu (nếu có)
+        List<User> targetUsers = resolveTargetUsers(request);
+
+        if (!targetUsers.isEmpty()) {
+            if (targetUsers.size() > MAX_TARGETED_USERS) {
+                throw new AppException(VoucherErrorCode.TARGET_USER_LIMIT_EXCEEDED);
+            }
+            List<Voucher> vouchers = createUniqueSync(request, rule, targetUsers.size());
+            distributeToUsers(vouchers, targetUsers);
+            return CreateVoucherResponse.builder()
+                    .generated(vouchers.size())
+                    .vouchers(vouchers)
+                    .status("completed")
+                    .jobId(null)
+                    .build();
+        }
+
+        // UNIQUE không có targeting — fallback theo threshold
+        if (request.getQuantity() == null) {
+            throw new AppException(VoucherErrorCode.TARGET_QUANTITY_REQUIRED);
         }
         if (request.getQuantity() >= uniqueThreshold) {
             Long jobId = voucherBatchService.triggerGenerateVoucherJob(request, rule);
@@ -182,13 +213,35 @@ public class VoucherService {
                     .build();
         }
 
-        List<Voucher> voucherList = createUniqueSync(request, rule);
+        List<Voucher> voucherList = createUniqueSync(request, rule, request.getQuantity());
         return CreateVoucherResponse.builder()
                 .generated(voucherList.size())
                 .vouchers(voucherList)
                 .status("completed")
                 .jobId(null)
                 .build();
+    }
+
+    private List<User> resolveTargetUsers(VoucherRequest request) {
+        if (request.getTargetUserIds() != null && !request.getTargetUserIds().isEmpty()) {
+            return userRepository.findByIdInAndIsDeletedFalse(request.getTargetUserIds());
+        }
+        if (request.getTargetUserType() != null) {
+            if (request.getTargetUserType() == UserTypeEnum.ALL) {
+                return userRepository.findByIsDeletedFalse();
+            }
+            return userRepository.findByTypeOfUserTypeAndIsDeletedFalse(
+                    request.getTargetUserType());
+        }
+        return List.of();
+    }
+
+    private void distributeToUsers(List<Voucher> vouchers, List<User> users) {
+        List<UserVoucher> records = new ArrayList<>();
+        for (int i = 0; i < vouchers.size() && i < users.size(); i++) {
+            records.add(UserVoucher.builder().user(users.get(i)).voucher(vouchers.get(i)).build());
+        }
+        userVoucherRepository.saveAll(records);
     }
 
     // Insert thẳng 1 bản ghi vào db (GENERIC)
@@ -214,9 +267,8 @@ public class VoucherService {
     }
 
     // Insert thẳng N voucher vào db (UNIQUE)
-    private List<Voucher> createUniqueSync(VoucherRequest request, RuleCampaign rule) {
-
-        int quantity = request.getQuantity();
+    private List<Voucher> createUniqueSync(
+            VoucherRequest request, RuleCampaign rule, int quantity) {
         List<Voucher> listVoucher = new ArrayList<>();
 
         int totalAttempts = 0; // index
@@ -268,5 +320,14 @@ public class VoucherService {
                         .orElseThrow(() -> new AppException(VoucherErrorCode.NOT_EXIST));
 
         return VoucherResponse.fromEntity(voucher);
+    }
+
+    public void delete(Integer id) {
+        Voucher voucher =
+                voucherRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(VoucherErrorCode.NOT_EXIST));
+        voucher.setStatus(VoucherStatus.DISABLED);
+        voucherRepository.save(voucher);
     }
 }

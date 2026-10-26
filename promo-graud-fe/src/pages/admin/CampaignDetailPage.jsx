@@ -7,6 +7,7 @@ import { useCampaign } from '../../features/admin/campaigns/hooks/useCampaigns';
 import {
   useRules,
   useCreateRule,
+  useUpdateRule,
   useDeleteRule,
 } from '../../features/admin/campaigns/hooks/useRules';
 import { useCampaignStats } from '../../features/admin/analytics/hooks/useAnalytics';
@@ -31,6 +32,7 @@ export default function CampaignDetailPage() {
   const { data: rulesPage } = useRules(id);
   const { data: stats } = useCampaignStats(id);
   const createRule = useCreateRule();
+  const updateRule = useUpdateRule();
   const deleteRule = useDeleteRule();
 
   const rules = rulesPage?.data ?? [];
@@ -127,6 +129,7 @@ export default function CampaignDetailPage() {
             campaignId={id}
             rules={rules}
             onAdd={(body) => createRule.mutate({ campaignId: id, body })}
+            onEdit={(ruleId, body) => updateRule.mutate({ campaignId: id, ruleId, body })}
             onDelete={(ruleId) => {
               if (confirm('Xóa rule này?')) deleteRule.mutate({ campaignId: id, ruleId });
             }}
