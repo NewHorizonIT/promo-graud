@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -102,7 +103,7 @@ public class UserService {
     }
 
     public Page<UserResponse> getAllUser(Integer userTypeId, String name, int size, int page) {
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
         String keyword = name == null ? "" : name.trim();
         return userRepository
                 .getAllUser(userTypeId, keyword, pageable)

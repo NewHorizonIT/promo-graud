@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -109,7 +110,7 @@ public class TypeOfUserServiceTest {
                         .threshold(BigDecimal.valueOf(3500000))
                         .build();
 
-        when(typeOfUserRepository.findAll())
+        when(typeOfUserRepository.findAll(any(Sort.class)))
                 .thenReturn(List.of(typeOfUser1, typeOfUser2, typeOfUser3));
         List<TypeOfUserResponse> responses = typeOfUserService.findAll();
         assertNotNull(responses);
@@ -117,17 +118,17 @@ public class TypeOfUserServiceTest {
         assertEquals(UserTypeEnum.NORMAL, responses.get(0).getType());
         assertEquals(UserTypeEnum.SILVER, responses.get(1).getType());
         assertEquals(UserTypeEnum.GOLD, responses.get(2).getType());
-        verify(typeOfUserRepository).findAll();
+        verify(typeOfUserRepository).findAll(any(Sort.class));
     }
 
     @Test
     @DisplayName("TC5:Lấy tất cả loại người dùng khi danh sách rỗng")
     public void findAllEmpty() {
-        when(typeOfUserRepository.findAll()).thenReturn(List.of());
+        when(typeOfUserRepository.findAll(any(Sort.class))).thenReturn(List.of());
         List<TypeOfUserResponse> responses = typeOfUserService.findAll();
         assertNotNull(responses);
         assertEquals(0, responses.size());
-        verify(typeOfUserRepository).findAll();
+        verify(typeOfUserRepository).findAll(any(Sort.class));
     }
 
     @Test
