@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Megaphone, Ticket, ShoppingBag, Package } from 'lucide-react';
+import { LayoutDashboard, Megaphone, Ticket, ShoppingBag, Package, User } from 'lucide-react';
 
 const NAV_ITEMS = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/admin/vouchers', label: 'Vouchers', icon: Ticket },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/products', label: 'Products', icon: Package },
+  { to: '/admin/users', label: 'Users', icon: User },
 ];
 
 export default function AdminSidebar() {

@@ -39,7 +39,7 @@ public class TypeOfUserController {
         return ResponseEntity.ok(
                 ApiResponse.<List<TypeOfUserResponse>>builder()
                         .code(200)
-                        .message("Create type-of-user success")
+                        .message("Get all type-of-user success")
                         .result(listTypeOfUser)
                         .build());
     }

@@ -23,6 +23,10 @@ import ProductFormPage from '../pages/admin/ProductFormPage';
 import ProductDetailPage from '../pages/admin/ProductDetailPage';
 import ProductPage from '../pages/admin/ProductPage';
 import ProductTypesPage from '../pages/admin/ProductTypesPage';
+import UsersPage from '../pages/admin/UserPage';
+import UserTypesPage from '../pages/admin/UserTypePage';
+import UserFormPage from '../pages/admin/UserFormPage';
+import UserDetailPage from '../pages/admin/UserDetailPage';
 
 export default function AppRoutes() {
   return (
@@ -79,6 +83,11 @@ export default function AppRoutes() {
         <Route path="products/:id" element={<ProductDetailPage />} />
         <Route path="products/:id/edit" element={<ProductFormPage />} />
         <Route path="product-types" element={<ProductTypesPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="users/new" element={<UserFormPage />} />
+        <Route path="users/:id" element={<UserDetailPage />} />
+        <Route path="users/:id/edit" element={<UserFormPage />} />
+        <Route path="user-types" element={<UserTypesPage />} />
       </Route>
     </Routes>
   );

@@ -86,6 +86,7 @@ export function useUpdateTypeProduct() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: ['admin', 'product-types', id] });
       qc.invalidateQueries({ queryKey: ['admin', 'product-types'] });
+      qc.invalidateQueries({ queryKey: ['admin', 'products'] });
     },
   });
 }

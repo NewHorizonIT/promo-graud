@@ -14,7 +14,7 @@ import group2d.promo_graud.modules.user.enums.RoleEnum;
 @NoArgsConstructor
 public class UserRequest {
     @NotBlank(message = "Username không được để trống")
-    @Size(min = 3, message = "Password phải có ít nhất 6 kí tự")
+    @Size(min = 3, message = "name phải có ít nhất 6 kí tự")
     String username;
 
     @NotBlank(message = "Email không được để trống")
