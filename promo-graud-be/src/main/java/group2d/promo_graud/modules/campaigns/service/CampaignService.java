@@ -1,8 +1,9 @@
-package group2d.promo_graud.modules.campaigns;
+package group2d.promo_graud.modules.campaigns.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,10 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
+import group2d.promo_graud.modules.campaigns.Campaign;
+import group2d.promo_graud.modules.campaigns.CampaignErrorCode;
+import group2d.promo_graud.modules.campaigns.CampaignRepository;
+import group2d.promo_graud.modules.campaigns.CampaignStatus;
 import group2d.promo_graud.modules.campaigns.dto.CampaignRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
 import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
@@ -23,6 +28,8 @@ import group2d.promo_graud.shared.exception.AppException;
 @RequiredArgsConstructor
 public class CampaignService {
     private final CampaignRepository campaignRepository;
+    private final CampaignStatusUpdater campaignStatusUpdater;
+    private final JobScheduler jobScheduler;
 
     // Tạo chiến dịch
     public CampaignResponse createCampaign(CampaignRequest request) {
@@ -38,6 +45,8 @@ public class CampaignService {
                         .build();
 
         Campaign savedCampaign = campaignRepository.save(campaign);
+
+        scheduleStatusJobs(savedCampaign);
 
         return mapToCampaignResponse(savedCampaign);
     }
@@ -70,6 +79,8 @@ public class CampaignService {
         campaign.setEndTime(request.getEndTime());
         campaign.setPromotionBudget(request.getPromotionBudget());
         Campaign savedCampaign = campaignRepository.save(campaign);
+
+        scheduleStatusJobs(savedCampaign);
         return mapToCampaignResponse(savedCampaign);
     }
 
@@ -212,5 +223,12 @@ public class CampaignService {
                 throw new AppException(CampaignErrorCode.END_TIME_MUST_BE_AFTER_START_TIME);
             }
         }
+    }
+
+    private void scheduleStatusJobs(Campaign campaign) {
+        Integer campaignId = campaign.getId(); // lấy ra biến local trước khi đưa vào lambda
+        jobScheduler.schedule(
+                campaign.getStartTime(), () -> campaignStatusUpdater.activate(campaignId));
+        jobScheduler.schedule(campaign.getEndTime(), () -> campaignStatusUpdater.end(campaignId));
     }
 }

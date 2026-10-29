@@ -12,6 +12,7 @@ import group2d.promo_graud.modules.campaigns.dto.CampaignRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
 import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
+import group2d.promo_graud.modules.campaigns.service.CampaignService;
 import group2d.promo_graud.shared.dto.*;
 
 @RestController
@@ -29,7 +30,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Tạo campaign thành công")
                         .result(response)
                         .build());
@@ -44,7 +45,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Sửa thông tin campaign thành công")
                         .result(response)
                         .build());
@@ -59,7 +60,7 @@ public class CampaignController {
 
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Cập nhật status thành công")
                         .result(response)
                         .build());
@@ -90,10 +91,7 @@ public class CampaignController {
         campaignService.deleteCampaign(id);
 
         return ResponseEntity.ok(
-                ApiResponse.<Void>builder()
-                        .code(1000)
-                        .message("Xóa thành công chiến dịch")
-                        .build());
+                ApiResponse.<Void>builder().code(200).message("Xóa thành công chiến dịch").build());
     }
 
     // lấy chi tiết chiến dịch
@@ -102,7 +100,7 @@ public class CampaignController {
         CampaignResponse response = campaignService.getCampaignById(id);
         return ResponseEntity.ok(
                 ApiResponse.<CampaignResponse>builder()
-                        .code(1000)
+                        .code(200)
                         .message("Lấy chi tiết thông tin chiến dịch thành công")
                         .result(response)
                         .build());
