@@ -2,6 +2,10 @@ package group2d.promo_graud.modules.user.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -14,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import group2d.promo_graud.modules.auth.AuthErrorCode;
 import group2d.promo_graud.modules.orders.service.OrderService;
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
+import group2d.promo_graud.modules.user.dto.request.UserUpdateRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
 import group2d.promo_graud.modules.user.entity.User;
@@ -48,7 +53,7 @@ public class UserService {
         return mapToUserResponse(userRepository.save(user));
     }
 
-    public UserResponse updateUser(UserRequest request, Integer id) {
+    public UserResponse updateUser(UserUpdateRequest request, Integer id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         User user =
@@ -64,7 +69,10 @@ public class UserService {
         }
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        // Nếu nhập password mới thì đổi, bỏ trống thì giữ nguyên password cũ
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
         user.setRole(request.getRole());
         TypeOfUser typeOfUser =
                 typeOfUserRepository
@@ -89,7 +97,26 @@ public class UserService {
                 userRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
-        return mapToUserResponse(user);
+        UserResponse response = mapToUserResponse(user);
+        response.setTotalSpending(orderService.getTotalSpending(id));
+        return response;
+    }
+
+    public Page<UserResponse> getAllUser(Integer userTypeId, String name, int size, int page) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
+        String keyword = name == null ? "" : name.trim();
+        return userRepository
+                .getAllUser(userTypeId, keyword, pageable)
+                .map(this::mapToUserResponse);
+    }
+
+    public void deleteUser(Integer id) {
+        User user =
+                userRepository
+                        .findByIdAndIsDeletedFalse(id)
+                        .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+        user.setIsDeleted(true);
+        userRepository.save(user);
     }
 
     public UserResponse getMyProfile(Integer id) {
@@ -113,6 +140,7 @@ public class UserService {
                 .isDelete(user.getIsDeleted())
                 .typeOfUserId(typeOfUser != null ? typeOfUser.getId() : null)
                 .typeOfUserType(typeOfUser != null ? typeOfUser.getType() : null)
+                .typeOfUserThreshold(typeOfUser != null ? typeOfUser.getThreshold() : null)
                 .createdAt(user.getCreatedAt())
                 .updateAt(user.getUpdatedAt())
                 .build();

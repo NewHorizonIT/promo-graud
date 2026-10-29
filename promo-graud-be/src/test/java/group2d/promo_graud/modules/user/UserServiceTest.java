@@ -21,7 +21,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import group2d.promo_graud.modules.orders.service.OrderService;
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
+import group2d.promo_graud.modules.user.dto.request.UserUpdateRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
 import group2d.promo_graud.modules.user.entity.User;
@@ -42,6 +44,8 @@ class UserServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private UserService userService;
+
+    @Mock private OrderService orderService;
 
     @AfterEach
     void clearSecurityContext() {
@@ -130,8 +134,8 @@ class UserServiceTest {
                         .threshold(BigDecimal.valueOf(3500000))
                         .build();
 
-        UserRequest request =
-                UserRequest.builder()
+        UserUpdateRequest request =
+                UserUpdateRequest.builder()
                         .username("huy123")
                         .email("new@gmail.com")
                         .password("newPassword")
@@ -183,8 +187,8 @@ class UserServiceTest {
     @DisplayName("TC4: Cập nhật User không tồn tại")
     void updateUserNotFound() {
         Integer id = 999;
-        UserRequest request =
-                UserRequest.builder()
+        UserUpdateRequest request =
+                UserUpdateRequest.builder()
                         .username("huy")
                         .email("huy@gmail.com")
                         .password("123456")
@@ -247,6 +251,7 @@ class UserServiceTest {
     @DisplayName("TC7: Tìm User theo ID thành công")
     void findUserByIdSuccess() {
         Integer id = 1;
+        BigDecimal expectedSpending = new BigDecimal("500000");
         User user =
                 User.builder()
                         .id(id)
@@ -256,6 +261,7 @@ class UserServiceTest {
                         .build();
 
         when(userRepository.findById(id)).thenReturn(Optional.of(user));
+        when(orderService.getTotalSpending(id)).thenReturn(expectedSpending);
 
         UserResponse response = userService.findUserById(id);
 
@@ -266,6 +272,7 @@ class UserServiceTest {
         assertEquals(RoleEnum.USER, response.getRole());
 
         verify(userRepository).findById(id);
+        verify(orderService).getTotalSpending(id);
     }
 
     @Test

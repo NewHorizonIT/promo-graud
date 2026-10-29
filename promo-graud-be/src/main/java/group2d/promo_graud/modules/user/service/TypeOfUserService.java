@@ -2,6 +2,7 @@ package group2d.promo_graud.modules.user.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import group2d.promo_graud.modules.user.dto.request.TypeOfUserRequest;
@@ -53,7 +54,9 @@ public class TypeOfUserService {
     }
 
     public List<TypeOfUserResponse> findAll() {
-        return typeOfUserRepository.findAll().stream().map(this::mapToTypeOfUserResponse).toList();
+        return typeOfUserRepository.findAll(Sort.by(Sort.Direction.ASC, "id")).stream()
+                .map(this::mapToTypeOfUserResponse)
+                .toList();
     }
 
     public TypeOfUserResponse mapToTypeOfUserResponse(TypeOfUser typeOfUser) {
