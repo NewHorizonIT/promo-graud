@@ -16,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 import group2d.promo_graud.modules.campaigns.Campaign;
 import group2d.promo_graud.modules.campaigns.CampaignRepository;
 import group2d.promo_graud.modules.rules.dto.request.RuleCreateRequest;
+import group2d.promo_graud.modules.rules.dto.request.RuleUpdateRequest;
 import group2d.promo_graud.modules.rules.dto.response.RuleResponse;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
@@ -65,6 +66,55 @@ public class RuleCampaignService {
                 .totalItems(result.getTotalElements())
                 .totalPages(result.getTotalPages())
                 .build();
+    }
+
+    // ---------------------- Cập nhật ------------------------
+    public RuleResponse updateRule(Integer id, RuleUpdateRequest request) {
+        RuleCampaign rule =
+                ruleRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(RuleCampaignErrorCode.RULE_NOT_EXIST));
+
+        if (request.getCampaignId() != null) {
+            Campaign newCampaign =
+                    campaignRepository
+                            .findById(request.getCampaignId())
+                            .orElseThrow(
+                                    () ->
+                                            new AppException(
+                                                    RuleCampaignErrorCode.CAMPAIGN_NOT_FOUND));
+            rule.setCampaign(newCampaign);
+        }
+
+        if (request.getName() != null) {
+            rule.setName(request.getName());
+        }
+        if (request.getTypeOfRule() != null) {
+            rule.setTypeOfRule(request.getTypeOfRule());
+        }
+        if (request.getValue() != null) {
+            rule.setValue(request.getValue());
+        }
+        if (request.getMaxDiscountValue() != null) {
+            rule.setMaxDiscountValue(request.getMaxDiscountValue());
+        }
+        if (request.getMinOrderValue() != null) {
+            rule.setMinOrderValue(request.getMinOrderValue());
+        }
+        if (request.getTypeOfUser() != null) {
+            rule.setTypeOfUser(request.getTypeOfUser());
+        }
+        if (request.getStartTime() != null) {
+            rule.setStartTime(request.getStartTime());
+        }
+        if (request.getEndTime() != null) {
+            rule.setEndTime(request.getEndTime());
+        }
+        if (request.getPayload() != null) {
+            rule.setPayload(request.getPayload());
+        }
+
+        return RuleResponse.fromEntity(ruleRepository.save(rule));
     }
 
     // ------------------------ Xóa ---------------------------

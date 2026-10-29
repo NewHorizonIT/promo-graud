@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.rules.dto.request.RuleCreateRequest;
+import group2d.promo_graud.modules.rules.dto.request.RuleUpdateRequest;
 import group2d.promo_graud.modules.rules.dto.response.RuleResponse;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
@@ -47,9 +48,21 @@ public class RuleController {
                         .build());
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<RuleResponse>> updateRule(
+            @PathVariable Integer id, @Valid @RequestBody RuleUpdateRequest request) {
+        RuleResponse response = ruleCampaignService.updateRule(id, request);
+        return ResponseEntity.ok(
+                ApiResponse.<RuleResponse>builder()
+                        .code(1000)
+                        .message("Cập nhật rule thành công")
+                        .result(response)
+                        .build());
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteRules(@PathVariable("id") Integer id) {
-        deleteRules(id);
+        ruleCampaignService.deleteRule(id);
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder().code(1000).message("Xóa voucher thành công ").build());
     }

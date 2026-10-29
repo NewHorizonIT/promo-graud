@@ -79,4 +79,11 @@ public class VoucherController {
                         .message("Lấy chi tiết voucher thành công")
                         .build());
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteVoucher(@PathVariable Integer id) {
+        voucherService.delete(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder().code(200).message("Xóa voucher thành công").build());
+    }
 }

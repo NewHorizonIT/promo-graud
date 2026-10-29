@@ -3,11 +3,25 @@ import { Plus, Pencil, Trash2 } from 'lucide-react';
 import RuleForm from './RuleForm';
 
 const RULE_TYPE_LABELS = {
-  giam_truc_tiep: 'Giảm trực tiếp',
-  giam_phan_tram: 'Giảm %',
-  mua_x_tang_y: 'Mua X tặng Y',
-  tiered: 'Tiered',
+  FIXED_AMOUNT: 'Giảm trực tiếp',
+  PERCENTAGE: 'Giảm %',
+  BUY_X_GET_Y: 'Mua X tặng Y',
+  TIERED: 'Tiered',
 };
+
+function toFormState(rule) {
+  return {
+    name: rule.name ?? '',
+    type_of_rule: rule.typeOfRule ?? 'PERCENTAGE',
+    value: String(rule.value ?? ''),
+    max_discount_value: String(rule.maxDiscountValue ?? ''),
+    min_order_value: String(rule.minOrderValue ?? ''),
+    type_of_user: rule.typeOfUser ?? 'ALL',
+    start_time: rule.startTime?.slice(0, 16) ?? '',
+    end_time: rule.endTime?.slice(0, 16) ?? '',
+    payload: rule.payload ? JSON.stringify(rule.payload) : '',
+  };
+}
 
 export default function RuleList({ rules = [], onAdd, onEdit, onDelete }) {
   const [showForm, setShowForm] = useState(false);
@@ -58,7 +72,7 @@ export default function RuleList({ rules = [], onAdd, onEdit, onDelete }) {
               <div className="bg-surface-muted border border-border rounded-xl p-4">
                 <p className="text-sm font-semibold text-text-primary mb-3">Sửa Rule</p>
                 <RuleForm
-                  initial={rule}
+                  initial={toFormState(rule)}
                   onSubmit={handleEdit}
                   onCancel={() => setEditTarget(null)}
                 />
@@ -69,12 +83,12 @@ export default function RuleList({ rules = [], onAdd, onEdit, onDelete }) {
                   <p className="text-sm font-semibold text-text-primary">{rule.name}</p>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-primary bg-primary-light px-2 py-0.5 rounded-sm font-semibold">
-                      {RULE_TYPE_LABELS[rule.type_of_rule] ?? rule.type_of_rule}
+                      {RULE_TYPE_LABELS[rule.typeOfRule] ?? rule.typeOfRule}
                     </span>
                     <span className="text-xs text-text-muted">Giá trị: {rule.value}</span>
-                    {rule.min_order_value && (
+                    {rule.minOrderValue && (
                       <span className="text-xs text-text-muted">
-                        Đơn tối thiểu: {rule.min_order_value.toLocaleString('vi-VN')}đ
+                        Đơn tối thiểu: {Number(rule.minOrderValue).toLocaleString('vi-VN')}đ
                       </span>
                     )}
                   </div>
