@@ -12,7 +12,12 @@ import group2d.promo_graud.modules.rules.dto.request.RuleUpdateRequest;
 import group2d.promo_graud.modules.rules.dto.response.RuleResponse;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(
+        name = "Rules",
+        description =
+                "Quản lý rule engine: giam_truc_tiep, giam_phan_tram, mua_x_tang_y, tiered, flash_sale")
 @RestController
 @RequestMapping("/api/v1/rules")
 @RequiredArgsConstructor

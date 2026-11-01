@@ -34,6 +34,10 @@ public class SecurityConfig {
     private final String[] publicEndpointsGet = {
         "/api/v1/vouchers", "/api/v1/products", "/api/v1/products/type"
     };
+
+    private final String[] swaggerEndpoint = {
+        "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**"
+    };
     private CustomJwtDecoder customJwtDecoder;
 
     public SecurityConfig(CustomJwtDecoder customJwtDecoder) {
@@ -47,6 +51,8 @@ public class SecurityConfig {
                         request.requestMatchers(HttpMethod.POST, publicEndpoints)
                                 .permitAll()
                                 .requestMatchers(HttpMethod.GET, publicEndpointsGet)
+                                .permitAll()
+                                .requestMatchers(swaggerEndpoint)
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated());
