@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { login, logout } from '../services/authService';
+import { login, logout, register } from '../services/authService';
 import { getMe } from '../../user/services/userService';
 import { useAuthStore } from '../../../store/authStore';
 
@@ -40,5 +40,11 @@ export function useLogout() {
       // Xóa toàn bộ cache khi logout để không lộ data của user cũ
       queryClient.clear();
     },
+  });
+}
+
+export function useRegister() {
+  return useMutation({
+    mutationFn: ({ username, email, password }) => register(username, email, password),
   });
 }

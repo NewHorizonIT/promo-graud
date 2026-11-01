@@ -52,9 +52,14 @@ public class UserVoucherService {
 
     public User getUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+        User user =
+                userRepository
+                        .findByUsername(authentication.getName())
+                        .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+        if (user.getIsDeleted()) {
+            throw new AppException(UserErrorCode.USER_NOT_EXISTS);
+        }
+        return user;
     }
 
     public Voucher getVoucher(Integer voucherId) {

@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import group2d.promo_graud.modules.user.dto.request.RegisterRequest;
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.request.UserUpdateRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
@@ -26,6 +27,18 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<ApiResponse<UserResponse>> register(
+            @Valid @RequestBody RegisterRequest request) {
+        UserResponse userResponse = userService.registerUser(request);
+        return ResponseEntity.ok(
+                ApiResponse.<UserResponse>builder()
+                        .code(201)
+                        .message("Đăng ký thành công")
+                        .result(userResponse)
+                        .build());
     }
 
     @PostMapping
@@ -87,7 +100,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> updateUser(
-            @RequestBody UserUpdateRequest request, @PathVariable Integer id) {
+            @RequestBody @Valid UserUpdateRequest request, @PathVariable Integer id) {
         UserResponse userResponse = userService.updateUser(request, id);
         return ResponseEntity.ok(
                 ApiResponse.<UserResponse>builder()

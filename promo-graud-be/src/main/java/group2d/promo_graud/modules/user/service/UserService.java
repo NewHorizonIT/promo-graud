@@ -17,11 +17,14 @@ import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.auth.AuthErrorCode;
 import group2d.promo_graud.modules.orders.service.OrderService;
+import group2d.promo_graud.modules.user.dto.request.RegisterRequest;
 import group2d.promo_graud.modules.user.dto.request.UserRequest;
 import group2d.promo_graud.modules.user.dto.request.UserUpdateRequest;
 import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
 import group2d.promo_graud.modules.user.entity.User;
+import group2d.promo_graud.modules.user.enums.RoleEnum;
+import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.error.TypeOfUserErrorCode;
 import group2d.promo_graud.modules.user.error.UserErrorCode;
 import group2d.promo_graud.modules.user.repository.TypeOfUserRepository;
@@ -36,18 +39,54 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final OrderService orderService;
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public UserResponse createUser(UserRequest request) {
+        // Fix: Check username and email
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(UserErrorCode.USER_EMAIL_EXISTS);
+        }
+
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(UserErrorCode.USER_EXISTS);
+        }
         TypeOfUser typeOfUser =
                 typeOfUserRepository
                         .findById(request.getTypeOfUser())
                         .orElseThrow(
-                                () -> new AppException(TypeOfUserErrorCode.TYPE_OF_USER_EXISTS));
+                                () ->
+                                        new AppException(
+                                                TypeOfUserErrorCode.TYPE_OF_USER_NOT_EXISTS));
         User user =
                 User.builder()
                         .username(request.getUsername())
                         .email(request.getEmail())
                         .typeOfUser(typeOfUser)
                         .role(request.getRole())
+                        .build();
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        return mapToUserResponse(userRepository.save(user));
+    }
+
+    public UserResponse registerUser(RegisterRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(UserErrorCode.USER_EXISTS);
+        }
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(UserErrorCode.USER_EMAIL_EXISTS);
+        }
+        TypeOfUser defaultType =
+                typeOfUserRepository
+                        .findByType(UserTypeEnum.NORMAL)
+                        .orElseThrow(
+                                () ->
+                                        new AppException(
+                                                TypeOfUserErrorCode.TYPE_OF_USER_NOT_EXISTS));
+        User user =
+                User.builder()
+                        .username(request.getUsername())
+                        .email(request.getEmail())
+                        .role(RoleEnum.USER)
+                        .typeOfUser(defaultType)
                         .build();
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         return mapToUserResponse(userRepository.save(user));
@@ -67,13 +106,25 @@ public class UserService {
         if (!isAdmin && !user.getUsername().equals(auth.getName())) {
             throw new AppException(AuthErrorCode.UNAUTHORIZED);
         }
+
+        if (!user.getEmail().equals(request.getEmail())
+                && userRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(UserErrorCode.USER_EMAIL_EXISTS);
+        }
+        if (!user.getUsername().equals(request.getUsername())
+                && userRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(UserErrorCode.USER_EXISTS);
+        }
+
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         // Nếu nhập password mới thì đổi, bỏ trống thì giữ nguyên password cũ
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
-        user.setRole(request.getRole());
+        if (isAdmin) {
+            user.setRole(request.getRole());
+        }
         TypeOfUser typeOfUser =
                 typeOfUserRepository
                         .findById(request.getTypeOfUser())
@@ -102,6 +153,7 @@ public class UserService {
         return response;
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Page<UserResponse> getAllUser(Integer userTypeId, String name, int size, int page) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
         String keyword = name == null ? "" : name.trim();
@@ -110,6 +162,7 @@ public class UserService {
                 .map(this::mapToUserResponse);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteUser(Integer id) {
         User user =
                 userRepository
@@ -124,6 +177,10 @@ public class UserService {
                 userRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+
+        if (user.getIsDeleted()) {
+            throw new AppException(UserErrorCode.USER_NOT_EXISTS);
+        }
 
         UserResponse response = mapToUserResponse(user);
         response.setTotalSpending(orderService.getTotalSpending(id));
