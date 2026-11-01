@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import lombok.Data;
 
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
 
@@ -30,7 +30,7 @@ public class VoucherRequest {
     @NotNull private DistributionChannel distributionChannel;
 
     /** Chỉ áp dụng với UNIQUE. null = không chỉ định loại user. */
-    private UserTypeEnum targetUserType;
+    private RuleTargetAudience targetUserType;
 
     /** Chỉ áp dụng với UNIQUE. null = không chỉ định danh sách user. */
     private List<Integer> targetUserIds;

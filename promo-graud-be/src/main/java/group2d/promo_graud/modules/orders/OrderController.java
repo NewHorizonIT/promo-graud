@@ -30,7 +30,7 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-            @RequestBody OrderRequest request, HttpServletRequest httpRequest) {
+            @RequestBody @Valid OrderRequest request, HttpServletRequest httpRequest) {
         String ipAddress = extractIp(httpRequest);
         OrderResponse orderResponse = orderService.createOrder(request, ipAddress);
         return ResponseEntity.ok(
@@ -43,7 +43,13 @@ public class OrderController {
 
     private String extractIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
-        return (forwarded != null) ? forwarded.split(",")[0].trim() : request.getRemoteAddr();
+        if (forwarded == null || forwarded.isBlank()) {
+            return request.getRemoteAddr();
+        }
+        // Take the rightmost entry — appended by the trusted reverse proxy (Railway LB).
+        // Clients can inject arbitrary left-hand entries but cannot forge the rightmost hop.
+        String[] parts = forwarded.split(",");
+        return parts[parts.length - 1].trim();
     }
 
     @GetMapping

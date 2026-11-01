@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.user.entity.TypeOfUser;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
@@ -27,7 +28,7 @@ class EligibilityCheckerTest {
         return RuleCampaign.builder()
                 .status(RuleStatus.ACTIVE)
                 .isDeleted(false)
-                .typeOfUser(UserTypeEnum.NORMAL)
+                .typeOfUser(RuleTargetAudience.NORMAL)
                 .startTime(LocalDateTime.now().minusDays(1))
                 .endTime(LocalDateTime.now().plusDays(1))
                 .build();
@@ -126,16 +127,16 @@ class EligibilityCheckerTest {
         @Test
         @DisplayName("Eligible khi rule áp dụng cho ALL user")
         void eligible_rule_targets_all() {
-            assertTrue(
-                    checker.isEligible(
-                            orderOf(500_000), baseRule(), userOfType(UserTypeEnum.BRONZE)));
+            RuleCampaign rule = baseRule();
+            rule.setTypeOfUser(RuleTargetAudience.ALL);
+            assertTrue(checker.isEligible(orderOf(500_000), rule, userOfType(UserTypeEnum.BRONZE)));
         }
 
         @Test
         @DisplayName("Eligible khi user đúng hạng mà rule yêu cầu")
         void eligible_matching_user_type() {
             RuleCampaign rule = baseRule();
-            rule.setTypeOfUser(UserTypeEnum.GOLD);
+            rule.setTypeOfUser(RuleTargetAudience.GOLD);
             assertTrue(checker.isEligible(orderOf(500_000), rule, userOfType(UserTypeEnum.GOLD)));
         }
 
@@ -143,7 +144,7 @@ class EligibilityCheckerTest {
         @DisplayName("Không eligible khi user sai hạng")
         void not_eligible_wrong_user_type() {
             RuleCampaign rule = baseRule();
-            rule.setTypeOfUser(UserTypeEnum.GOLD);
+            rule.setTypeOfUser(RuleTargetAudience.GOLD);
             assertFalse(
                     checker.isEligible(orderOf(500_000), rule, userOfType(UserTypeEnum.NORMAL)));
         }
@@ -152,7 +153,7 @@ class EligibilityCheckerTest {
         @DisplayName("Không eligible khi user chưa có typeOfUser (null)")
         void not_eligible_null_type_of_user() {
             RuleCampaign rule = baseRule();
-            rule.setTypeOfUser(UserTypeEnum.GOLD);
+            rule.setTypeOfUser(RuleTargetAudience.GOLD);
             User user = User.builder().typeOfUser(null).build();
             assertFalse(checker.isEligible(orderOf(500_000), rule, user));
         }
@@ -161,7 +162,7 @@ class EligibilityCheckerTest {
         @DisplayName("Không eligible khi typeOfUser.getType() là null")
         void not_eligible_null_type_inside_type_of_user() {
             RuleCampaign rule = baseRule();
-            rule.setTypeOfUser(UserTypeEnum.GOLD);
+            rule.setTypeOfUser(RuleTargetAudience.GOLD);
             TypeOfUser typeOfUser = TypeOfUser.builder().type(null).build();
             User user = User.builder().typeOfUser(typeOfUser).build();
             assertFalse(checker.isEligible(orderOf(500_000), rule, user));

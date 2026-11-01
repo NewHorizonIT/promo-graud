@@ -9,8 +9,8 @@ import jakarta.validation.constraints.Size;
 
 import lombok.Data;
 
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Data
 public class RuleUpdateRequest {
@@ -31,7 +31,7 @@ public class RuleUpdateRequest {
     @Min(value = 0, message = "Giá trị đơn hàng tối thiểu phải lớn hơn hoặc bằng 0")
     private BigDecimal minOrderValue;
 
-    private UserTypeEnum typeOfUser;
+    private RuleTargetAudience typeOfUser;
 
     private LocalDateTime startTime;
 

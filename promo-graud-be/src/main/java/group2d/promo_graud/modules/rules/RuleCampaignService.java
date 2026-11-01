@@ -20,8 +20,8 @@ import group2d.promo_graud.modules.rules.dto.request.RuleUpdateRequest;
 import group2d.promo_graud.modules.rules.dto.response.RuleResponse;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 import group2d.promo_graud.shared.exception.AppException;
 
@@ -159,7 +159,7 @@ public class RuleCampaignService {
                         .typeOfUser(
                                 request.getTypeOfUser() != null
                                         ? request.getTypeOfUser()
-                                        : UserTypeEnum.NORMAL)
+                                        : RuleTargetAudience.NORMAL)
                         .startTime(request.getStartTime())
                         .endTime(request.getEndTime())
                         .payload(request.getPayload())
