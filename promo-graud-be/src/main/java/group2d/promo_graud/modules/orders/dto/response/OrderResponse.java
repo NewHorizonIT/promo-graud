@@ -8,8 +8,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import group2d.promo_graud.modules.orders.OrderStatus;
-import group2d.promo_graud.modules.user.entity.User;
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 
 @Data
 @Builder
@@ -18,10 +17,10 @@ import group2d.promo_graud.modules.voucher.Voucher;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class OrderResponse {
     Integer id;
-    User user;
+    UserSummaryResponse user;
     BigDecimal totalPrice;
     BigDecimal finalPrice;
-    Voucher voucher;
+    VoucherResponse voucher;
     OrderStatus status;
     LocalDateTime createdAt;
     List<OrderItemResponse> items;

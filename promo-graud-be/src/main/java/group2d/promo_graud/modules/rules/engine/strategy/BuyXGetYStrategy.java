@@ -69,7 +69,8 @@ public class BuyXGetYStrategy implements RuleStrategy {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal result = yInOrderItems.getPrice().multiply(new BigDecimal(totalFree));
+        int actualFree = Math.min(totalFree, yInOrderItems.getQuantity());
+        BigDecimal result = yInOrderItems.getPrice().multiply(new BigDecimal(actualFree));
 
         return result;
     }

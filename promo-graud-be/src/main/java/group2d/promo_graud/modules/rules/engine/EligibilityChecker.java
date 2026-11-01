@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.user.entity.User;
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Component
 public class EligibilityChecker {
@@ -36,14 +36,14 @@ public class EligibilityChecker {
     }
 
     private boolean checkUserType(RuleCampaign rule, User user) {
-        UserTypeEnum required = rule.getTypeOfUser();
-        if (required == UserTypeEnum.ALL || required == UserTypeEnum.NORMAL) {
+        RuleTargetAudience required = rule.getTypeOfUser();
+        if (required == RuleTargetAudience.ALL) {
             return true;
         }
         if (user.getTypeOfUser() == null || user.getTypeOfUser().getType() == null) {
             return false;
         }
-        return rule.getTypeOfUser().equals(user.getTypeOfUser().getType());
+        return required.name().equals(user.getTypeOfUser().getType().name());
     }
 
     private boolean checkMinOrder(RuleCampaign rule, Order order) {

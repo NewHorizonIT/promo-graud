@@ -192,13 +192,25 @@ class StrategyTest {
         }
 
         @Test
-        @DisplayName("Tính đúng discount: mua 2 tai nghe, tặng 1 cáp sạc")
+        @DisplayName("Tính đúng discount: mua 4 tai nghe (2 set), tặng 2 cáp sạc")
         void calculates_correct_discount() {
             RuleCampaign rule = RuleCampaign.builder().payload(buyXGetYPayload(1, 2, 3, 1)).build();
 
-            Order order = orderWithItems(itemOf(1, 4, 200000), itemOf(3, 1, 50000));
+            // 4 tai nghe → 2 set → được tặng 2 cáp sạc, cart có đủ 2 cáp
+            Order order = orderWithItems(itemOf(1, 4, 200000), itemOf(3, 2, 50000));
 
             assertEquals(BigDecimal.valueOf(100000), strategy.calculateDiscount(order, rule));
+        }
+
+        @Test
+        @DisplayName("Discount bị cap theo số lượng Y thực tế trong cart")
+        void discount_capped_by_actual_y_quantity_in_cart() {
+            RuleCampaign rule = RuleCampaign.builder().payload(buyXGetYPayload(1, 2, 3, 1)).build();
+
+            // 4 tai nghe → đủ điều kiện tặng 2 cáp, nhưng cart chỉ có 1 cáp
+            Order order = orderWithItems(itemOf(1, 4, 200000), itemOf(3, 1, 50000));
+
+            assertEquals(BigDecimal.valueOf(50000), strategy.calculateDiscount(order, rule));
         }
 
         @Test

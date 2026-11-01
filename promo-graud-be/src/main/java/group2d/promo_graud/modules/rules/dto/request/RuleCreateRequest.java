@@ -8,8 +8,8 @@ import jakarta.validation.constraints.*;
 
 import lombok.Data;
 
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Data
 public class RuleCreateRequest {
@@ -32,7 +32,7 @@ public class RuleCreateRequest {
     @Min(value = 0, message = "Giá trị đơn hàng tối thiểu phải lớn hơn hoặc bằng 0")
     private BigDecimal minOrderValue;
 
-    private UserTypeEnum typeOfUser = UserTypeEnum.NORMAL;
+    private RuleTargetAudience typeOfUser = RuleTargetAudience.NORMAL;
 
     @NotNull(message = "Thời gian bắt đầu không được để trống")
     @FutureOrPresent(message = "Thời gian bắt đầu phải ở hiện tại hoặc tương lai")

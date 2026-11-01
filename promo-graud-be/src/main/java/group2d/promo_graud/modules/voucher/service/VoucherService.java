@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.entity.UserVoucher;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
@@ -227,11 +228,11 @@ public class VoucherService {
             return userRepository.findByIdInAndIsDeletedFalse(request.getTargetUserIds());
         }
         if (request.getTargetUserType() != null) {
-            if (request.getTargetUserType() == UserTypeEnum.ALL) {
+            if (request.getTargetUserType() == RuleTargetAudience.ALL) {
                 return userRepository.findByIsDeletedFalse();
             }
             return userRepository.findByTypeOfUserTypeAndIsDeletedFalse(
-                    request.getTargetUserType());
+                    UserTypeEnum.valueOf(request.getTargetUserType().name()));
         }
         return List.of();
     }

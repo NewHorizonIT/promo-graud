@@ -29,6 +29,7 @@ import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderItemResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderPreviewResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
+import group2d.promo_graud.modules.orders.dto.response.UserSummaryResponse;
 import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.orders.entity.OrderItem;
 import group2d.promo_graud.modules.orders.repository.OrderItemRepository;
@@ -47,6 +48,7 @@ import group2d.promo_graud.modules.voucher.Voucher;
 import group2d.promo_graud.modules.voucher.VoucherRedemption;
 import group2d.promo_graud.modules.voucher.VoucherRedemptionRepository;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
@@ -80,9 +82,14 @@ public class OrderService {
     private final RuleEngine ruleEngine;
 
     public OrderResponse createOrder(OrderRequest request, String ipAddress) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new AppException(OrderErrorCode.ORDER_ITEMS_NOT_FOUND);
+        }
+
         if (request.getVoucherId() == null) {
             return createOrderWithOutVoucher(request);
         }
+
         String lockKey = "lock:voucher:" + request.getVoucherId();
         String lockValue = UUID.randomUUID().toString();
         boolean isLocked = distributedLockService.tryLock(lockKey, lockValue, 10);
@@ -112,6 +119,9 @@ public class OrderService {
                             createOrderItemAndCalculateTotal(order, request.getItems());
                     order.setTotalPrice(totalPrice);
                     order.setFinalPrice(totalPrice);
+                    // Fix: Save order -> DB
+                    orderRepository.save(order);
+
                     return mapToOrderResponse(order);
                 });
     }
@@ -151,7 +161,9 @@ public class OrderService {
                     order.setTotalPrice(totalPrice);
                     BigDecimal discount =
                             ruleEngine.applyRules(order, currentVoucher.getRuleCampaign(), user);
-                    order.setFinalPrice(totalPrice.subtract(discount));
+                    // Fix: check final price >= 0
+                    BigDecimal finalPrice = totalPrice.subtract(discount).max(BigDecimal.ZERO);
+                    order.setFinalPrice(finalPrice);
                     consumeVoucher(currentVoucher, userVoucher);
                     voucherRedemptionRepository.save(
                             VoucherRedemption.builder()
@@ -161,6 +173,7 @@ public class OrderService {
                                     .ipAddress(ipAddress)
                                     .statusOfOrder(OrderStatus.SUCCESS)
                                     .build());
+                    orderRepository.save(order);
                     return mapToOrderResponse(order);
                 });
     }
@@ -173,11 +186,11 @@ public class OrderService {
     }
 
     public void validateUniqueVoucher(Voucher voucher, UserVoucher userVoucher) {
-        if (!voucher.getStatus().equals(VoucherStatus.ACTIVE)) {
-            throw new AppException(VoucherErrorCode.INVALID_STATUS);
-        }
         if (userVoucher.getStatus().equals(UserVoucherStatus.USED)) {
             throw new AppException(UserVoucherErrorCode.USER_VOUCHER_ALREADY_USED);
+        }
+        if (!voucher.getStatus().equals(VoucherStatus.ACTIVE)) {
+            throw new AppException(VoucherErrorCode.INVALID_STATUS);
         }
     }
 
@@ -204,6 +217,9 @@ public class OrderService {
         List<OrderItem> items = new ArrayList<>();
         for (OrderItemRequest request : requests) {
             Product product = productMaps.get(request.getProductId());
+            if (product == null) {
+                throw new AppException(OrderErrorCode.ORDER_ITEMS_NOT_FOUND);
+            }
             totalPrice =
                     totalPrice.add(
                             product.getPrice().multiply(BigDecimal.valueOf(request.getQuantity())));
@@ -237,6 +253,8 @@ public class OrderService {
                 userVoucher.setStatus(UserVoucherStatus.USED);
             }
         }
+        voucherRepository.save(voucher);
+        userVoucherRepository.save(userVoucher);
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -308,8 +326,11 @@ public class OrderService {
 
         return OrderResponse.builder()
                 .id(order.getId())
-                .user(order.getUser())
-                .voucher(order.getVoucher())
+                .user(UserSummaryResponse.fromEntity(order.getUser()))
+                .voucher(
+                        order.getVoucher() != null
+                                ? VoucherResponse.fromEntity(order.getVoucher())
+                                : null)
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice())
                 .finalPrice(order.getFinalPrice())
