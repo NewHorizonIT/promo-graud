@@ -26,6 +26,6 @@ public class TypeOfProduct {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "type", length = 100, nullable = false)
+    @Column(name = "type", length = 100, nullable = false, unique = true)
     private String type;
 }

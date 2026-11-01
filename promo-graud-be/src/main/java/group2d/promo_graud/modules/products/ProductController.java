@@ -4,10 +4,13 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +29,6 @@ import group2d.promo_graud.modules.products.dto.ProductRequest;
 import group2d.promo_graud.modules.products.dto.ProductResponse;
 import group2d.promo_graud.modules.products.dto.TypeOfProductRequest;
 import group2d.promo_graud.modules.products.dto.TypeOfProductResponse;
-import group2d.promo_graud.modules.products.entity.TypeOfProduct;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +38,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Validated
 public class ProductController {
 
     ProductService productService;
@@ -46,8 +49,8 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) String name,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "1") int page) {
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page) {
         Page<ProductResponse> pages =
                 productService.getProducts(typeId, minPrice, maxPrice, name, size, page);
         PaginatedResponse<ProductResponse> result =
@@ -107,9 +110,9 @@ public class ProductController {
     }
 
     @GetMapping("/type")
-    public ResponseEntity<ApiResponse<List<TypeOfProduct>>> getTypes() {
+    public ResponseEntity<ApiResponse<List<TypeOfProductResponse>>> getTypes() {
         return ResponseEntity.ok(
-                ApiResponse.<List<TypeOfProduct>>builder()
+                ApiResponse.<List<TypeOfProductResponse>>builder()
                         .code(200)
                         .result(productService.getTypes())
                         .message("Lấy danh sách loại sản phẩm thành công")
@@ -117,7 +120,7 @@ public class ProductController {
     }
 
     @GetMapping("/types")
-    public ResponseEntity<ApiResponse<PaginatedResponse<TypeOfProductResponse>>> getProducts(
+    public ResponseEntity<ApiResponse<PaginatedResponse<TypeOfProductResponse>>> getProductTypes(
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "1") int page) {
         Page<TypeOfProductResponse> pages = productService.getTypeProducts(size, page);
@@ -157,6 +160,16 @@ public class ProductController {
                         .code(200)
                         .result(productService.updateType(id, request))
                         .message("Cập nhật loại sản phẩm thành công")
+                        .build());
+    }
+
+    @DeleteMapping("/type/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTypeProduct(@PathVariable Integer id) {
+        productService.deleteType(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .code(200)
+                        .message("Xóa loại sản phẩm thành công")
                         .build());
     }
 }

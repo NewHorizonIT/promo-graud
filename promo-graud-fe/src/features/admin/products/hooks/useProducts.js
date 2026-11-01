@@ -3,6 +3,7 @@ import {
   createProduct,
   createTypeOfProduct,
   deleteProduct,
+  deleteTypeOfProduct,
   getProduct,
   getProducts,
   getTypeProduct,
@@ -72,9 +73,16 @@ export function useTypeProduct() {
 
 export function useCreateTypeProduct() {
   const qc = useQueryClient();
-  // Dùng cho các tác vụ thay đổi dữ liệu (POST, PUT, DELETE, PATCH)
   return useMutation({
     mutationFn: (body) => createTypeOfProduct(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'product-types'] }),
+  });
+}
+
+export function useDeleteTypeProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => deleteTypeOfProduct(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'product-types'] }),
   });
 }
