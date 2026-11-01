@@ -14,7 +14,11 @@ import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
 import group2d.promo_graud.modules.campaigns.service.CampaignService;
 import group2d.promo_graud.shared.dto.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(
+        name = "Campaigns",
+        description = "Quản lý chiến dịch khuyến mãi: tạo, cập nhật, đổi trạng thái, xóa")
 @RestController
 @RequestMapping("/api/v1/campaigns")
 @RequiredArgsConstructor

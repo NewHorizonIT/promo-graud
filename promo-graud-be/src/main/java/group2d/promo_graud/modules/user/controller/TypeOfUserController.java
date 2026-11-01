@@ -11,7 +11,9 @@ import group2d.promo_graud.modules.user.dto.request.TypeOfUserRequest;
 import group2d.promo_graud.modules.user.dto.response.TypeOfUserResponse;
 import group2d.promo_graud.modules.user.service.TypeOfUserService;
 import group2d.promo_graud.shared.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "User Types", description = "Quản lý loại người dùng (admin, customer...)")
 @RestController
 @RequestMapping("/api/v1/type-of-users")
 public class TypeOfUserController {

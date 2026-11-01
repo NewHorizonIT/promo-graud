@@ -21,7 +21,12 @@ import group2d.promo_graud.modules.analytics.dto.TimelinePointResponse;
 import group2d.promo_graud.modules.analytics.dto.TopUserResponse;
 import group2d.promo_graud.modules.analytics.dto.VoucherUtilizationResponse;
 import group2d.promo_graud.shared.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(
+        name = "Analytics",
+        description =
+                "Dashboard thống kê: overview, campaign stats, timeline, top users, voucher utilization")
 @RestController
 @RequestMapping("/api/v1/analytics")
 @RequiredArgsConstructor

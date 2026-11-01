@@ -21,7 +21,10 @@ import group2d.promo_graud.modules.auth.dto.response.AuthenticationResponse;
 import group2d.promo_graud.modules.auth.dto.response.IntrospectResponse;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.exception.AppException;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Authentication", description = "Đăng nhập, đăng xuất, refresh token, introspect JWT")
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -29,6 +32,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    @Operation(security = {})
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> login(
             @Valid @RequestBody AuthenticationRequest request) {
@@ -58,6 +62,7 @@ public class AuthenticationController {
                                 .build());
     }
 
+    @Operation(security = {})
     @PostMapping("/introspect")
     public ResponseEntity<ApiResponse<IntrospectResponse>> introspect(
             @Valid @RequestBody IntrospectRequest request) throws ParseException, JOSEException {
@@ -70,6 +75,7 @@ public class AuthenticationController {
                         .build());
     }
 
+    @Operation(security = {})
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @Valid @RequestBody IntrospectRequest request,
@@ -99,6 +105,7 @@ public class AuthenticationController {
                 .body(ApiResponse.<Void>builder().code(200).message("Logout thành công").build());
     }
 
+    @Operation(security = {})
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthenticationResponse>> refreshToken(
             @CookieValue(value = "refreshToken", required = false) String refreshToken)

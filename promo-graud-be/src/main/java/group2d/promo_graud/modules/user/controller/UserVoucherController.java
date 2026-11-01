@@ -17,7 +17,11 @@ import group2d.promo_graud.modules.user.dto.response.UserVoucherResponse;
 import group2d.promo_graud.modules.user.service.UserVoucherService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(
+        name = "User Vouchers",
+        description = "Voucher của từng user: claim, xem danh sách voucher cá nhân")
 @RestController
 @RequestMapping("/api/v1/user-vouchers")
 @RequiredArgsConstructor

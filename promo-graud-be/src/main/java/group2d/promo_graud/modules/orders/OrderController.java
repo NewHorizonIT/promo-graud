@@ -21,7 +21,9 @@ import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
 import group2d.promo_graud.modules.orders.service.OrderService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Orders", description = "Quản lý đơn hàng: tạo, xem, lọc, preview trước khi đặt")
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor

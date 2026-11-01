@@ -16,7 +16,9 @@ import group2d.promo_graud.modules.user.dto.response.UserResponse;
 import group2d.promo_graud.modules.user.service.UserService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Users", description = "Quản lý người dùng: CRUD, lấy profile")
 @RestController
 @RequestMapping("/api/v1/users")
 public class UserController {

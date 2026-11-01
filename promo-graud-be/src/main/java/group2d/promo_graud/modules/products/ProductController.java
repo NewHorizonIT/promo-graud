@@ -29,7 +29,9 @@ import group2d.promo_graud.modules.products.dto.TypeOfProductResponse;
 import group2d.promo_graud.modules.products.entity.TypeOfProduct;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Products", description = "Quản lý sản phẩm và loại sản phẩm")
 @RestController
 @RequestMapping("/api/v1/products")
 @RequiredArgsConstructor
