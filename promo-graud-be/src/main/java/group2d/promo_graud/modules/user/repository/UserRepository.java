@@ -17,6 +17,8 @@ import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 public interface UserRepository extends JpaRepository<User, Integer> {
     boolean existsByUsername(String username);
 
+    boolean existsByEmail(String email);
+
     Optional<User> findByIdAndIsDeletedFalse(Integer id);
 
     public Optional<User> findByUsername(String username);

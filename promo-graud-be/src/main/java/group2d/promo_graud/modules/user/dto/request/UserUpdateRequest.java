@@ -26,7 +26,6 @@ public class UserUpdateRequest {
 
     String password;
 
-    @NotNull(message = "TypeOfUser không được để trống")
     RoleEnum role;
 
     @NotNull(message = "TypeOfUser không được để trống")

@@ -41,12 +41,11 @@ public class UserVoucherController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserVoucherResponse>>> findAll(
-            @Valid @RequestBody UserVoucherRequest request) {
+    public ResponseEntity<ApiResponse<List<UserVoucherResponse>>> findAll() {
         List<UserVoucherResponse> response = userVoucherService.findAll();
         return ResponseEntity.ok(
                 ApiResponse.<List<UserVoucherResponse>>builder()
-                        .code(201)
+                        .code(200)
                         .message("Find all user_voucher success")
                         .result(response)
                         .build());

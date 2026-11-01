@@ -11,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.nimbusds.jose.JOSEException;
@@ -33,8 +32,8 @@ import group2d.promo_graud.shared.exception.AppException;
 public class AuthenticationServiceTest {
 
     @Mock private RedisTemplate<String, String> redisTemplate;
-
     @Mock private UserRepository userRepository;
+    @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private AuthenticationService authenticationService;
 
@@ -53,16 +52,16 @@ public class AuthenticationServiceTest {
     public void loginSuccess() {
         AuthenticationRequest request =
                 AuthenticationRequest.builder().username("admin").password("123456").build();
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
 
         User user =
                 User.builder()
                         .id(1)
                         .email("ahuy200499@gmail.com")
                         .username("admin")
-                        .password(passwordEncoder.encode("123456"))
+                        .password("$2a$10$hashedPassword")
                         .build();
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("123456", "$2a$10$hashedPassword")).thenReturn(true);
         AuthenticationResponse response = authenticationService.login(request);
         assertNotNull(response.getToken());
         assertTrue(response.isValid());
@@ -87,9 +86,10 @@ public class AuthenticationServiceTest {
                         .id(1)
                         .username("admin")
                         .email("ahuy200499@gmail.com")
-                        .password("222222")
+                        .password("$2a$10$hashedWrongPassword")
                         .build();
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("123456", "$2a$10$hashedWrongPassword")).thenReturn(false);
         assertThrows(AppException.class, () -> authenticationService.login(request));
     }
 
