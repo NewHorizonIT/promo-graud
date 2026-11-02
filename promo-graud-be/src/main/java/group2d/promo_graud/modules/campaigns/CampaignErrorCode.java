@@ -37,7 +37,8 @@ public enum CampaignErrorCode implements BaseErrorCode {
             1212, "thời gian kết thúc phải hơn thời gian bắt dầu", HttpStatus.BAD_REQUEST),
     // --- 4. Nhóm Ràng buộc Thao tác ---
     CANNOT_DELETE_UNENDED_CAMPAIGN(
-            1213, "Chỉ có thể xóa chiến dịch đã END", HttpStatus.BAD_REQUEST);
+            1213, "Chỉ có thể xóa chiến dịch đã END", HttpStatus.BAD_REQUEST),
+    INVALID_SORT_FIELD(1214, "Trường sắp xếp không hợp lệ", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

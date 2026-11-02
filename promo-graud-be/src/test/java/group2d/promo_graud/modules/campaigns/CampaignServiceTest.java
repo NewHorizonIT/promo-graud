@@ -27,6 +27,7 @@ import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
 import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
 import group2d.promo_graud.modules.campaigns.service.CampaignService;
+import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +40,8 @@ public class CampaignServiceTest {
     @Mock private JobScheduler jobScheduler;
 
     @InjectMocks private CampaignService campaignService;
+
+    @Mock private RuleCampaignRepository ruleCampaignRepository;
 
     // 1. NHÓM TEST CHO HÀM CREATE CAMPAIGN
     @Nested
@@ -380,6 +383,8 @@ public class CampaignServiceTest {
 
             // Assert
             assertTrue(existingCampaign.getIsDeleted());
+            verify(ruleCampaignRepository, times(1)).softDeleteByCampaignId(id);
+
             verify(campaignRepository, times(1)).save(existingCampaign);
         }
 

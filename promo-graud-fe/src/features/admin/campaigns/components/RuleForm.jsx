@@ -3,6 +3,7 @@ import { useState } from 'react';
 const RULE_TYPES = [
   { value: 'PERCENTAGE', label: 'Giảm phần trăm (%)' },
   { value: 'FIXED_AMOUNT', label: 'Giảm trực tiếp (VNĐ)' },
+  { value: 'FLASH_SALE', label: 'Flash Sale (%)' },
   { value: 'BUY_X_GET_Y', label: 'Mua X tặng Y' },
   { value: 'TIERED', label: 'Tiered Discount' },
 ];
@@ -29,36 +30,65 @@ const EMPTY = {
 };
 
 const PAYLOAD_PLACEHOLDER = {
-  TIERED: '{"tiers":[{"min":0,"discount":5},{"min":500000,"discount":10}]}',
-  BUY_X_GET_Y: '{"buyQuantity":2,"getQuantity":1,"productId":5}',
+  TIERED:
+    '{"tiers":[{"min_order_value":200000,"discount_value":20000},{"min_order_value":500000,"discount_value":70000}]}',
+  BUY_X_GET_Y:
+    '{"x_product":{"product_id":1,"product_quantity":2},"y_product":{"product_id":5,"product_quantity":1}}',
 };
 
-/**
- * @param {object} props
- * @param {object}  [props.initial]      - pre-fill values for edit mode
- * @param {Array}   [props.campaigns]    - [{id, name}] list; when provided, shows campaign selector
- * @param {function} props.onSubmit
- * @param {function} props.onCancel
- * @param {boolean} [props.loading]
- */
+// useEffect removed — parent uses key={rule.id} to remount on edit target change
 export default function RuleForm({
   initial = EMPTY,
   campaigns,
   onSubmit,
   onCancel,
   loading = false,
+  isEdit = false,
 }) {
   const [form, setForm] = useState({ ...EMPTY, ...initial });
+  const [errors, setErrors] = useState({});
 
-  const set = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
+  const set = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
 
   const isPayloadType = ['TIERED', 'BUY_X_GET_Y'].includes(form.type_of_rule);
-  const isPercentage = form.type_of_rule === 'PERCENTAGE';
+  const isPercentageLike = ['PERCENTAGE', 'FLASH_SALE'].includes(form.type_of_rule);
+  const nowStr = new Date().toISOString().slice(0, 16);
+
+  const validate = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = 'Tên rule không được để trống';
+    if (!form.start_time) {
+      e.start_time = 'Chọn ngày bắt đầu';
+    } else if (!isEdit && form.start_time < nowStr) {
+      // chỉ check trong create mode — edit không cần vì rule có thể đang chạy
+      e.start_time = 'Ngày bắt đầu phải ở hiện tại hoặc tương lai';
+    }
+    if (!form.end_time) e.end_time = 'Chọn ngày kết thúc';
+    if (form.start_time && form.end_time && form.end_time <= form.start_time)
+      e.end_time = 'Ngày kết thúc phải sau ngày bắt đầu';
+    if (!isPayloadType) {
+      if (!form.value || Number(form.value) <= 0) e.value = 'Giá trị phải lớn hơn 0';
+      if (isPercentageLike) {
+        if (Number(form.value) > 100) e.value = 'Phần trăm không được vượt quá 100';
+        if (!form.max_discount_value || Number(form.max_discount_value) <= 0)
+          e.max_discount_value = 'Giảm tối đa bắt buộc phải nhập';
+      }
+    }
+    return e;
+  };
 
   const toDateTime = (val) => (val ? val.slice(0, 16) + ':00' : undefined);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      return;
+    }
 
     const body = {
       name: form.name.trim(),
@@ -66,25 +96,20 @@ export default function RuleForm({
       typeOfUser: form.type_of_user,
     };
 
-    if (campaigns && form.campaign_id) {
-      body.campaignId = Number(form.campaign_id);
-    }
+    if (campaigns && form.campaign_id) body.campaignId = Number(form.campaign_id);
 
     if (isPayloadType) {
       try {
         body.payload = JSON.parse(form.payload);
       } catch {
-        alert('Payload JSON không hợp lệ. Vui lòng kiểm tra lại định dạng.');
+        setErrors((prev) => ({ ...prev, payload: 'JSON không hợp lệ. Kiểm tra lại định dạng.' }));
         return;
       }
     } else {
       body.value = Number(form.value);
-      if (isPercentage && form.max_discount_value) {
+      if (isPercentageLike && form.max_discount_value)
         body.maxDiscountValue = Number(form.max_discount_value);
-      }
-      if (form.min_order_value) {
-        body.minOrderValue = Number(form.min_order_value);
-      }
+      if (form.min_order_value) body.minOrderValue = Number(form.min_order_value);
     }
 
     if (form.start_time) body.startTime = toDateTime(form.start_time);
@@ -95,6 +120,7 @@ export default function RuleForm({
 
   const inputClass =
     'w-full h-10 px-3 rounded-xl border border-border bg-surface text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all';
+  const errBorder = 'border-error-text focus:border-error-text focus:ring-error-text/20';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -107,12 +133,12 @@ export default function RuleForm({
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
             placeholder="VD: Giảm 10% cho đơn từ 500k"
-            className={inputClass}
-            required
+            className={`${inputClass} ${errors.name ? errBorder : ''}`}
           />
+          {errors.name && <p className="mt-1 text-xs text-error-text">{errors.name}</p>}
         </div>
 
-        {/* Campaign selector — only shown when campaigns list is provided */}
+        {/* Campaign selector */}
         {campaigns && (
           <div className="col-span-2">
             <label className="block text-xs font-medium text-text-secondary mb-1">Campaign *</label>
@@ -165,8 +191,8 @@ export default function RuleForm({
           </select>
         </div>
 
-        {/* ── PERCENTAGE fields ── */}
-        {isPercentage && (
+        {/* PERCENTAGE / FLASH_SALE fields */}
+        {isPercentageLike && (
           <>
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -179,9 +205,9 @@ export default function RuleForm({
                 value={form.value}
                 onChange={(e) => set('value', e.target.value)}
                 placeholder="VD: 10"
-                className={inputClass}
-                required
+                className={`${inputClass} ${errors.value ? errBorder : ''}`}
               />
+              {errors.value && <p className="mt-1 text-xs text-error-text">{errors.value}</p>}
             </div>
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -193,9 +219,11 @@ export default function RuleForm({
                 value={form.max_discount_value}
                 onChange={(e) => set('max_discount_value', e.target.value)}
                 placeholder="VD: 50000"
-                className={inputClass}
-                required
+                className={`${inputClass} ${errors.max_discount_value ? errBorder : ''}`}
               />
+              {errors.max_discount_value && (
+                <p className="mt-1 text-xs text-error-text">{errors.max_discount_value}</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -213,7 +241,7 @@ export default function RuleForm({
           </>
         )}
 
-        {/* ── FIXED_AMOUNT fields ── */}
+        {/* FIXED_AMOUNT fields */}
         {form.type_of_rule === 'FIXED_AMOUNT' && (
           <>
             <div>
@@ -226,9 +254,9 @@ export default function RuleForm({
                 value={form.value}
                 onChange={(e) => set('value', e.target.value)}
                 placeholder="VD: 50000"
-                className={inputClass}
-                required
+                className={`${inputClass} ${errors.value ? errBorder : ''}`}
               />
+              {errors.value && <p className="mt-1 text-xs text-error-text">{errors.value}</p>}
             </div>
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -246,7 +274,7 @@ export default function RuleForm({
           </>
         )}
 
-        {/* ── TIERED / BUY_X_GET_Y: payload only ── */}
+        {/* TIERED / BUY_X_GET_Y payload */}
         {isPayloadType && (
           <div className="col-span-2">
             <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -257,9 +285,9 @@ export default function RuleForm({
               value={form.payload}
               onChange={(e) => set('payload', e.target.value)}
               placeholder={PAYLOAD_PLACEHOLDER[form.type_of_rule]}
-              className="w-full px-3 py-2 rounded-xl border border-border bg-surface text-xs font-mono text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all resize-none"
-              required
+              className={`w-full px-3 py-2 rounded-xl border bg-surface text-xs font-mono text-text-primary focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all resize-none ${errors.payload ? 'border-error-text' : 'border-border'}`}
             />
+            {errors.payload && <p className="mt-1 text-xs text-error-text">{errors.payload}</p>}
           </div>
         )}
 
@@ -271,10 +299,11 @@ export default function RuleForm({
           <input
             type="datetime-local"
             value={form.start_time}
+            min={isEdit ? undefined : nowStr}
             onChange={(e) => set('start_time', e.target.value)}
-            className={inputClass}
-            required
+            className={`${inputClass} ${errors.start_time ? errBorder : ''}`}
           />
+          {errors.start_time && <p className="mt-1 text-xs text-error-text">{errors.start_time}</p>}
         </div>
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">
@@ -283,10 +312,11 @@ export default function RuleForm({
           <input
             type="datetime-local"
             value={form.end_time}
+            min={form.start_time || nowStr}
             onChange={(e) => set('end_time', e.target.value)}
-            className={inputClass}
-            required
+            className={`${inputClass} ${errors.end_time ? errBorder : ''}`}
           />
+          {errors.end_time && <p className="mt-1 text-xs text-error-text">{errors.end_time}</p>}
         </div>
       </div>
 

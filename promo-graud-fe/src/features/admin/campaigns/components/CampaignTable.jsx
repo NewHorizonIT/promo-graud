@@ -68,21 +68,25 @@ export default function CampaignTable({ campaigns = [], onDelete }) {
                     >
                       <Eye size={15} />
                     </Link>
-                    <Link
-                      to={`/admin/campaigns/${c.id}/edit`}
-                      className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-muted transition-colors"
-                      title="Chỉnh sửa"
-                    >
-                      <Pencil size={15} />
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => onDelete?.(c)}
-                      className="p-1.5 rounded-lg text-text-muted hover:text-error-text hover:bg-error-bg transition-colors cursor-pointer"
-                      title="Xóa"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    {c.status !== 'ENDED' && (
+                      <Link
+                        to={`/admin/campaigns/${c.id}/edit`}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-muted transition-colors"
+                        title="Chỉnh sửa"
+                      >
+                        <Pencil size={15} />
+                      </Link>
+                    )}
+                    {c.status === 'ENDED' && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete?.(c)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-error-text hover:bg-error-bg transition-colors cursor-pointer"
+                        title="Xóa"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
