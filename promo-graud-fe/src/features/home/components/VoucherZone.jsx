@@ -1,23 +1,39 @@
 ﻿import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import axiosInstance from '../../../lib/axiosInstance';
+import { claimVoucher } from '../../user/vouchers/services/voucherCollectionService';
+import { useAuthStore } from '../../../store/authStore';
 import VoucherCard from '../../../components/VoucherCard';
 
 export default function VoucherZone() {
+  const navigate = useNavigate();
+  const token = useAuthStore((s) => s.token);
   const [vouchers, setVouchers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [claimedIds, setClaimedIds] = useState(new Set());
   const ITEMS_PER_PAGE = 4;
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/v1/vouchers?type=GENERIC&status=ACTIVE&pageSize=8')
-      .then((res) => res.json())
-      .then((data) => {
+    axiosInstance
+      .get('/vouchers', { params: { type: 'GENERIC', status: 'ACTIVE', pageSize: 8 } })
+      .then(({ data }) => {
         if (data?.data) setVouchers(data.data);
       })
       .catch((err) => console.error('Failed to fetch vouchers:', err))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleClaim = (voucherId) => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    claimVoucher(voucherId)
+      .then(() => setClaimedIds((prev) => new Set([...prev, voucherId])))
+      .catch(() => {});
+  };
 
   const totalPages = Math.ceil(vouchers.length / ITEMS_PER_PAGE);
   const visible = vouchers.slice(page * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE + ITEMS_PER_PAGE);
@@ -44,7 +60,12 @@ export default function VoucherZone() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {visible.map((voucher) => (
-              <VoucherCard key={voucher.id} voucher={voucher} />
+              <VoucherCard
+                key={voucher.id}
+                voucher={voucher}
+                claimed={claimedIds.has(voucher.id)}
+                onClaim={() => handleClaim(voucher.id)}
+              />
             ))}
           </div>
           {totalPages > 1 && (

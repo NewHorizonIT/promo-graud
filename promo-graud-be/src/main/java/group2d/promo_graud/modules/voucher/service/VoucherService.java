@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -69,15 +70,32 @@ public class VoucherService {
             int page,
             int pageSize) {
 
-        VoucherType typeEnum = (type != null) ? VoucherType.valueOf(type.toUpperCase()) : null;
+        VoucherType typeEnum = null;
+        if (type != null) {
+            try {
+                typeEnum = VoucherType.valueOf(type.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(VoucherErrorCode.VOUCHER_TYPE_INVALID);
+            }
+        }
 
-        VoucherStatus statusEnum =
-                (status != null) ? VoucherStatus.valueOf(status.toUpperCase()) : null;
+        VoucherStatus statusEnum = null;
+        if (status != null) {
+            try {
+                statusEnum = VoucherStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(VoucherErrorCode.VOUCHER_STATUS_INVALID);
+            }
+        }
 
-        DistributionChannel channelEnum =
-                (distributionChannel != null)
-                        ? DistributionChannel.valueOf(distributionChannel.toUpperCase())
-                        : null;
+        DistributionChannel channelEnum = null;
+        if (distributionChannel != null) {
+            try {
+                channelEnum = DistributionChannel.valueOf(distributionChannel.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(VoucherErrorCode.VOUCHER_CHANNEL_INVALID);
+            }
+        }
         Pageable pageable = PageRequest.of(page - 1, pageSize);
 
         Page<Voucher> result =
@@ -95,6 +113,7 @@ public class VoucherService {
 
     // -----------------------Cập nhật voucher-----------------------------
     // Voucher unique thì mới cho cập nhật số lương
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public VoucherResponse update(Integer id, UpdatedVoucherRequest request) {
         if (request.getStatus() == null && request.getQuantityRemain() == null) {
             throw new AppException(VoucherErrorCode.REQUIRED_FIELD);
@@ -104,7 +123,7 @@ public class VoucherService {
                         .findById(id)
                         .orElseThrow(() -> new AppException(VoucherErrorCode.NOT_EXIST));
         if (voucher.getType() == VoucherType.UNIQUE && request.getQuantityRemain() != null) {
-            throw new AppException(VoucherErrorCode.GENERIC_QUANTITY_NOT_EDITABLE);
+            throw new AppException(VoucherErrorCode.UNIQUE_QUANTITY_NOT_EDITABLE);
         }
         if (voucher.getType() == VoucherType.GENERIC
                 && request.getQuantityRemain() != null
@@ -130,6 +149,7 @@ public class VoucherService {
     }
 
     // ------------------------Kiểm tra trạng thái job(AI)----------------------
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public JobStatusResponse getJobStatus(Long jobId) {
         JobExecution je = jobRepository.getJobExecution(jobId);
         if (je == null) {
@@ -162,6 +182,7 @@ public class VoucherService {
     }
 
     // -----------------------Tạo voucher----------------------------------
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public CreateVoucherResponse create(VoucherRequest request) {
 
         RuleCampaign rule =
@@ -246,6 +267,7 @@ public class VoucherService {
     }
 
     // Insert thẳng 1 bản ghi vào db (GENERIC)
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     private List<Voucher> createGeneric(VoucherRequest request, RuleCampaign rule) {
         Voucher voucher =
                 Voucher.builder()
@@ -323,6 +345,7 @@ public class VoucherService {
         return VoucherResponse.fromEntity(voucher);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void delete(Integer id) {
         Voucher voucher =
                 voucherRepository

@@ -21,7 +21,7 @@ function CampaignCardSkeleton() {
 
 export default function CampaignBanner() {
   const { data: campaignData, isLoading: loadingCampaigns } = useCampaigns();
-  const campaigns = campaignData?.content ?? [];
+  const campaigns = campaignData?.data ?? [];
 
   const campaignIds = campaigns.map((c) => c.id);
   const { data: allVouchers, isLoading: loadingVouchers } = useAllCampaignVouchers(campaignIds);

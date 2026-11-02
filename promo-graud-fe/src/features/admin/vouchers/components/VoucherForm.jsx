@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 const USER_TYPES = [
   { value: 'ALL', label: 'Tất cả user' },
@@ -9,26 +10,40 @@ const USER_TYPES = [
 ];
 
 const EMPTY = {
+  campaign_id: '',
   rule_id: '',
   type: 'GENERIC',
   quantity: '',
   limit_client: '',
-  expired_at: '',
   distribution_channel: 'EMAIL',
   prefix: '',
-  // targeting — chỉ dùng cho UNIQUE
-  target_mode: 'none', // 'none' | 'user_type' | 'user_ids'
+  target_mode: 'none',
   target_user_type: 'ALL',
-  target_user_ids: '', // chuỗi IDs cách nhau bởi dấu phẩy
+  target_user_ids: '',
 };
 
-export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loading = false }) {
+export default function VoucherForm({
+  campaigns = [],
+  rules = [],
+  loadingRules = false,
+  onCampaignChange,
+  initial = EMPTY,
+  onSubmit,
+  loading = false,
+}) {
   const [form, setForm] = useState({ ...EMPTY, ...initial });
   const [errors, setErrors] = useState({});
 
   const set = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const handleCampaignChange = (e) => {
+    const campaignId = e.target.value;
+    setForm((prev) => ({ ...prev, campaign_id: campaignId, rule_id: '' }));
+    setErrors((prev) => ({ ...prev, campaign_id: '', rule_id: '' }));
+    onCampaignChange?.(campaignId ? Number(campaignId) : null);
   };
 
   const isUnique = form.type === 'UNIQUE';
@@ -43,11 +58,11 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
 
   const validate = () => {
     const e = {};
+    if (!form.campaign_id) e.campaign_id = 'Chọn campaign';
     if (!form.rule_id) e.rule_id = 'Chọn rule cho voucher';
     if (needsQuantity && (!form.quantity || Number(form.quantity) <= 0)) {
       e.quantity = 'Số lượng phải lớn hơn 0';
     }
-    if (!form.expired_at) e.expired_at = 'Chọn ngày hết hạn';
     if (isUnique && form.target_mode === 'user_ids' && parsedUserIds.length === 0) {
       e.target_user_ids = 'Nhập ít nhất 1 user ID hợp lệ';
     }
@@ -67,7 +82,6 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
       type: form.type,
       prefix: form.prefix ?? '',
       limitClient: form.limit_client ? Number(form.limit_client) : 1,
-      expiredAt: form.expired_at,
       distributionChannel: form.distribution_channel,
     };
 
@@ -92,27 +106,68 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Rule */}
+      {/* ── Step 1: Campaign ── */}
+      <div>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">
+          Campaign <span className="text-error-text">*</span>
+        </label>
+        <select
+          value={form.campaign_id}
+          onChange={handleCampaignChange}
+          className={`${inputClass} ${errors.campaign_id ? 'border-error-text' : ''}`}
+        >
+          <option value="">— Chọn campaign —</option>
+          {campaigns.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+              {c.status && c.status !== 'ACTIVE' ? ` (${c.status})` : ''}
+            </option>
+          ))}
+        </select>
+        {errors.campaign_id && <p className="mt-1 text-xs text-error-text">{errors.campaign_id}</p>}
+      </div>
+
+      {/* ── Step 2: Rule (phụ thuộc campaign) ── */}
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1.5">
           Rule <span className="text-error-text">*</span>
         </label>
-        <select
-          value={form.rule_id}
-          onChange={(e) => set('rule_id', e.target.value)}
-          className={`${inputClass} ${errors.rule_id ? 'border-error-text' : ''}`}
-        >
-          <option value="">— Chọn rule —</option>
-          {rules.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.campaignName ? `[${r.campaignName}] ${r.name}` : r.name}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={form.rule_id}
+            onChange={(e) => set('rule_id', e.target.value)}
+            disabled={!form.campaign_id || loadingRules}
+            className={`${inputClass} ${errors.rule_id ? 'border-error-text' : ''} disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {!form.campaign_id ? (
+              <option value="">— Chọn campaign trước —</option>
+            ) : loadingRules ? (
+              <option value="">Đang tải rule...</option>
+            ) : rules.length === 0 ? (
+              <option value="">Campaign này chưa có rule</option>
+            ) : (
+              <>
+                <option value="">— Chọn rule —</option>
+                {rules.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                    {r.typeOfRule ? ` — ${r.typeOfRule}` : ''}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+          {loadingRules && (
+            <Loader2
+              size={14}
+              className="absolute right-10 top-1/2 -translate-y-1/2 text-text-muted animate-spin pointer-events-none"
+            />
+          )}
+        </div>
         {errors.rule_id && <p className="mt-1 text-xs text-error-text">{errors.rule_id}</p>}
       </div>
 
-      {/* Prefix */}
+      {/* ── Prefix ── */}
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1.5">
           Prefix mã voucher
@@ -144,7 +199,7 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
           </select>
         </div>
 
-        {/* Quantity — ẩn khi UNIQUE + có targeting tự động */}
+        {/* Quantity */}
         {needsQuantity ? (
           <div>
             <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -188,20 +243,6 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             className={inputClass}
           />
         </div>
-
-        {/* Expiry */}
-        <div>
-          <label className="block text-sm font-medium text-text-secondary mb-1.5">
-            Hết hạn <span className="text-error-text">*</span>
-          </label>
-          <input
-            type="datetime-local"
-            value={form.expired_at}
-            onChange={(e) => set('expired_at', e.target.value)}
-            className={`${inputClass} ${errors.expired_at ? 'border-error-text' : ''}`}
-          />
-          {errors.expired_at && <p className="mt-1 text-xs text-error-text">{errors.expired_at}</p>}
-        </div>
       </div>
 
       {/* ── Targeting — chỉ hiện khi UNIQUE ── */}
@@ -242,7 +283,6 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             ))}
           </div>
 
-          {/* Loại user */}
           {form.target_mode === 'user_type' && (
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -262,7 +302,6 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
             </div>
           )}
 
-          {/* Danh sách user IDs */}
           {form.target_mode === 'user_ids' && (
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-1.5">
@@ -289,7 +328,7 @@ export default function VoucherForm({ rules = [], initial = EMPTY, onSubmit, loa
         </div>
       )}
 
-      {/* Distribution channel */}
+      {/* ── Distribution channel ── */}
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1.5">
           Kênh phân phối

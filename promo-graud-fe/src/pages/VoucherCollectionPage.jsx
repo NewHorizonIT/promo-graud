@@ -85,6 +85,7 @@ const RULE_TYPE_LABELS = {
   FIXED_AMOUNT: 'Giảm trực tiếp',
   TIERED: 'Giảm theo bậc',
   BUY_X_GET_Y: 'Mua X tặng Y',
+  FLASH_SALE: 'Flash Sale',
 };
 
 export default function VoucherCollectionPage() {
