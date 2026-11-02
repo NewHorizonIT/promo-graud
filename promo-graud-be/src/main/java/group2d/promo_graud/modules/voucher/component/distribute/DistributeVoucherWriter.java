@@ -126,11 +126,6 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
             userVoucherRepository.saveAll(userVouchers);
             logRepository.saveAllAndFlush(logs);
         }
-        // Thực thi xuống Database (Tối ưu bằng cách lưu hàng loạt)
-        voucherRepository.updateStatus(voucherIdsToUpdate);
-        // Tối ưu: Lưu hàng loạt thay vì lưu từng dòng
-        userVoucherRepository.saveAll(userVouchers);
-        logRepository.saveAllAndFlush(logs);
 
         // Khởi tạo Payload từ dữ liệu đã lưu và gửi sang Redis
         List<DistributionPayload> payloads = new ArrayList<>();
