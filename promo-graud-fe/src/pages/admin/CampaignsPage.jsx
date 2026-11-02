@@ -166,7 +166,9 @@ export default function CampaignsPage() {
           {getVisiblePages(page, totalPages).map((pg, idx, arr) => (
             <Fragment key={pg}>
               {idx > 0 && arr[idx - 1] !== pg - 1 && (
-                <span className="flex items-center px-1 text-text-muted text-sm select-none">…</span>
+                <span className="flex items-center px-1 text-text-muted text-sm select-none">
+                  …
+                </span>
               )}
               <button
                 type="button"

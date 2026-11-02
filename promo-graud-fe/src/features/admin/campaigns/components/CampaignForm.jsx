@@ -9,7 +9,12 @@ function formatBudget(raw) {
   return n.toLocaleString('en-US');
 }
 
-export default function CampaignForm({ initial = EMPTY, onSubmit, loading = false, isEdit = false }) {
+export default function CampaignForm({
+  initial = EMPTY,
+  onSubmit,
+  loading = false,
+  isEdit = false,
+}) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
   const [budgetFocused, setBudgetFocused] = useState(false);

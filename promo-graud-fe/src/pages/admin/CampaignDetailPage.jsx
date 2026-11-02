@@ -55,8 +55,7 @@ export default function CampaignDetailPage() {
   const rules = rulesPage?.data ?? [];
 
   const showError = (err) => {
-    const msg =
-      err?.response?.data?.message ?? err?.message ?? 'Đã xảy ra lỗi, vui lòng thử lại.';
+    const msg = err?.response?.data?.message ?? err?.message ?? 'Đã xảy ra lỗi, vui lòng thử lại.';
     setMutationError(msg);
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
     errorTimerRef.current = setTimeout(() => setMutationError(null), 5000);

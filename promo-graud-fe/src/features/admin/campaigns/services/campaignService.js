@@ -41,7 +41,10 @@ export const createRule = async (campaignId, body) => {
 };
 
 export const updateRule = async (campaignId, ruleId, body) => {
-  const { data } = await axiosInstance.put(`/rules/${ruleId}`, { ...body, campaignId: Number(campaignId) });
+  const { data } = await axiosInstance.put(`/rules/${ruleId}`, {
+    ...body,
+    campaignId: Number(campaignId),
+  });
   return data.result;
 };
 

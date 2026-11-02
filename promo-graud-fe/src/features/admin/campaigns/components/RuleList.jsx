@@ -26,7 +26,11 @@ function ruleValueDisplay(rule) {
 
 function formatDateShort(iso) {
   if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return new Date(iso).toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 function toFormState(rule) {
@@ -97,11 +101,7 @@ export default function RuleList({
       {showForm && (
         <div className="bg-surface-muted border border-border rounded-xl p-4">
           <p className="text-sm font-semibold text-text-primary mb-3">Tạo Rule mới</p>
-          <RuleForm
-            onSubmit={handleAdd}
-            onCancel={() => setShowForm(false)}
-            loading={addLoading}
-          />
+          <RuleForm onSubmit={handleAdd} onCancel={() => setShowForm(false)} loading={addLoading} />
         </div>
       )}
 

@@ -141,9 +141,7 @@ export default function RuleForm({
         {/* Campaign selector */}
         {campaigns && (
           <div className="col-span-2">
-            <label className="block text-xs font-medium text-text-secondary mb-1">
-              Campaign *
-            </label>
+            <label className="block text-xs font-medium text-text-secondary mb-1">Campaign *</label>
             <select
               value={form.campaign_id}
               onChange={(e) => set('campaign_id', e.target.value)}
@@ -305,9 +303,7 @@ export default function RuleForm({
             onChange={(e) => set('start_time', e.target.value)}
             className={`${inputClass} ${errors.start_time ? errBorder : ''}`}
           />
-          {errors.start_time && (
-            <p className="mt-1 text-xs text-error-text">{errors.start_time}</p>
-          )}
+          {errors.start_time && <p className="mt-1 text-xs text-error-text">{errors.start_time}</p>}
         </div>
         <div>
           <label className="block text-xs font-medium text-text-secondary mb-1">
