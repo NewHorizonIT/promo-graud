@@ -52,8 +52,6 @@ public class DistributeVoucherReader implements ItemReader<Integer> {
             for (String idStr : poppedIds) {
                 buffer.add(Integer.valueOf(idStr));
             }
-
-            log.info("Kéo thành công mẻ {} users từ Redis về Kho đệm RAM", poppedIds.size());
         }
 
         // Bốc 1 phần tử từ KHO ĐỆM RAM (chạy cực nhanh) trả về cho Spring Batch

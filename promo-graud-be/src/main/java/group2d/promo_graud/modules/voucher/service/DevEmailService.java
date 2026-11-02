@@ -19,13 +19,13 @@ public class DevEmailService {
     @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public void sendVoucher(String toEmail, String voucherCode) {
         // Giả lập gửi email, không gọi Mailtrap hay SMTP
-        log.info(
-                "[MOCK EMAIL] To: {}"
-                        + "\nChúc mừng! Bạn nhận được Voucher mới"
-                        + " Mã Voucher của bạn là: {}"
-                        + "\nHãy sử dụng ngay hôm nay nhé!",
-                toEmail,
-                voucherCode);
+//        log.info(
+//                "[MOCK EMAIL] To: {}"
+//                        + "\nChúc mừng! Bạn nhận được Voucher mới"
+//                        + " Mã Voucher của bạn là: {}"
+//                        + "\nHãy sử dụng ngay hôm nay nhé!",
+//                toEmail,
+//                voucherCode);
         //    SimpleMailMessage message = new SimpleMailMessage();
         //
         //    message.setTo(toEmail);
