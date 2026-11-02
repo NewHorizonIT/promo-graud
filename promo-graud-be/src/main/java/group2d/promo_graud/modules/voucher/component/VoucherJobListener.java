@@ -18,7 +18,17 @@ public class VoucherJobListener implements JobExecutionListener {
                 je.getStepExecutions().stream().mapToLong(step -> step.getWriteCount()).sum();
 
         if (je.getStatus() == BatchStatus.COMPLETED) {
-            log.info("Voucher job {} done: {}/{}", je.getId(), written, requested);
+            if (written < requested) {
+                log.warn(
+                        "Voucher job {} PARTIAL: only {}/{} vouchers inserted. "
+                                + "{} codes were skipped due to collision.",
+                        je.getId(),
+                        written,
+                        requested,
+                        requested - written);
+            } else {
+                log.info("Voucher job {} done: {}/{}", je.getId(), written, requested);
+            }
         } else {
             log.error(
                     "Voucher job {} {}: {}",
