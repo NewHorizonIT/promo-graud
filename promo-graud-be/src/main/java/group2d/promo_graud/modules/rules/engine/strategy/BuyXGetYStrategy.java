@@ -44,6 +44,10 @@ public class BuyXGetYStrategy implements RuleStrategy {
         Integer yId = yProductId.intValue();
         Integer yQuantity = yProductQuantity.intValue();
 
+        if (xQuantity <= 0 || yQuantity <= 0) {
+            return BigDecimal.ZERO;
+        }
+
         List<OrderItem> orderItems = order.getItems();
 
         OrderItem productBuy =

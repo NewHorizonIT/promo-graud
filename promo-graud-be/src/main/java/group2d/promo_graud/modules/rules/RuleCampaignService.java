@@ -3,10 +3,12 @@ package group2d.promo_graud.modules.rules;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import lombok.AccessLevel;
@@ -15,6 +17,7 @@ import lombok.experimental.FieldDefaults;
 
 import group2d.promo_graud.modules.campaigns.Campaign;
 import group2d.promo_graud.modules.campaigns.CampaignRepository;
+import group2d.promo_graud.modules.campaigns.CampaignStatus;
 import group2d.promo_graud.modules.rules.dto.request.RuleCreateRequest;
 import group2d.promo_graud.modules.rules.dto.request.RuleUpdateRequest;
 import group2d.promo_graud.modules.rules.dto.response.RuleResponse;
@@ -33,6 +36,7 @@ public class RuleCampaignService {
     final CampaignRepository campaignRepository;
 
     // ---------------------- Lấy danh sách ------------------
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public PaginatedResponse<RuleResponse> getAllByFilter(
             String name,
             String typeOfRule,
@@ -42,10 +46,23 @@ public class RuleCampaignService {
             int pageSize) {
 
         // Parse String thành Enum, nếu null thì bỏ qua
-        TypeOfRule typeEnum =
-                (typeOfRule != null) ? TypeOfRule.valueOf(typeOfRule.toUpperCase()) : null;
+        TypeOfRule typeEnum = null;
+        if (typeOfRule != null) {
+            try {
+                typeEnum = TypeOfRule.valueOf(typeOfRule.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(RuleCampaignErrorCode.UNSUPPORTED_RULE_TYPE);
+            }
+        }
 
-        RuleStatus statusEnum = (status != null) ? RuleStatus.valueOf(status.toUpperCase()) : null;
+        RuleStatus statusEnum = null;
+        if (status != null) {
+            try {
+                statusEnum = RuleStatus.valueOf(status.trim().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(RuleCampaignErrorCode.UNSUPPORTED_RULE_STATUS);
+            }
+        }
 
         // Phân trang (Client truyền vào từ 1, Spring Data JPA tính từ 0)
         Pageable pageable = PageRequest.of(page - 1, pageSize);
@@ -69,60 +86,90 @@ public class RuleCampaignService {
     }
 
     // ---------------------- Cập nhật ------------------------
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public RuleResponse updateRule(Integer id, RuleUpdateRequest request) {
         RuleCampaign rule =
                 ruleRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(RuleCampaignErrorCode.RULE_NOT_EXIST));
 
+        if (Boolean.TRUE.equals(rule.getIsDeleted())) {
+            throw new AppException(RuleCampaignErrorCode.RULE_IS_DELETED);
+        }
+
+        TypeOfRule type =
+                request.getTypeOfRule() != null ? request.getTypeOfRule() : rule.getTypeOfRule();
+
+        BigDecimal value = request.getValue() != null ? request.getValue() : rule.getValue();
+
+        BigDecimal maxDiscount =
+                request.getMaxDiscountValue() != null
+                        ? request.getMaxDiscountValue()
+                        : rule.getMaxDiscountValue();
+
+        BigDecimal minOrder =
+                request.getMinOrderValue() != null
+                        ? request.getMinOrderValue()
+                        : rule.getMinOrderValue();
+
+        var payload = request.getPayload() != null ? request.getPayload() : rule.getPayload();
+
+        LocalDateTime startTime =
+                request.getStartTime() != null ? request.getStartTime() : rule.getStartTime();
+
+        LocalDateTime endTime =
+                request.getEndTime() != null ? request.getEndTime() : rule.getEndTime();
+
+        Campaign campaign = rule.getCampaign();
+
         if (request.getCampaignId() != null) {
-            Campaign newCampaign =
+            campaign =
                     campaignRepository
                             .findById(request.getCampaignId())
                             .orElseThrow(
                                     () ->
                                             new AppException(
                                                     RuleCampaignErrorCode.CAMPAIGN_NOT_FOUND));
-            rule.setCampaign(newCampaign);
+            if (campaign.getStatus() == CampaignStatus.ENDED) {
+                throw new AppException(RuleCampaignErrorCode.CAMPAIGN_ALREADY_ENDED);
+            }
         }
+        if (!endTime.isAfter(startTime)) {
+            throw new AppException(RuleCampaignErrorCode.INVALID_TIME_RANGE);
+        }
+
+        if (startTime.isBefore(campaign.getStartTime()) || endTime.isAfter(campaign.getEndTime())) {
+            throw new AppException(RuleCampaignErrorCode.RULE_TIME_OUTSIDE_CAMPAIGN);
+        }
+
+        validateRuleBusinessLogic(type, value, maxDiscount, minOrder, payload);
+
+        rule.setCampaign(campaign);
+        rule.setTypeOfRule(type);
+        rule.setValue(value);
+        rule.setMaxDiscountValue(maxDiscount);
+        rule.setMinOrderValue(minOrder);
+        rule.setPayload(payload);
+        rule.setStartTime(startTime);
+        rule.setEndTime(endTime);
 
         if (request.getName() != null) {
             rule.setName(request.getName());
-        }
-        if (request.getTypeOfRule() != null) {
-            rule.setTypeOfRule(request.getTypeOfRule());
-        }
-        if (request.getValue() != null) {
-            rule.setValue(request.getValue());
-        }
-        if (request.getMaxDiscountValue() != null) {
-            rule.setMaxDiscountValue(request.getMaxDiscountValue());
-        }
-        if (request.getMinOrderValue() != null) {
-            rule.setMinOrderValue(request.getMinOrderValue());
-        }
-        if (request.getTypeOfUser() != null) {
-            rule.setTypeOfUser(request.getTypeOfUser());
-        }
-        if (request.getStartTime() != null) {
-            rule.setStartTime(request.getStartTime());
-        }
-        if (request.getEndTime() != null) {
-            rule.setEndTime(request.getEndTime());
-        }
-        if (request.getPayload() != null) {
-            rule.setPayload(request.getPayload());
         }
 
         return RuleResponse.fromEntity(ruleRepository.save(rule));
     }
 
     // ------------------------ Xóa ---------------------------
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteRule(Integer id) {
         RuleCampaign rule =
                 ruleRepository
                         .findById(id)
                         .orElseThrow(() -> new AppException(RuleCampaignErrorCode.RULE_NOT_EXIST));
+        if (Boolean.TRUE.equals(rule.getIsDeleted())) {
+            throw new AppException(RuleCampaignErrorCode.RULE_IS_DELETED);
+        }
 
         rule.setIsDeleted(true);
 
@@ -130,6 +177,7 @@ public class RuleCampaignService {
     }
 
     // ---------------------- Tạo rule ------------------------
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public RuleResponse createRule(RuleCreateRequest request) {
         // 1. Validate logic nội bộ
         validateRuleInternalLogic(request);
@@ -159,7 +207,7 @@ public class RuleCampaignService {
                         .typeOfUser(
                                 request.getTypeOfUser() != null
                                         ? request.getTypeOfUser()
-                                        : RuleTargetAudience.NORMAL)
+                                        : RuleTargetAudience.ALL)
                         .startTime(request.getStartTime())
                         .endTime(request.getEndTime())
                         .payload(request.getPayload())
@@ -171,7 +219,6 @@ public class RuleCampaignService {
     }
 
     private void validateRuleInternalLogic(RuleCreateRequest request) {
-
         // 1. Kiểm tra tính hợp lệ của cặp thời gian
         // Thời gian kết thúc bắt buộc phải diễn ra SAU thời gian bắt đầu (không được trước hoặc
         // bằng)
@@ -227,6 +274,18 @@ public class RuleCampaignService {
                 }
                 break;
 
+            case FLASH_SALE:
+                if (request.getValue() == null
+                        || request.getValue().compareTo(BigDecimal.ZERO) <= 0
+                        || request.getValue().compareTo(new BigDecimal("100")) > 0) {
+                    throw new AppException(RuleCampaignErrorCode.INVALID_PERCENTAGE_VALUE);
+                }
+                if (request.getMaxDiscountValue() == null
+                        || request.getMaxDiscountValue().compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new AppException(RuleCampaignErrorCode.MISSING_MAX_DISCOUNT);
+                }
+                break;
+
             case TIERED:
             case BUY_X_GET_Y:
                 // Đối với các quy tắc phức tạp như Chiết khấu theo bậc thang (TIERED)
@@ -234,6 +293,56 @@ public class RuleCampaignService {
                 // Do đó, BẮT BUỘC phải truyền cấu hình chi tiết dưới dạng JSON vào trường
                 // "payload".
                 if (request.getPayload() == null || request.getPayload().isEmpty()) {
+                    throw new AppException(RuleCampaignErrorCode.MISSING_PAYLOAD);
+                }
+                break;
+        }
+    }
+
+    private void validateRuleBusinessLogic(
+            TypeOfRule typeOfRule,
+            BigDecimal value,
+            BigDecimal maxDiscountValue,
+            BigDecimal minOrderValue,
+            Map<String, Object> payload) {
+
+        switch (typeOfRule) {
+            case PERCENTAGE:
+                if (value == null
+                        || value.compareTo(BigDecimal.ZERO) <= 0
+                        || value.compareTo(new BigDecimal("100")) > 0) {
+                    throw new AppException(RuleCampaignErrorCode.INVALID_PERCENTAGE_VALUE);
+                }
+
+                if (maxDiscountValue == null || maxDiscountValue.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new AppException(RuleCampaignErrorCode.MISSING_MAX_DISCOUNT);
+                }
+                break;
+
+            case FIXED_AMOUNT:
+                if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new AppException(RuleCampaignErrorCode.INVALID_FIXED_AMOUNT);
+                }
+
+                if (minOrderValue != null && minOrderValue.compareTo(value) < 0) {
+                    throw new AppException(RuleCampaignErrorCode.MIN_ORDER_LESS_THAN_DISCOUNT);
+                }
+                break;
+
+            case FLASH_SALE:
+                if (value == null
+                        || value.compareTo(BigDecimal.ZERO) <= 0
+                        || value.compareTo(new BigDecimal("100")) > 0) {
+                    throw new AppException(RuleCampaignErrorCode.INVALID_PERCENTAGE_VALUE);
+                }
+                if (maxDiscountValue == null || maxDiscountValue.compareTo(BigDecimal.ZERO) <= 0) {
+                    throw new AppException(RuleCampaignErrorCode.MISSING_MAX_DISCOUNT);
+                }
+                break;
+
+            case TIERED:
+            case BUY_X_GET_Y:
+                if (payload == null || payload.isEmpty()) {
                     throw new AppException(RuleCampaignErrorCode.MISSING_PAYLOAD);
                 }
                 break;

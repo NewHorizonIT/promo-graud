@@ -8,7 +8,9 @@ import org.springframework.stereotype.Component;
 
 import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.rules.RuleCampaign;
+import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;
+import group2d.promo_graud.shared.exception.AppException;
 
 @Component
 public class TieredStrategy implements RuleStrategy {
@@ -26,11 +28,10 @@ public class TieredStrategy implements RuleStrategy {
         return tiers.stream()
                 .filter(
                         tier -> {
-                            BigDecimal minOrder =
-                                    new BigDecimal(tier.get("min_order_value").toString());
+                            BigDecimal minOrder = getRequiredBigDecimal(tier, "min_order_value");
                             return order.getTotalPrice().compareTo(minOrder) >= 0;
                         })
-                .map(tier -> new BigDecimal(tier.get("discount_value").toString()))
+                .map(tier -> getRequiredBigDecimal(tier, "discount_value"))
                 .max(BigDecimal::compareTo)
                 .orElse(BigDecimal.ZERO);
     }
@@ -38,5 +39,19 @@ public class TieredStrategy implements RuleStrategy {
     @Override
     public TypeOfRule getRuleType() {
         return TypeOfRule.TIERED;
+    }
+
+    private BigDecimal getRequiredBigDecimal(Map<String, Object> data, String key) {
+        Object value = data.get(key);
+
+        if (value == null) {
+            throw new AppException(RuleCampaignErrorCode.INVALID_PAYLOAD);
+        }
+
+        try {
+            return new BigDecimal(value.toString());
+        } catch (NumberFormatException e) {
+            throw new AppException(RuleCampaignErrorCode.INVALID_PAYLOAD);
+        }
     }
 }

@@ -84,7 +84,7 @@ export default function CampaignFormPage() {
             ))}
           </div>
         ) : (
-          <CampaignForm initial={initial ?? undefined} onSubmit={handleSubmit} loading={loading} />
+          <CampaignForm initial={initial ?? undefined} onSubmit={handleSubmit} loading={loading} isEdit={isEdit} />
         )}
       </div>
     </div>

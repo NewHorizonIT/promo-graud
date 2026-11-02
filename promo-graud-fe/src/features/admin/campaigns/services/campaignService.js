@@ -36,13 +36,12 @@ export const getRules = async (campaignId) => {
 };
 
 export const createRule = async (campaignId, body) => {
-  const { data } = await axiosInstance.post('/rules', { ...body, campaignId });
+  const { data } = await axiosInstance.post('/rules', { ...body, campaignId: Number(campaignId) });
   return data.result;
 };
 
-// TODO: BE chưa có PUT /rules/{id} — sẽ throw 404 cho đến khi BE thêm endpoint
 export const updateRule = async (campaignId, ruleId, body) => {
-  const { data } = await axiosInstance.put(`/rules/${ruleId}`, { ...body, campaignId });
+  const { data } = await axiosInstance.put(`/rules/${ruleId}`, { ...body, campaignId: Number(campaignId) });
   return data.result;
 };
 

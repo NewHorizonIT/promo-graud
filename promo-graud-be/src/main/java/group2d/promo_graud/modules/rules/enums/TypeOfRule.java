@@ -4,5 +4,6 @@ public enum TypeOfRule {
     PERCENTAGE,
     FIXED_AMOUNT,
     TIERED,
-    BUY_X_GET_Y
+    BUY_X_GET_Y,
+    FLASH_SALE
 }
