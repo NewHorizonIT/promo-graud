@@ -32,7 +32,7 @@ public class SecurityConfig {
         "/api/v1/auth/refresh"
     };
     private final String[] publicEndpointsGet = {
-        "/api/v1/vouchers", "/api/v1/products", "/api/v1/products/type"
+        "/api/v1/vouchers", "/api/v1/products", "/api/v1/products/type", "/api/v1/products/*"
     };
 
     private final String[] swaggerEndpoint = {

@@ -44,3 +44,8 @@ export const updateTypeOfProduct = async (id, body) => {
   const { data } = await axiosInstance.put(`/products/type/${id}`, body);
   return data.result;
 };
+
+export const deleteTypeOfProduct = async (id) => {
+  const { data } = await axiosInstance.delete(`/products/type/${id}`);
+  return data.result;
+};
