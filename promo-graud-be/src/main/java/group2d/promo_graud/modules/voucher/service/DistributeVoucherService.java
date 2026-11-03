@@ -74,7 +74,7 @@ public class DistributeVoucherService {
         // Lazy-load: Nếu Redis chưa có thì đếm DB nạp lên
         if (Boolean.FALSE.equals(redisTemplate.hasKey(redisKey))) {
             Long countInDb =
-                    voucherRepository.countByRuleCampaign_IdAndTypeAndStatusAndDistributionChannel(
+                    voucherRepository.countByRuleCampaignIdAndTypeAndStatusAndDistributionChannel(
                             request.getRuleId(),
                             VoucherType.UNIQUE,
                             VoucherStatus.ACTIVE,

@@ -41,7 +41,7 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
                     + "GROUP BY r.id, r.name, c.name, v.distributionChannel")
     List<VoucherCardResponse> getUniqueVoucherCard();
 
-    Long countByRuleCampaign_IdAndTypeAndStatusAndDistributionChannel(
+    Long countByRuleCampaignIdAndTypeAndStatusAndDistributionChannel(
             Integer ruleId, VoucherType type, VoucherStatus status, DistributionChannel channel);
 
     // ngăn tình trạng 2 luồng cùng rút cùng 1 mã dùng Permissive Lock
@@ -49,7 +49,8 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
     // Bất kỳ luồng/server nào khác gọi vào sẽ tự động bỏ qua mã này và lấy mã tiếp theo.
     @Query(
             value =
-                    "SELECT * FROM Voucher WHERE rule_id = :ruleId AND type = 'UNIQUE' AND status = 'ACTIVE' AND distribution_channel = :channel LIMIT :limit FOR UPDATE SKIP LOCKED",
+                    "SELECT * FROM Voucher WHERE rule_id = :ruleId AND type = 'UNIQUE' AND status = 'ACTIVE' AND "
+                            + "distribution_channel = :channel LIMIT :limit FOR UPDATE SKIP LOCKED",
             nativeQuery = true)
     List<Voucher> findActiveVouchersWithLock(
             @Param("ruleId") Integer ruleId,

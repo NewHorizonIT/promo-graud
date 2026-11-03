@@ -21,13 +21,13 @@ public interface DistributionLogRepository extends JpaRepository<DistributionLog
     @Transactional
     @Query(
             """
-        UPDATE DistributionLog d
-        SET d.status = :status,
-            d.retryCount = d.retryCount + 1,
-            d.lastAttemptAt = :time,
-            d.errorMessage = :error
-            WHERE d.id = :id
-        """)
+                  UPDATE DistributionLog d
+                  SET d.status = :status,
+                      d.retryCount = d.retryCount + 1,
+                      d.lastAttemptAt = :time,
+                      d.errorMessage = :error
+                      WHERE d.id = :id
+                  """)
     void markAsFailedAndIncrementRetry(
             @Param("id") Integer id,
             @Param("status") DistributionLogStatus status,

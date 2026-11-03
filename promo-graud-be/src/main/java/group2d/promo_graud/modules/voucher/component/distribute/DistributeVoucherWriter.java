@@ -49,30 +49,22 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
 
     @Override
     public void write(Chunk<? extends Integer> chunk) throws Exception {
-        // chunk.getItem trả về List các UserId
         List<Integer> userIds = (List<Integer>) chunk.getItems();
         int chunkSize = userIds.size();
-        // 1. Rút MỘT LẦN đủ N mã voucher từ Database (Giải quyết triệt để lỗi trùng mã)
         List<Voucher> vouchers =
                 voucherRepository.findActiveVouchersWithLock(ruleId, channelStr, chunkSize);
-
         if (vouchers.size() < chunkSize) {
             log.error("Kho DB không đủ mã! Cần {}, có {}", chunkSize, vouchers.size());
             throw new RuntimeException("Không đủ mã voucher trong database");
         }
-
-        // Lấy danh sách User và chuyển thành Map (UserId -> User) để tìm kiếm tốc độ O(1)
         Map<Integer, User> userMap =
                 userRepository.findAllById(userIds).stream()
                         .collect(Collectors.toMap(User::getId, user -> user));
-
-        // Tạm thời hard-code URL test ở đây. Sau này bạn lấy từ currentRule.getPayload() ra nhé.
-        String webhookUrl = "https://webhook.site/f37d210e-d515-4821-9b6a-218b1cf2feeb";
-
+        String webhookUrl =
+                "https://webhook.site/f37d210e-d515-4821-9b6a-218b1cf2feeb"; // Tạm thời hard-code
         List<UserVoucher> userVouchers = new ArrayList<>();
         List<Integer> voucherIdsToUpdate = new ArrayList<>();
         List<DistributionLog> logs = new ArrayList<>();
-
         // TẠO THÊM 2 DANH SÁCH ĐỂ LƯU LẠI NHỮNG NGƯỜI HỢP LỆ
         List<Integer> validUserIds = new ArrayList<>();
         List<Voucher> validVouchers = new ArrayList<>();
@@ -80,22 +72,17 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
         for (int i = 0; i < chunkSize; i++) {
             Integer userId = userIds.get(i);
             Voucher voucher = vouchers.get(i);
-
             try {
                 User targetUser = userMap.get(userId);
-                // NẾU USER KHÔNG TỒN TẠI -> BỎ QUA
                 if (targetUser == null) {
                     log.warn("Bỏ qua User ID {} vì không tìm thấy trong Database", userId);
                     voucher.setStatus(VoucherStatus.ACTIVE);
                     continue;
                 }
-                // LƯU LẠI VÀO DANH SÁCH HỢP LỆ ĐỂ LÁT NỮA XÀI
                 validUserIds.add(userId);
                 validVouchers.add(voucher);
-
                 // 1. Chuẩn bị list Voucher ID để đổi trạng thái
                 voucherIdsToUpdate.add(voucher.getId());
-
                 // 2. Chuẩn bị data lưu bảng user_voucher
                 UserVoucher uv =
                         UserVoucher.builder()
@@ -104,13 +91,9 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
                                 .status(UserVoucherStatus.UNUSED)
                                 .build();
                 userVouchers.add(uv);
-
-                // 3. Chuẩn bị data lưu bảng distribution_log (recipient là userId)
                 String userEmail = userMap.get(userId).getEmail(); // Lấy Email của User từ Database
-                // XÁC ĐỊNH LƯU GÌ VÀO CỘT RECIPIENT
                 String recipientValue =
                         (channel == DistributionChannel.EMAIL) ? userEmail : webhookUrl;
-
                 DistributionLog log =
                         DistributionLog.builder()
                                 .voucher(Voucher.builder().id(voucher.getId()).build())
@@ -122,17 +105,14 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
                 logs.add(log);
             } catch (Exception ex) {
                 log.error("Lỗi khi chuẩn bị data cho User ID {}: {}", userId, ex.getMessage());
-                // Trả lại trạng thái Voucher để người khác dùng
                 voucher.setStatus(VoucherStatus.ACTIVE);
             }
         }
-        // CHẶN LỖI: Chỉ cập nhật DB nếu có ít nhất 1 user hợp lệ
         if (!voucherIdsToUpdate.isEmpty()) {
             voucherRepository.updateStatus(voucherIdsToUpdate);
             userVoucherRepository.saveAll(userVouchers);
             logRepository.saveAllAndFlush(logs);
         }
-
         // Khởi tạo Payload từ dữ liệu đã lưu và gửi sang Redis
         List<DistributionPayload> payloads = new ArrayList<>();
         for (int i = 0; i < logs.size(); i++) {
@@ -140,14 +120,10 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
             Voucher voucher = validVouchers.get(i);
             Integer logId = logs.get(i).getId();
             String userEmail = userMap.get(userId).getEmail();
-
             payloads.add(
                     new DistributionPayload(
                             logId, userEmail, voucher.getCode(), channel, webhookUrl));
         }
-
-        // Spring sẽ tự động hiểu là "Hãy phát sự kiện này đi, nhưng nhớ chờ Transaction hiện tại
-        // chốt xong DB đã nhé".
         if (!payloads.isEmpty()) {
             eventPublisher.publishEvent(new VoucherDistributionEvent(payloads));
         }
