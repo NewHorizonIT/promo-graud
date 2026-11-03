@@ -23,11 +23,14 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
                     + "WHERE (:type IS NULL OR v.type = :type) "
                     + "AND (:status IS NULL OR v.status = :status) "
                     + "AND (:ruleId IS NULL OR v.ruleCampaign.id = :ruleId) "
-                    + "AND (:distributionChannel IS NULL OR v.distributionChannel = :distributionChannel)")
+                    + "AND (:campaignId IS NULL OR v.ruleCampaign.campaign.id = :campaignId) "
+                    + "AND (:distributionChannel IS NULL"
+                    + " OR v.distributionChannel = :distributionChannel)")
     Page<Voucher> getAll(
             @Param("type") VoucherType type,
             @Param("status") VoucherStatus status,
             @Param("ruleId") Integer ruleId,
+            @Param("campaignId") Integer campaignId,
             @Param("distributionChannel") DistributionChannel distributionChannel,
             Pageable pageable);
 

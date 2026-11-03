@@ -20,7 +20,7 @@ import group2d.promo_graud.modules.orders.service.DistributedLockService;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Distributed Lock Service Unit Test")
-class DistributedLockServiceTest {
+class DistributedServiceTest {
 
     @Mock private RedisTemplate<String, String> redisTemplate;
 

@@ -1,4 +1,4 @@
-package group2d.promo_graud.modules.voucher;
+package group2d.promo_graud.modules.voucher.entity;
 
 import jakarta.persistence.*;
 

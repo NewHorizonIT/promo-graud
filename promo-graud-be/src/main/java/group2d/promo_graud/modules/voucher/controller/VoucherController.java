@@ -93,6 +93,7 @@ public class VoucherController {
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder().code(200).message("Xóa voucher thành công").build());
     }
+
     @GetMapping("/summary-cards")
     public ResponseEntity<ApiResponse<List<VoucherCardResponse>>> getSummaryCards() {
         return ResponseEntity.ok(

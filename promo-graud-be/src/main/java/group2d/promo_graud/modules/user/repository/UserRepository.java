@@ -36,7 +36,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findByTypeOfUserTypeAndIsDeletedFalse(UserTypeEnum type);
 
     List<User> findByIdInAndIsDeletedFalse(List<Integer> ids);
-                    
+
     @Query("SELECT u.id FROM User u WHERE u.typeOfUser.type = :userType")
     List<Integer> findIdsByType(@Param("userType") UserTypeEnum userType);
 

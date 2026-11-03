@@ -187,18 +187,6 @@ public class UserService {
         return response;
     }
 
-    public Page<UserResponse> getAll(String userName, String typeOfUser, int page, int size) {
-        UserTypeEnum userType =
-                (typeOfUser != null && !typeOfUser.isBlank())
-                        ? UserTypeEnum.valueOf(typeOfUser.trim().toUpperCase())
-                        : null;
-
-        Pageable pageable = PageRequest.of(page - 1, size);
-
-        Page<User> result = userRepository.getAll(userName, userType, pageable);
-        return result.map(this::mapToUserResponse);
-    }
-
     public UserResponse mapToUserResponse(User user) {
         TypeOfUser typeOfUser = user.getTypeOfUser();
         return UserResponse.builder()

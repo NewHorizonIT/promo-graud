@@ -20,10 +20,10 @@ import group2d.promo_graud.modules.user.error.UserErrorCode;
 import group2d.promo_graud.modules.user.error.UserVoucherErrorCode;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
-import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
+import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Service

@@ -13,7 +13,7 @@ import lombok.*;
 
 import group2d.promo_graud.modules.orders.OrderStatus;
 import group2d.promo_graud.modules.user.entity.User;
-import group2d.promo_graud.modules.voucher.Voucher;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 
 @Entity
 @Table(name = "\"order\"") // Bắt buộc phải escape từ khóa "order" trong SQL
