@@ -4,12 +4,12 @@ import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
-import org.springframework.batch.core.step.builder.ChunkOrientedStepBuilder;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.dao.DataAccessException;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import lombok.RequiredArgsConstructor;
@@ -22,25 +22,34 @@ public class DistributeVoucherJobConfig {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
 
+    // 1. Tạo một ThreadPool riêng để chạy CÁC CHUNK SONG SONG
+    @Bean("stepTaskExecutor")
+    public ThreadPoolTaskExecutor stepTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(5); // 5 luồng cùng bốc chunk
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("step-worker-");
+        executor.initialize();
+        return executor;
+    }
+
     // Lấy chunk-size từ file application.yml (mặc định 50 nếu không cấu hình)
     @Value("${voucher.batch.chunk-size:50}")
     private int chunkSize;
 
     @Bean
     public Step distributeVoucherStep(
-            DistributeVoucherReader reader, DistributeVoucherWriter writer) {
+            DistributeVoucherReader reader,
+            DistributeVoucherWriter writer,
+            @Qualifier("stepTaskExecutor") ThreadPoolTaskExecutor stepExecutor) {
 
-        ChunkOrientedStepBuilder<Integer, Integer> stepBuilder =
-                new StepBuilder("distributeVoucherStep", jobRepository)
-                        .<Integer, Integer>chunk(chunkSize)
-                        .transactionManager(transactionManager)
-                        .reader(reader)
-                        .writer(writer)
-                        .faultTolerant()
-                        .retryLimit(3)
-                        .retry(DataAccessException.class);
-
-        return stepBuilder.build();
+        return new StepBuilder("distributeVoucherStep", jobRepository)
+                .<Integer, Integer>chunk(chunkSize, transactionManager) // Gộp 2 tham số
+                .reader(reader)
+                .writer(writer)
+                .taskExecutor(stepExecutor) // Giao việc cho 5 công nhân
+                .build();
     }
 
     @Bean

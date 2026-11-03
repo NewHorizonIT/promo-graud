@@ -3,23 +3,31 @@ package group2d.promo_graud.modules.voucher.service;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.voucher.dto.requests.DistributeVoucherRequest;
-import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
-import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
-import group2d.promo_graud.modules.voucher.enums.VoucherType;
+import group2d.promo_graud.modules.voucher.dto.responses.DistributionResponse;
+import group2d.promo_graud.modules.voucher.entity.DistributionLog;
+import group2d.promo_graud.modules.voucher.enums.*;
+import group2d.promo_graud.modules.voucher.repository.DistributionLogRepository;
 import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DistributeVoucherService {
     private final UserRepository userRepository;
+    private final DistributionLogRepository distributionLogRepository;
     private final StringRedisTemplate redisTemplate;
     private final VoucherRepository voucherRepository;
     private final DistributeBatchService distributeBatchService;
@@ -30,17 +38,31 @@ public class DistributeVoucherService {
 
         // Nếu Admin chọn "Gửi cho tất cả hạng VÀNG/BẠC..."
         if (request.getTargetUserType() != null) {
-            // Cần viết thêm hàm này trong UserRepository để moi ra danh sách ID
-            finalUserIds = userRepository.findIdsByType(request.getTargetUserType());
+            // Có chọn loại user và có chọn danh sách user cụ thể
+            if (request.getUserIds() != null && !request.getUserIds().isEmpty()) {
+                finalUserIds =
+                        userRepository.findIdsByTypeAndIdIn(
+                                request.getTargetUserType(), request.getUserIds());
 
-            // Gán ngược lại vào request để đẩy sang Batch
-            request.setUserIds(finalUserIds);
+            } else {
+                // Chỉ chọn loại user => gửi cho tất cả user thuộc loại đó
+                finalUserIds = userRepository.findIdsByType(request.getTargetUserType());
+            }
+
+        } else {
+            // Không chọn hạng -> gửi user thủ công
+            finalUserIds =
+                    request.getUserIds() == null
+                            ? List.of()
+                            : request.getUserIds().stream().distinct().toList();
         }
 
         // Chặn lỗi nếu danh sách rỗng (Không có user nào để gửi)
         if (finalUserIds == null || finalUserIds.isEmpty()) {
             throw new AppException(VoucherErrorCode.NO_USER_SELECTED);
         }
+        // Gán ngược lại vào request để đẩy sang Batch
+        request.setUserIds(finalUserIds);
         // đếm số lượng user cần gửi
         int targetUserCount = finalUserIds.size();
         String redisKey =
@@ -74,5 +96,35 @@ public class DistributeVoucherService {
         // Đủ hàng -> kích hoạt spring batch
         // Gọi sang Batch Service để chạy Job
         return distributeBatchService.launchDistributionJob(request);
+    }
+
+    public Page<DistributionResponse> getAllDistribution(
+            String recipient,
+            DistributionLogStatus status,
+            Integer retryCount,
+            DistributionChannel channel,
+            int size,
+            int page) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
+        String keyword = recipient == null ? "" : recipient.trim();
+        return distributionLogRepository
+                .getAll(keyword, status, retryCount, channel, pageable)
+                .map(this::mapToResponse);
+    }
+
+    private DistributionResponse mapToResponse(DistributionLog distributionLog) {
+
+        return DistributionResponse.builder()
+                .id(distributionLog.getId())
+                .voucherId(distributionLog.getVoucher().getId())
+                .voucherCode(distributionLog.getVoucher().getCode())
+                .type(distributionLog.getVoucher().getType())
+                .channel(distributionLog.getChannel())
+                .errorMessage(distributionLog.getErrorMessage())
+                .status(distributionLog.getStatus())
+                .lastAttemptAt(distributionLog.getLastAttemptAt())
+                .recipient(distributionLog.getRecipient())
+                .retryCount(distributionLog.getRetryCount())
+                .build();
     }
 }

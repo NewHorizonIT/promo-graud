@@ -20,10 +20,10 @@ spring:
       port: ${REDIS_PORT:6378}
       timeout: 2000ms
   mail:
-    host: ${MAIL_HOST}
-    port: ${MAIL_PORT}
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: smtp.gmail.com
+    port: 587
+    username: {EMAIL_NAME}
+    password: {PASSWORD}
     properties:
       mail:
         smtp:
@@ -61,6 +61,6 @@ admin:
 voucher:
   batch:
     unique-threshold: 50         # UNIQUE >= số này thì chạy bằng batch
-    chunk-size: 20               # số bản ghi mỗi lần commit
+    chunk-size: 50               # số bản ghi mỗi lần commit
 
 
