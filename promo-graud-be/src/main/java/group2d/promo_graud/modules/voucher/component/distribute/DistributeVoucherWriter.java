@@ -81,44 +81,50 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
             Integer userId = userIds.get(i);
             Voucher voucher = vouchers.get(i);
 
-            User targetUser = userMap.get(userId);
+            try {
+                User targetUser = userMap.get(userId);
+                // NẾU USER KHÔNG TỒN TẠI -> BỎ QUA
+                if (targetUser == null) {
+                    log.warn("Bỏ qua User ID {} vì không tìm thấy trong Database", userId);
+                    voucher.setStatus(VoucherStatus.ACTIVE);
+                    continue;
+                }
+                // LƯU LẠI VÀO DANH SÁCH HỢP LỆ ĐỂ LÁT NỮA XÀI
+                validUserIds.add(userId);
+                validVouchers.add(voucher);
 
-            // NẾU USER KHÔNG TỒN TẠI -> BỎ QUA
-            if (targetUser == null) {
-                log.warn("Bỏ qua User ID {} vì không tìm thấy trong Database", userId);
+                // 1. Chuẩn bị list Voucher ID để đổi trạng thái
+                voucherIdsToUpdate.add(voucher.getId());
+
+                // 2. Chuẩn bị data lưu bảng user_voucher
+                UserVoucher uv =
+                        UserVoucher.builder()
+                                .user(User.builder().id(userId).build())
+                                .voucher(Voucher.builder().id(voucher.getId()).build())
+                                .status(UserVoucherStatus.UNUSED)
+                                .build();
+                userVouchers.add(uv);
+
+                // 3. Chuẩn bị data lưu bảng distribution_log (recipient là userId)
+                String userEmail = userMap.get(userId).getEmail(); // Lấy Email của User từ Database
+                // XÁC ĐỊNH LƯU GÌ VÀO CỘT RECIPIENT
+                String recipientValue =
+                        (channel == DistributionChannel.EMAIL) ? userEmail : webhookUrl;
+
+                DistributionLog log =
+                        DistributionLog.builder()
+                                .voucher(Voucher.builder().id(voucher.getId()).build())
+                                .channel(channel)
+                                .recipient(recipientValue) // Lưu String (Email hoặc URL)
+                                .status(DistributionLogStatus.PENDING)
+                                .retryCount(0)
+                                .build();
+                logs.add(log);
+            } catch (Exception ex) {
+                log.error("Lỗi khi chuẩn bị data cho User ID {}: {}", userId, ex.getMessage());
+                // Trả lại trạng thái Voucher để người khác dùng
                 voucher.setStatus(VoucherStatus.ACTIVE);
-                continue;
             }
-            // LƯU LẠI VÀO DANH SÁCH HỢP LỆ ĐỂ LÁT NỮA XÀI
-            validUserIds.add(userId);
-            validVouchers.add(voucher);
-
-            // 1. Chuẩn bị list Voucher ID để đổi trạng thái
-            voucherIdsToUpdate.add(voucher.getId());
-
-            // 2. Chuẩn bị data lưu bảng user_voucher
-            UserVoucher uv =
-                    UserVoucher.builder()
-                            .user(User.builder().id(userId).build())
-                            .voucher(Voucher.builder().id(voucher.getId()).build())
-                            .status(UserVoucherStatus.UNUSED)
-                            .build();
-            userVouchers.add(uv);
-
-            // 3. Chuẩn bị data lưu bảng distribution_log (recipient là userId)
-            String userEmail = userMap.get(userId).getEmail(); // Lấy Email của User từ Database
-            // XÁC ĐỊNH LƯU GÌ VÀO CỘT RECIPIENT
-            String recipientValue = (channel == DistributionChannel.EMAIL) ? userEmail : webhookUrl;
-
-            DistributionLog log =
-                    DistributionLog.builder()
-                            .voucher(Voucher.builder().id(voucher.getId()).build())
-                            .channel(channel)
-                            .recipient(recipientValue) // Lưu String (Email hoặc URL)
-                            .status(DistributionLogStatus.PENDING)
-                            .retryCount(0)
-                            .build();
-            logs.add(log);
         }
         // CHẶN LỖI: Chỉ cập nhật DB nếu có ít nhất 1 user hợp lệ
         if (!voucherIdsToUpdate.isEmpty()) {

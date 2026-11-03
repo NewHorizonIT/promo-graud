@@ -20,9 +20,8 @@ public class DistributeJobExecutorConfig {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(2);
         executor.setMaxPoolSize(4);
-        executor.setQueueCapacity(50); // Hàng đợi 50 slot
-        executor.setThreadNamePrefix(
-                "distribute-batch-"); // Đổi tên luồng để dễ debug trong Console
+        executor.setQueueCapacity(50);
+        executor.setThreadNamePrefix("distribute-batch-");
         executor.initialize();
         return executor;
     }
@@ -38,7 +37,7 @@ public class DistributeJobExecutorConfig {
         TaskExecutorJobOperator operator = new TaskExecutorJobOperator();
         operator.setJobRepository(jobRepository);
         operator.setJobRegistry(jobRegistry);
-        operator.setTaskExecutor(distributeExecutor); // Nhét cái luồng to bự vào đây
+        operator.setTaskExecutor(distributeExecutor);
         operator.afterPropertiesSet();
 
         return operator;

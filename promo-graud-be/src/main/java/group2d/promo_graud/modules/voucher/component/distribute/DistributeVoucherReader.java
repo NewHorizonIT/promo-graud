@@ -31,7 +31,7 @@ public class DistributeVoucherReader implements ItemReader<Integer> {
     private final Queue<Integer> buffer = new LinkedList<>();
 
     // TỪ KHÓA QUAN TRỌNG NHẤT: synchronized
-    // Vì bạn đang chạy Đa luồng (4 luồng cùng lao vào lấy ID), phải có synchronized để xếp hàng,
+    // Vì bạn đang chạy Đa luồng, phải có synchronized để xếp hàng,
     // chống giật lag và tránh trường hợp 2 luồng rút trùng ID của nhau.
     @Override
     public synchronized Integer read() {
@@ -54,23 +54,6 @@ public class DistributeVoucherReader implements ItemReader<Integer> {
             }
         }
 
-        // Bốc 1 phần tử từ KHO ĐỆM RAM (chạy cực nhanh) trả về cho Spring Batch
         return buffer.poll();
     }
-    // viết kiểu này chạy for => lâu
-    //  @Override
-    //  public Integer read() {
-    //
-    //    String listKey = "batch_users:" + requestId;
-    //    // Rút ID từ đầu hàng đợi (Left Pop). Nếu hàng đợi rỗng, nó trả về null.
-    //    String userIdStr = redisTemplate.opsForList().leftPop(listKey);
-    //
-    //    // Khi trả về null, Spring Batch sẽ hiểu là "Đã đọc hết danh sách" và tự động dừng Step
-    //    if (userIdStr != null) {
-    //      return Integer.valueOf(userIdStr);
-    //    }
-    //
-    //    return null;
-    //  }
-
 }
