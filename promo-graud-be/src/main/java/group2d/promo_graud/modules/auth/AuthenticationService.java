@@ -63,7 +63,7 @@ public class AuthenticationService {
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (!matches) {
-            throw new AppException(UserErrorCode.USER_NOT_EXISTS);
+            throw new AppException(UserErrorCode.PASSWORD_NOT_EXISTS);
         }
         String token = generateToken(user, false);
         String refreshToken = generateToken(user, true);

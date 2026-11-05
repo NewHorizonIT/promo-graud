@@ -52,7 +52,7 @@ public class VoucherDistributeWorker
                         payload.getUserEmail());
 
                 String partnerWebhookUrl = payload.getTargetUrl();
-                webHookService.sendVoucherWebhook(
+                webHookService.sendVoucherWebHook(
                         partnerWebhookUrl, payload.getUserEmail(), payload.getVoucherCode());
             }
             // 4. Thành công -> Update trạng thái Log xuống Database (Chỉ tốn 1 lệnh UPDATE)
