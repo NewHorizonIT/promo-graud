@@ -8,6 +8,11 @@ const STATUS_MAP = {
   DLQ: { label: 'DLQ', className: 'bg-surface-muted text-text-secondary border-border' },
 };
 
+export const CHANNEL_LABELS = {
+  EMAIL: 'Email',
+  WEBHOOK: 'Webhook',
+};
+
 export default function DistributionStatusBadge({ status }) {
   const cfg = STATUS_MAP[status] ?? STATUS_MAP.PENDING;
   return (
