@@ -121,6 +121,7 @@ export default function VoucherCollectionPage() {
   const [detailTarget, setDetailTarget] = useState(null); // { voucher, rule }
 
   const { data: rulesData } = useRules();
+  const rules = rulesData?.data ?? [];
 
   const ruleMap = useMemo(
     () => Object.fromEntries((rulesData?.data ?? []).map((r) => [r.id, r])),
