@@ -12,3 +12,8 @@ export async function getAdminOrder(id) {
   const { data } = await axiosInstance.get(`/orders/${id}`);
   return data.result;
 }
+
+export async function cancelAdminOrder(id) {
+  const { data } = await axiosInstance.patch(`/orders/${id}/cancel`);
+  return data.result;
+}

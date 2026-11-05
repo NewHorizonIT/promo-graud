@@ -17,8 +17,8 @@
 
 /* ─── Light mode ─────────────────────────────────────── */
 :root {
-  --primary: #aa3bff;
-  --primary-hover: #9b35e8;
+  --primary: #ff6600;
+  --primary-hover: #ff6600d0;
   --surface: #ffffff;
   --surface-muted: #f9f8fa;
   --border-color: #e5e4e7;

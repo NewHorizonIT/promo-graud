@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Ticket, Tag, ArrowRight, PackageOpen } from 'lucide-react';
-import { useMyVouchers } from '../features/user/vouchers/hooks/useVouchers';
+import { Ticket, Tag, ArrowRight, PackageOpen, Info } from 'lucide-react';
+import { useMyVouchers, useRules } from '../features/user/vouchers/hooks/useVouchers';
+import VoucherDetailModal from '../components/VoucherDetailModal';
 
 const TYPE_LABEL = { UNIQUE: 'Riêng', GENERIC: 'Dùng chung' };
 const TYPE_STYLE = {
@@ -9,9 +10,21 @@ const TYPE_STYLE = {
   GENERIC: 'bg-sky-50 text-sky-700 border-sky-200',
 };
 
-function VoucherWalletCard({ uv }) {
+function VoucherWalletCard({ uv, rule, onDetail }) {
   const v = uv.voucher;
   const isUsed = uv.status === 'USED';
+
+  const discountLabel = rule
+    ? rule.typeOfRule === 'PERCENTAGE'
+      ? `Giảm ${rule.value}%`
+      : rule.typeOfRule === 'FIXED_AMOUNT'
+        ? `Giảm ${Number(rule.value).toLocaleString('vi-VN')}₫`
+        : rule.typeOfRule === 'BUY_X_GET_Y'
+          ? 'Mua X tặng Y'
+          : rule.typeOfRule === 'FLASH_SALE'
+            ? 'Flash Sale'
+            : 'Giảm theo bậc'
+    : (TYPE_LABEL[v?.type] ?? v?.type);
 
   return (
     <div
@@ -25,30 +38,42 @@ function VoucherWalletCard({ uv }) {
 
       {/* Left zone */}
       <div className="w-1/3 min-w-[90px] border-r border-dashed border-border flex flex-col items-center justify-center p-3 bg-success-bg/30 shrink-0">
-        <Tag size={18} className="text-success-text mb-1" />
-        <span className="text-[10px] text-success-text font-semibold text-center">
-          {TYPE_LABEL[v?.type] ?? v?.type}
+        <Tag size={16} className="text-success-text mb-1 shrink-0" />
+        <span className="text-[10px] text-success-text font-bold text-center leading-tight">
+          {discountLabel}
         </span>
       </div>
 
       {/* Right zone */}
       <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span
-              className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
-                TYPE_STYLE[v?.type] ?? 'bg-surface-muted text-text-muted border-border'
-              }`}
-            >
-              {TYPE_LABEL[v?.type] ?? v?.type}
-            </span>
-            <span
-              className={`text-[10px] font-semibold ${
-                isUsed ? 'text-text-muted' : 'text-success-text'
-              }`}
-            >
-              {isUsed ? 'Đã dùng' : 'Chưa dùng'}
-            </span>
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                  TYPE_STYLE[v?.type] ?? 'bg-surface-muted text-text-muted border-border'
+                }`}
+              >
+                {TYPE_LABEL[v?.type] ?? v?.type}
+              </span>
+              <span
+                className={`text-[10px] font-semibold ${
+                  isUsed ? 'text-text-muted' : 'text-success-text'
+                }`}
+              >
+                {isUsed ? 'Đã dùng' : 'Chưa dùng'}
+              </span>
+            </div>
+            {!isUsed && (
+              <button
+                type="button"
+                onClick={() => onDetail(v, rule)}
+                className="p-0.5 text-text-muted hover:text-primary transition-colors cursor-pointer shrink-0"
+                title="Xem chi tiết"
+              >
+                <Info size={14} />
+              </button>
+            )}
           </div>
           <p className="text-sm font-bold text-text-primary font-mono uppercase tracking-wide truncate">
             {v?.code}
@@ -90,7 +115,15 @@ const TABS = [
 
 export default function MyVouchersPage() {
   const [tab, setTab] = useState('UNUSED');
+  const [detailTarget, setDetailTarget] = useState(null);
+
   const { data, isLoading } = useMyVouchers();
+  const { data: rulesData } = useRules();
+
+  const ruleMap = useMemo(
+    () => Object.fromEntries((rulesData?.data ?? []).map((r) => [r.id, r])),
+    [rulesData],
+  );
 
   const allVouchers = data?.data ?? [];
   const filtered = allVouchers.filter((uv) => uv.status === tab);
@@ -149,7 +182,12 @@ export default function MyVouchersPage() {
       ) : filtered.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((uv) => (
-            <VoucherWalletCard key={uv.id} uv={uv} />
+            <VoucherWalletCard
+              key={uv.id}
+              uv={uv}
+              rule={ruleMap[uv.voucher?.ruleId]}
+              onDetail={(voucher, rule) => setDetailTarget({ voucher, rule })}
+            />
           ))}
         </div>
       ) : (
@@ -170,6 +208,14 @@ export default function MyVouchersPage() {
             </Link>
           )}
         </div>
+      )}
+
+      {detailTarget && (
+        <VoucherDetailModal
+          voucher={detailTarget.voucher}
+          rule={detailTarget.rule}
+          onClose={() => setDetailTarget(null)}
+        />
       )}
     </div>
   );
