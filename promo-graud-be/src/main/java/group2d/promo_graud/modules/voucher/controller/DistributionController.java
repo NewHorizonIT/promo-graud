@@ -38,13 +38,11 @@ public class DistributionController {
     public ResponseEntity<ApiResponse<PaginatedResponse<DistributionResponse>>> getDistributions(
             @RequestParam(required = false) String recipient,
             @RequestParam(required = false) DistributionLogStatus status,
-            @RequestParam(required = false) Integer retryCount,
             @RequestParam(required = false) DistributionChannel channel,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "1") int page) {
         Page<DistributionResponse> pages =
-                distributeVoucherService.getAllDistribution(
-                        recipient, status, retryCount, channel, size, page);
+                distributeVoucherService.getAllDistribution(recipient, status, channel, size, page);
         PaginatedResponse<DistributionResponse> result =
                 PaginatedResponse.<DistributionResponse>builder()
                         .data(pages.getContent())
@@ -58,6 +56,18 @@ public class DistributionController {
                         .code(200)
                         .message("Lấy danh sách log phân phối thành công")
                         .result(result)
+                        .build());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<DistributionResponse>> getDistributionById(
+            @PathVariable Integer id) {
+        DistributionResponse response = distributeVoucherService.getDistributionById(id);
+        return ResponseEntity.ok(
+                ApiResponse.<DistributionResponse>builder()
+                        .code(200)
+                        .message("Lấy chi tiết thông tin Log phân phối thành công")
+                        .result(response)
                         .build());
     }
 }

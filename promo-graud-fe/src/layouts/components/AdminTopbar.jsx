@@ -16,6 +16,7 @@ const PAGE_TITLES = {
   '/admin/users': 'Users',
   '/admin/users/new': 'User Create',
   '/admin/user-types': 'User Types',
+  '/admin/distributions': 'DistributionsLog',
 };
 
 const getPageTitle = (pathname) => {
@@ -47,6 +48,10 @@ const getPageTitle = (pathname) => {
 
   if (pathname.startsWith('/admin/orders/')) {
     return 'Order Detail';
+  }
+
+  if (pathname.startsWith('/admin/distributions/')) {
+    return 'Distribution Log Detail';
   }
 
   return 'Admin';

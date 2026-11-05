@@ -31,6 +31,8 @@ import UserTypesPage from '../pages/admin/UserTypePage';
 import UserFormPage from '../pages/admin/UserFormPage';
 import UserDetailPage from '../pages/admin/UserDetailPage';
 import PaymentResultPage from '../pages/PaymentResultPage';
+import DistributionPage from '../pages/admin/DistributionPage';
+import DistributionLogDetailPage from '../pages/admin/DistributionLogDetailPage';
 
 export default function AppRoutes() {
   return (
@@ -111,6 +113,8 @@ export default function AppRoutes() {
         <Route path="users/:id" element={<UserDetailPage />} />
         <Route path="users/:id/edit" element={<UserFormPage />} />
         <Route path="user-types" element={<UserTypesPage />} />
+        <Route path="distributions" element={<DistributionPage />} />
+        <Route path="distributions/:id" element={<DistributionLogDetailPage />} />
       </Route>
     </Routes>
   );

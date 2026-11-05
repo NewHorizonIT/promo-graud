@@ -5,6 +5,7 @@ import { useDeleteUser, useUsers } from '../../features/admin/users/hooks/useUse
 import UserTable from '../../features/admin/users/components/UserTable';
 import Toast from '../../components/Toast';
 import { useTypeUser } from '../../features/admin/users/hooks/useTypeOfUser';
+import Pagination from '../../components/pagination';
 
 const PAGE_SIZE = 10;
 
@@ -144,23 +145,10 @@ export default function UserPage() {
         <UserTable users={users} onDelete={handleDelete} />
       )}
 
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-2">
-          {[...Array(totalPages)].map((_, i) => {
-            const pg = i + 1;
-            return (
-              <button
-                key={pg}
-                type="button"
-                onClick={() => setQueryParams((prev) => ({ ...prev, page: pg }))}
-                className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${pg === queryParams.page ? 'bg-primary text-white shadow-glow' : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'}`}
-              >
-                {pg}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <Pagination
+        meta={{ current_page: queryParams.page, last_page: totalPages }}
+        onPageChange={(pg) => setQueryParams((prev) => ({ ...prev, page: pg }))}
+      />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
