@@ -13,7 +13,17 @@ import {
   useUpdateRule,
   useDeleteRule,
 } from '../../features/admin/campaigns/hooks/useRules';
-import { useCampaignStats } from '../../features/admin/analytics/hooks/useAnalytics';
+import {
+  useCampaignStats,
+  useCampaignTimeline,
+  useRuleBreakdown,
+  useTopUsers,
+  useVoucherUtilization,
+} from '../../features/admin/analytics/hooks/useAnalytics';
+import TimelineChart from '../../features/admin/analytics/components/TimelineChart';
+import RuleBreakdownTable from '../../features/admin/analytics/components/RuleBreakdownTable';
+import TopUsersTable from '../../features/admin/analytics/components/TopUsersTable';
+import VoucherUtilizationTable from '../../features/admin/analytics/components/VoucherUtilizationTable';
 import { formatCurrency } from '../../utils/format';
 import ConfirmModal from '../../components/ConfirmModal';
 
@@ -28,9 +38,20 @@ function StatItem({ label, value }) {
   );
 }
 
+function SectionHeader({ title }) {
+  return (
+    <h3 className="text-sm font-bold text-text-primary uppercase tracking-wide mb-3">{title}</h3>
+  );
+}
+
 const STATUS_TRANSITIONS = {
   ACTIVE: { next: 'ENDED', label: 'Kết thúc ngay', requireConfirm: true },
 };
+
+function computeRoi(revenue, discount) {
+  if (!discount || Number(discount) === 0) return null;
+  return (Number(revenue) / Number(discount)).toFixed(2) + 'x';
+}
 
 export default function CampaignDetailPage() {
   const { id } = useParams();
@@ -39,11 +60,22 @@ export default function CampaignDetailPage() {
   const [deletingRuleId, setDeletingRuleId] = useState(null);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [pendingDeleteRuleId, setPendingDeleteRuleId] = useState(null);
+  const [interval, setInterval] = useState('day');
+  const [sortBy, setSortBy] = useState('usage_rate');
+  const [sortDir, setSortDir] = useState('desc');
   const errorTimerRef = useRef(null);
 
   const { data: campaign, isLoading } = useCampaign(id);
   const { data: rulesPage } = useRules(id);
   const { data: stats } = useCampaignStats(id);
+  const { data: timeline, isLoading: timelineLoading } = useCampaignTimeline(id, { interval });
+  const { data: ruleBreakdown, isLoading: ruleBreakdownLoading } = useRuleBreakdown(id);
+  const { data: topUsers, isLoading: topUsersLoading } = useTopUsers(id);
+  const { data: voucherUtilization, isLoading: voucherUtilLoading } = useVoucherUtilization(
+    id,
+    sortBy,
+    sortDir,
+  );
 
   const updateStatus = useUpdateCampaignStatus();
   const createRule = useCreateRule();
@@ -59,6 +91,15 @@ export default function CampaignDetailPage() {
     setMutationError(msg);
     if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
     errorTimerRef.current = setTimeout(() => setMutationError(null), 5000);
+  };
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortBy(field);
+      setSortDir('desc');
+    }
   };
 
   if (isLoading) {
@@ -111,6 +152,8 @@ export default function CampaignDetailPage() {
       setDeletingRuleId(null);
     }
   };
+
+  const roi = computeRoi(stats?.totalRevenue, stats?.totalDiscount);
 
   return (
     <div className="space-y-5">
@@ -264,18 +307,85 @@ export default function CampaignDetailPage() {
       )}
 
       {tab === 2 && (
-        <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
-          {stats ? (
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatItem label="Mã đã phát" value={stats.totalIssued} />
-              <StatItem label="Mã đã dùng" value={stats.totalRedeemed} />
-              <StatItem label="Tỷ lệ chuyển đổi" value={`${stats.redemptionRate ?? 0}%`} />
-              <StatItem label="Tổng tiền giảm" value={formatCurrency(stats.totalDiscount)} />
-              <StatItem label="Doanh thu" value={formatCurrency(stats.totalRevenue)} />
+        <div className="space-y-6">
+          {/* Campaign Stats */}
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
+            {stats ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                <StatItem label="Mã đã phát" value={stats.totalIssued} />
+                <StatItem label="Mã đã dùng" value={stats.totalRedeemed} />
+                <StatItem label="Tỷ lệ chuyển đổi" value={`${stats.redemptionRate ?? 0}%`} />
+                <StatItem label="Tổng tiền giảm" value={formatCurrency(stats.totalDiscount)} />
+                <StatItem label="Doanh thu" value={formatCurrency(stats.totalRevenue)} />
+                <StatItem label="ROI" value={roi} />
+              </div>
+            ) : (
+              <p className="text-sm text-text-muted">Chưa có dữ liệu thống kê.</p>
+            )}
+          </div>
+
+          {/* Timeline */}
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
+            <div className="flex items-center justify-between mb-4">
+              <SectionHeader title="Redemption theo thời gian" />
+              <div className="flex items-center gap-1 bg-surface-muted p-1 rounded-lg">
+                {['day', 'hour'].map((iv) => (
+                  <button
+                    key={iv}
+                    type="button"
+                    onClick={() => setInterval(iv)}
+                    className={`px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      interval === iv
+                        ? 'bg-surface text-text-primary shadow-level-1'
+                        : 'text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    {iv === 'day' ? 'Ngày' : 'Giờ'}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : (
-            <p className="text-sm text-text-muted">Chưa có dữ liệu thống kê.</p>
-          )}
+            {timelineLoading ? (
+              <div className="h-64 bg-surface-muted rounded-xl animate-pulse" />
+            ) : (
+              <TimelineChart data={timeline ?? []} interval={interval} />
+            )}
+          </div>
+
+          {/* Rule Breakdown */}
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
+            <SectionHeader title="Hiệu quả theo Rule" />
+            {ruleBreakdownLoading ? (
+              <div className="h-32 bg-surface-muted rounded-xl animate-pulse" />
+            ) : (
+              <RuleBreakdownTable data={ruleBreakdown ?? []} />
+            )}
+          </div>
+
+          {/* Top Users */}
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
+            <SectionHeader title="Top Users" />
+            {topUsersLoading ? (
+              <div className="h-32 bg-surface-muted rounded-xl animate-pulse" />
+            ) : (
+              <TopUsersTable data={topUsers ?? []} />
+            )}
+          </div>
+
+          {/* Voucher Utilization */}
+          <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
+            <SectionHeader title="Tỉ lệ sử dụng Voucher" />
+            {voucherUtilLoading ? (
+              <div className="h-32 bg-surface-muted rounded-xl animate-pulse" />
+            ) : (
+              <VoucherUtilizationTable
+                data={voucherUtilization ?? []}
+                sortBy={sortBy}
+                sortDir={sortDir}
+                onSort={handleSort}
+              />
+            )}
+          </div>
         </div>
       )}
     </div>
