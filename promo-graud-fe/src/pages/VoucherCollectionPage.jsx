@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Ticket, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Ticket, SlidersHorizontal, X, Info } from 'lucide-react';
 import CampaignBanner from '../features/user/vouchers/components/CampaignBanner';
 import {
   useVouchers,
@@ -8,6 +8,7 @@ import {
   useRules,
 } from '../features/user/vouchers/hooks/useVouchers';
 import { useAuthStore } from '../store/authStore';
+import VoucherDetailModal from '../components/VoucherDetailModal';
 
 const PAGE_SIZE = 16;
 
@@ -24,21 +25,46 @@ function VoucherSkeleton() {
   );
 }
 
-function VoucherItem({ voucher, claimed, claiming, onClaim }) {
+const RULE_TYPE_DISCOUNT_LABEL = {
+  PERCENTAGE: (v) => `Giảm ${v}%`,
+  FIXED_AMOUNT: (v) => `Giảm ${v ? Number(v).toLocaleString('vi-VN') + '₫' : ''}`,
+  BUY_X_GET_Y: () => 'Mua X tặng Y',
+  TIERED: () => 'Giảm theo bậc',
+  FLASH_SALE: () => 'Flash Sale',
+};
+
+function getDiscountLabel(rule) {
+  if (!rule) return 'Khuyến mãi';
+  const fn = RULE_TYPE_DISCOUNT_LABEL[rule.typeOfRule];
+  return fn ? fn(rule.value) : 'Khuyến mãi';
+}
+
+function VoucherItem({ voucher, rule, claimed, claiming, onClaim, onDetail }) {
   return (
     <div className="relative bg-surface rounded-xl border border-border flex h-28 overflow-hidden hover:shadow-level-1 transition-shadow">
       <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-background rounded-full border border-border z-10" />
 
       <div className="w-1/3 min-w-[90px] border-r border-dashed border-border flex flex-col items-center justify-center p-3 bg-success-bg/30 shrink-0">
-        <span className="text-success-text text-base font-bold">GIẢM</span>
-        <span className="text-[10px] text-text-secondary text-center mt-1">GIÁ</span>
+        <span className="text-success-text text-sm font-bold text-center leading-tight">
+          {getDiscountLabel(rule)}
+        </span>
       </div>
 
       <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
         <div>
-          <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-sm">
-            GENERIC
-          </span>
+          <div className="flex items-center justify-between gap-1">
+            <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold rounded-sm">
+              GENERIC
+            </span>
+            <button
+              type="button"
+              onClick={() => onDetail(voucher, rule)}
+              className="p-0.5 text-text-muted hover:text-primary transition-colors cursor-pointer"
+              title="Xem chi tiết"
+            >
+              <Info size={14} />
+            </button>
+          </div>
           <h3 className="text-sm font-semibold text-text-primary uppercase tracking-wide mt-1 truncate">
             {voucher.code}
           </h3>
@@ -92,9 +118,15 @@ export default function VoucherCollectionPage() {
   const token = useAuthStore((s) => s.token);
   const [page, setPage] = useState(1);
   const [ruleId, setRuleId] = useState(null);
+  const [detailTarget, setDetailTarget] = useState(null); // { voucher, rule }
 
   const { data: rulesData } = useRules();
   const rules = rulesData?.data ?? [];
+
+  const ruleMap = useMemo(
+    () => Object.fromEntries((rulesData?.data ?? []).map((r) => [r.id, r])),
+    [rulesData],
+  );
 
   const { data: vouchersData, isLoading } = useVouchers({ page, pageSize: PAGE_SIZE, ruleId });
   const { data: myVouchersData } = useMyVouchers();
@@ -192,9 +224,11 @@ export default function VoucherCollectionPage() {
               <VoucherItem
                 key={v.id ?? v.code}
                 voucher={v}
+                rule={ruleMap[v.ruleId]}
                 claimed={claimedIds.has(v.id)}
                 claiming={isPending && claimingId === v.id}
                 onClaim={handleClaim}
+                onDetail={(voucher, rule) => setDetailTarget({ voucher, rule })}
               />
             ))}
           </div>
@@ -267,6 +301,14 @@ export default function VoucherCollectionPage() {
           </div>
         )}
       </section>
+
+      {detailTarget && (
+        <VoucherDetailModal
+          voucher={detailTarget.voucher}
+          rule={detailTarget.rule}
+          onClose={() => setDetailTarget(null)}
+        />
+      )}
     </div>
   );
 }

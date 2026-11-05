@@ -20,6 +20,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     public Integer countByUserIdAndVoucherIdAndStatus(
             Integer userId, Integer voucherId, OrderStatus status);
 
+    @EntityGraph(attributePaths = {"items", "items.product"})
     public List<Order> findByCreatedAtGreaterThanEqualAndCreatedAtLessThanAndIsDeletedFalse(
             LocalDateTime start, LocalDateTime end);
 

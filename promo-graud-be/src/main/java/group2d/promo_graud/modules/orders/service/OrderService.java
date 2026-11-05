@@ -119,7 +119,7 @@ public class OrderService {
                             createOrderItemAndCalculateTotal(order, request.getItems());
                     order.setTotalPrice(totalPrice);
                     order.setFinalPrice(totalPrice);
-                    // Fix: Save order -> DB
+                    order.setStatus(OrderStatus.SUCCESS);
                     orderRepository.save(order);
 
                     return mapToOrderResponse(order);
@@ -164,6 +164,7 @@ public class OrderService {
                     // Fix: check final price >= 0
                     BigDecimal finalPrice = totalPrice.subtract(discount).max(BigDecimal.ZERO);
                     order.setFinalPrice(finalPrice);
+                    order.setStatus(OrderStatus.SUCCESS);
                     consumeVoucher(currentVoucher, userVoucher);
                     voucherRedemptionRepository.save(
                             VoucherRedemption.builder()
@@ -337,6 +338,20 @@ public class OrderService {
                 .createdAt(order.getCreatedAt())
                 .items(itemResponses)
                 .build();
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public OrderResponse cancelOrder(Integer id) {
+        Order order =
+                orderRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_EXISTS));
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new AppException(OrderErrorCode.ORDER_CANNOT_CANCEL);
+        }
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+        return mapToOrderResponse(order);
     }
 
     public BigDecimal getTotalSpending(Integer userId) {
