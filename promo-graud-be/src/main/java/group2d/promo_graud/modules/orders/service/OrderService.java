@@ -232,8 +232,8 @@ public class OrderService {
                             .price(product.getPrice())
                             .build();
             items.add(item);
-            orderItemRepository.save(item);
         }
+        orderItemRepository.saveAll(items);
         order.setItems(items);
         return totalPrice;
     }
