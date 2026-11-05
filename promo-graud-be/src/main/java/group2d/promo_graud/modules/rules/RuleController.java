@@ -1,0 +1,74 @@
+package group2d.promo_graud.modules.rules;
+
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import lombok.RequiredArgsConstructor;
+
+import group2d.promo_graud.modules.rules.dto.request.RuleCreateRequest;
+import group2d.promo_graud.modules.rules.dto.request.RuleUpdateRequest;
+import group2d.promo_graud.modules.rules.dto.response.RuleResponse;
+import group2d.promo_graud.shared.dto.ApiResponse;
+import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(
+        name = "Rules",
+        description =
+                "Quản lý rule engine: giam_truc_tiep, giam_phan_tram, mua_x_tang_y, tiered, flash_sale")
+@RestController
+@RequestMapping("/api/v1/rules")
+@RequiredArgsConstructor
+public class RuleController {
+    private final RuleCampaignService ruleCampaignService;
+
+    @GetMapping
+    public ResponseEntity<PaginatedResponse<RuleResponse>> getAll(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String typeOfRule,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer campaignId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int pageSize) {
+
+        PaginatedResponse<RuleResponse> response =
+                ruleCampaignService.getAllByFilter(
+                        name, typeOfRule, status, campaignId, page, pageSize);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<RuleResponse>> createRule(
+            @Valid @RequestBody RuleCreateRequest request) {
+        RuleResponse response = ruleCampaignService.createRule(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.<RuleResponse>builder()
+                        .code(1000)
+                        .message("Tạo rule thành công")
+                        .result(response)
+                        .build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<RuleResponse>> updateRule(
+            @PathVariable Integer id, @Valid @RequestBody RuleUpdateRequest request) {
+        RuleResponse response = ruleCampaignService.updateRule(id, request);
+        return ResponseEntity.ok(
+                ApiResponse.<RuleResponse>builder()
+                        .code(1000)
+                        .message("Cập nhật rule thành công")
+                        .result(response)
+                        .build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteRules(@PathVariable("id") Integer id) {
+        ruleCampaignService.deleteRule(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder().code(1000).message("Xóa voucher thành công ").build());
+    }
+}

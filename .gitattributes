@@ -1,0 +1,41 @@
+# Auto-detect text files and normalize to LF
+* text=auto eol=lf
+
+# Java / Spring Boot
+*.java      text eol=lf
+*.xml       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.properties text eol=lf
+*.sql       text eol=lf
+
+# Frontend
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.json      text eol=lf
+*.css       text eol=lf
+*.html      text eol=lf
+*.md        text eol=lf
+
+# Windows-specific — keep CRLF
+*.cmd       text eol=crlf
+*.bat       text eol=crlf
+
+# Maven wrapper — must be LF to run on Linux/Mac
+mvnw        text eol=lf
+
+# Binary — không convert
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.svg       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.jar       binary
+*.class     binary

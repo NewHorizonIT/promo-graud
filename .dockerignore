@@ -1,0 +1,11 @@
+promo-graud-fe/
+promo-graud-be/target/
+promo-graud-be/bin/
+.git/
+.github/
+docs/
+bruno/
+*.md
+.env
+.env.*
+!.env.example

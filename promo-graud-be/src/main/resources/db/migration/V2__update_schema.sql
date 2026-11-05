@@ -1,0 +1,36 @@
+
+-- Remove expired_at from voucher
+ALTER TABLE voucher
+DROP COLUMN IF EXISTS expired_at;
+
+-- Update default values to uppercase
+
+ALTER TABLE "user"
+ALTER COLUMN role SET DEFAULT 'USER';
+
+ALTER TABLE campaign
+ALTER COLUMN status SET DEFAULT 'UPCOMING';
+
+ALTER TABLE rule_campaign
+ALTER COLUMN type_of_user SET DEFAULT 'ALL';
+
+ALTER TABLE rule_campaign
+ALTER COLUMN status SET DEFAULT 'ACTIVE';
+
+ALTER TABLE voucher
+ALTER COLUMN type SET DEFAULT 'GENERIC';
+
+ALTER TABLE voucher
+ALTER COLUMN distribution_channel SET DEFAULT 'WEBHOOK';
+
+ALTER TABLE voucher
+ALTER COLUMN status SET DEFAULT 'ACTIVE';
+
+ALTER TABLE user_voucher
+ALTER COLUMN status SET DEFAULT 'UNUSED';
+
+ALTER TABLE "order"
+ALTER COLUMN status SET DEFAULT 'SUCCESS';
+
+ALTER TABLE distribution_log
+ALTER COLUMN status SET DEFAULT 'PENDING';

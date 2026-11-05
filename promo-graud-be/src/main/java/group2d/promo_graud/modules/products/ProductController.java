@@ -1,0 +1,175 @@
+package group2d.promo_graud.modules.products;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
+import group2d.promo_graud.modules.products.dto.ProductRequest;
+import group2d.promo_graud.modules.products.dto.ProductResponse;
+import group2d.promo_graud.modules.products.dto.TypeOfProductRequest;
+import group2d.promo_graud.modules.products.dto.TypeOfProductResponse;
+import group2d.promo_graud.shared.dto.ApiResponse;
+import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(name = "Products", description = "Quản lý sản phẩm và loại sản phẩm")
+@RestController
+@RequestMapping("/api/v1/products")
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Validated
+public class ProductController {
+
+    ProductService productService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<PaginatedResponse<ProductResponse>>> getProducts(
+            @RequestParam(required = false) Integer typeId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page) {
+        Page<ProductResponse> pages =
+                productService.getProducts(typeId, minPrice, maxPrice, name, size, page);
+        PaginatedResponse<ProductResponse> result =
+                PaginatedResponse.<ProductResponse>builder()
+                        .data(pages.getContent())
+                        .page(pages.getNumber() + 1)
+                        .totalItems(pages.getTotalElements())
+                        .totalPages(pages.getTotalPages())
+                        .build();
+
+        return ResponseEntity.ok(
+                ApiResponse.<PaginatedResponse<ProductResponse>>builder()
+                        .code(200)
+                        .message("Lấy danh sách sản phẩm thành công")
+                        .result(result)
+                        .build());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProductResponse>> getProductById(@PathVariable Integer id) {
+        return ResponseEntity.ok(
+                ApiResponse.<ProductResponse>builder()
+                        .code(200)
+                        .result(productService.getProductById(id))
+                        .message("Lấy chi tiết sản phẩm thành công")
+                        .build());
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
+            @RequestBody @Valid ProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.<ProductResponse>builder()
+                                .code(201)
+                                .result(productService.createProduct(request))
+                                .message("Tạo sản phẩm thành công")
+                                .build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
+            @PathVariable Integer id, @RequestBody @Valid ProductRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.<ProductResponse>builder()
+                        .code(200)
+                        .result(productService.updateProduct(id, request))
+                        .message("Cập nhật sản phẩm thành công")
+                        .build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Integer id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder().code(200).message("Xóa sản phẩm thành công").build());
+    }
+
+    @GetMapping("/type")
+    public ResponseEntity<ApiResponse<List<TypeOfProductResponse>>> getTypes() {
+        return ResponseEntity.ok(
+                ApiResponse.<List<TypeOfProductResponse>>builder()
+                        .code(200)
+                        .result(productService.getTypes())
+                        .message("Lấy danh sách loại sản phẩm thành công")
+                        .build());
+    }
+
+    @GetMapping("/types")
+    public ResponseEntity<ApiResponse<PaginatedResponse<TypeOfProductResponse>>> getProductTypes(
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "1") int page) {
+        Page<TypeOfProductResponse> pages = productService.getTypeProducts(size, page);
+        PaginatedResponse<TypeOfProductResponse> result =
+                PaginatedResponse.<TypeOfProductResponse>builder()
+                        .data(pages.getContent())
+                        .page(pages.getNumber() + 1)
+                        .totalItems(pages.getTotalElements())
+                        .totalPages(pages.getTotalPages())
+                        .build();
+
+        return ResponseEntity.ok(
+                ApiResponse.<PaginatedResponse<TypeOfProductResponse>>builder()
+                        .code(200)
+                        .message("Lấy danh sách loại sản phẩm thành công")
+                        .result(result)
+                        .build());
+    }
+
+    @PostMapping("/type")
+    public ResponseEntity<ApiResponse<TypeOfProductResponse>> createProduct(
+            @RequestBody @Valid TypeOfProductRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponse.<TypeOfProductResponse>builder()
+                                .code(201)
+                                .result(productService.createType(request))
+                                .message("Tạo loại sản phẩm thành công")
+                                .build());
+    }
+
+    @PutMapping("/type/{id}")
+    public ResponseEntity<ApiResponse<TypeOfProductResponse>> updateTypeProduct(
+            @PathVariable Integer id, @RequestBody @Valid TypeOfProductRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.<TypeOfProductResponse>builder()
+                        .code(200)
+                        .result(productService.updateType(id, request))
+                        .message("Cập nhật loại sản phẩm thành công")
+                        .build());
+    }
+
+    @DeleteMapping("/type/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTypeProduct(@PathVariable Integer id) {
+        productService.deleteType(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .code(200)
+                        .message("Xóa loại sản phẩm thành công")
+                        .build());
+    }
+}

@@ -1,0 +1,93 @@
+package group2d.promo_graud.modules.voucher;
+
+import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import lombok.RequiredArgsConstructor;
+
+import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
+import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
+import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.service.VoucherService;
+import group2d.promo_graud.shared.dto.ApiResponse;
+import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+@Tag(
+        name = "Vouchers",
+        description = "Quản lý voucher Generic/Unique: tạo, cập nhật, xóa, theo dõi batch job")
+@RestController
+@RequestMapping("/api/v1/vouchers")
+@RequiredArgsConstructor
+public class VoucherController {
+    private final VoucherService voucherService;
+
+    @GetMapping
+    public ResponseEntity<PaginatedResponse<VoucherResponse>> getVouchers(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer ruleId,
+            @RequestParam(required = false) String distributionChannel,
+            @RequestParam(required = false) Integer campaignId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize) {
+        return ResponseEntity.ok(
+                voucherService.getAll(
+                        type, status, ruleId, distributionChannel, campaignId, page, pageSize));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<CreateVoucherResponse>> createVoucher(
+            @Valid @RequestBody VoucherRequest request) {
+        return ResponseEntity.ok(
+                ApiResponse.<CreateVoucherResponse>builder()
+                        .code(200)
+                        .message("Request success")
+                        .result(voucherService.create(request))
+                        .build());
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApiResponse<VoucherResponse>> updateVoucher(
+            @Valid @RequestBody UpdatedVoucherRequest request, @PathVariable Integer id) {
+        return ResponseEntity.ok(
+                ApiResponse.<VoucherResponse>builder()
+                        .code(200)
+                        .message("Request success")
+                        .result(voucherService.update(id, request))
+                        .build());
+    }
+
+    @GetMapping("/jobs/{jobId}")
+    public ResponseEntity<ApiResponse<JobStatusResponse>> jobStatus(
+            @PathVariable("jobId") Long jobId) {
+        return ResponseEntity.ok(
+                ApiResponse.<JobStatusResponse>builder()
+                        .code(200)
+                        .message("Request success")
+                        .result(voucherService.getJobStatus(jobId))
+                        .build());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<VoucherResponse>> getVoucherById(@PathVariable Integer id) {
+        VoucherResponse voucher = voucherService.getVoucherById(id);
+        return ResponseEntity.ok(
+                ApiResponse.<VoucherResponse>builder()
+                        .code(200)
+                        .result(voucher)
+                        .message("Lấy chi tiết voucher thành công")
+                        .build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteVoucher(@PathVariable Integer id) {
+        voucherService.delete(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder().code(200).message("Xóa voucher thành công").build());
+    }
+}
