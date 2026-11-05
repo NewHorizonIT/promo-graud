@@ -47,6 +47,9 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
     @Value("#{jobParameters['channel']}")
     private String channelStr;
 
+    @Value("#{jobParameters['targetUrl']}")
+    private String webhookUrl;
+
     @Override
     public void write(Chunk<? extends Integer> chunk) throws Exception {
         List<Integer> userIds = (List<Integer>) chunk.getItems();
@@ -60,8 +63,6 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
         Map<Integer, User> userMap =
                 userRepository.findAllById(userIds).stream()
                         .collect(Collectors.toMap(User::getId, user -> user));
-        String webhookUrl =
-                "https://webhook.site/f37d210e-d515-4821-9b6a-218b1cf2feeb"; // Tạm thời hard-code
         List<UserVoucher> userVouchers = new ArrayList<>();
         List<Integer> voucherIdsToUpdate = new ArrayList<>();
         List<DistributionLog> logs = new ArrayList<>();
@@ -69,13 +70,14 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
         List<Integer> validUserIds = new ArrayList<>();
         List<Voucher> validVouchers = new ArrayList<>();
         DistributionChannel channel = DistributionChannel.valueOf(channelStr);
+        String finalWebhookUrl =
+                (webhookUrl != null && !webhookUrl.isBlank()) ? webhookUrl : "DISCORD_DEMO";
         for (int i = 0; i < chunkSize; i++) {
             Integer userId = userIds.get(i);
             Voucher voucher = vouchers.get(i);
             try {
                 User targetUser = userMap.get(userId);
                 if (targetUser == null) {
-                    log.warn("Bỏ qua User ID {} vì không tìm thấy trong Database", userId);
                     voucher.setStatus(VoucherStatus.ACTIVE);
                     continue;
                 }
@@ -93,7 +95,7 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
                 userVouchers.add(uv);
                 String userEmail = userMap.get(userId).getEmail(); // Lấy Email của User từ Database
                 String recipientValue =
-                        (channel == DistributionChannel.EMAIL) ? userEmail : webhookUrl;
+                        (channel == DistributionChannel.EMAIL) ? userEmail : finalWebhookUrl;
                 DistributionLog log =
                         DistributionLog.builder()
                                 .voucher(Voucher.builder().id(voucher.getId()).build())
@@ -122,7 +124,7 @@ public class DistributeVoucherWriter implements ItemWriter<Integer> {
             String userEmail = userMap.get(userId).getEmail();
             payloads.add(
                     new DistributionPayload(
-                            logId, userEmail, voucher.getCode(), channel, webhookUrl));
+                            logId, userEmail, voucher.getCode(), channel, finalWebhookUrl));
         }
         if (!payloads.isEmpty()) {
             eventPublisher.publishEvent(new VoucherDistributionEvent(payloads));
