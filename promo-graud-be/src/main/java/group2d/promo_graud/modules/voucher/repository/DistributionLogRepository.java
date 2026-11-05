@@ -43,12 +43,10 @@ public interface DistributionLogRepository extends JpaRepository<DistributionLog
             "SELECT d FROM DistributionLog d "
                     + "WHERE (:recipient = '' OR LOWER(d.recipient) LIKE LOWER(CONCAT('%', :recipient, '%'))) "
                     + "AND (:status IS NULL OR d.status = :status) "
-                    + "AND (:retryCount IS null OR d.retryCount = :retryCount) "
                     + "AND (:channel IS null OR d.channel = :channel) ")
     Page<DistributionLog> getAll(
             @Param("recipient") String recipient,
             @Param("status") DistributionLogStatus status,
-            @Param("retryCount") Integer retryCount,
             @Param("channel") DistributionChannel distributionChannel,
             Pageable pageable);
 }

@@ -101,15 +101,25 @@ public class DistributeVoucherService {
     public Page<DistributionResponse> getAllDistribution(
             String recipient,
             DistributionLogStatus status,
-            Integer retryCount,
             DistributionChannel channel,
             int size,
             int page) {
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
         String keyword = recipient == null ? "" : recipient.trim();
         return distributionLogRepository
-                .getAll(keyword, status, retryCount, channel, pageable)
+                .getAll(keyword, status, channel, pageable)
                 .map(this::mapToResponse);
+    }
+
+    public DistributionResponse getDistributionById(Integer id) {
+        DistributionLog distributionLog =
+                distributionLogRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new AppException(
+                                                DistributionErrorCode.DISTRIBUTION_NOT_FOUND));
+        return mapToResponse(distributionLog);
     }
 
     private DistributionResponse mapToResponse(DistributionLog distributionLog) {
