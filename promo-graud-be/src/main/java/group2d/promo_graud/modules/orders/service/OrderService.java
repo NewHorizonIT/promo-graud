@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import group2d.promo_graud.modules.fraud.FraudCheckService;
+import group2d.promo_graud.modules.fraud.FraudDetectedException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +31,7 @@ import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderItemResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderPreviewResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
+import group2d.promo_graud.modules.orders.dto.response.UserSummaryResponse;
 import group2d.promo_graud.modules.orders.entity.Order;
 import group2d.promo_graud.modules.orders.entity.OrderItem;
 import group2d.promo_graud.modules.orders.repository.OrderItemRepository;
@@ -47,6 +50,7 @@ import group2d.promo_graud.modules.voucher.Voucher;
 import group2d.promo_graud.modules.voucher.VoucherRedemption;
 import group2d.promo_graud.modules.voucher.VoucherRedemptionRepository;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
@@ -79,23 +83,47 @@ public class OrderService {
     private final UserVoucherRepository userVoucherRepository;
     private final RuleEngine ruleEngine;
 
+    private final FraudCheckService fraudCheckService;
+
     // Điểm vào tạo đơn hàng, rẽ nhánh theo có dùng voucher hay không
     // không có voucher -> tạo đơn thường; có voucher -> lock Redis theo voucherId -> tạo đơn
     // voucher -> nhả lock
-    public OrderResponse createOrder(OrderRequest request, String ipAddress) {
+    public OrderResponse createOrder(OrderRequest request, String ipAddress, String deviceFingerprint) {
+        if (request.getItems() == null || request.getItems().isEmpty()) {
+            throw new AppException(OrderErrorCode.ORDER_ITEMS_NOT_FOUND);
+        }
+
         if (request.getVoucherId() == null) {
             return createOrderWithOutVoucher(request);
         }
+
         String lockKey = "lock:voucher:" + request.getVoucherId();
         String lockValue = UUID.randomUUID().toString();
+
+      String deviceLockValue = UUID.randomUUID().toString();
+
+        String deviceLockKey = "lock:redeem:device:" + request.getVoucherId()+ ":" + deviceFingerprint;
         boolean isLocked = distributedLockService.tryLock(lockKey, lockValue, 10);
         if (!isLocked) {
             throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
         }
+        boolean isDeviceLocked = distributedLockService.tryLock(deviceLockKey, deviceLockValue, 10);
+      if (!isDeviceLocked) {
+        throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
+      }
         try {
-            return createOrderVoucher(request, ipAddress);
-        } finally {
+            return createOrderVoucher(request, ipAddress,deviceFingerprint);
+        } catch (FraudDetectedException e) {
+          User user = getCurrentUser();
+          throw fraudCheckService.onBlocked(user.getId(), ipAddress, deviceFingerprint, e);  // <-- gọi ở đây
+        }
+        finally {
+          if (isLocked) {
             distributedLockService.unLock(lockKey, lockValue);
+          }
+          if (isDeviceLocked) {
+            distributedLockService.unLock(deviceLockKey, deviceLockValue);
+          }
         }
     }
 
@@ -118,6 +146,8 @@ public class OrderService {
                             createOrderItemAndCalculateTotal(order, request.getItems());
                     order.setTotalPrice(totalPrice);
                     order.setFinalPrice(totalPrice);
+                    // Fix: Save order -> DB
+                    orderRepository.save(order);
                     return mapToOrderResponse(order);
                 });
     }
@@ -125,7 +155,7 @@ public class OrderService {
     // Tạo đơn hàng có áp dụng voucher (chạy trong lock Redis)
     // mở transaction -> kiểm tra voucher và userVoucher -> lưu order + item -> tính giảm giá bằng
     // rule engine -> trừ voucher -> lưu lịch sử redemption
-    private OrderResponse createOrderVoucher(OrderRequest request, String ipAddress) {
+    private OrderResponse createOrderVoucher(OrderRequest request, String ipAddress,String deviceFingerprint) {
         return transactionTemplate.execute(
                 status -> {
                     User user = getCurrentUser();
@@ -160,16 +190,23 @@ public class OrderService {
                     order.setTotalPrice(totalPrice);
                     BigDecimal discount =
                             ruleEngine.applyRules(order, currentVoucher.getRuleCampaign(), user);
-                    order.setFinalPrice(totalPrice.subtract(discount));
+                    // Fix: check final price >= 0
+                    BigDecimal finalPrice = totalPrice.subtract(discount).max(BigDecimal.ZERO);
+                    order.setFinalPrice(finalPrice);
                     consumeVoucher(currentVoucher, userVoucher);
+
+                  fraudCheckService.check(
+                    user.getId(), currentVoucher, ipAddress, deviceFingerprint);
                     voucherRedemptionRepository.save(
                             VoucherRedemption.builder()
                                     .user(user)
                                     .order(order)
                                     .voucher(currentVoucher)
                                     .ipAddress(ipAddress)
+                              .deviceFingerprint(deviceFingerprint)
                                     .statusOfOrder(OrderStatus.SUCCESS)
                                     .build());
+                    orderRepository.save(order);
                     return mapToOrderResponse(order);
                 });
     }
@@ -186,11 +223,11 @@ public class OrderService {
     // Kiểm tra voucher loại UNIQUE có dùng được không
     // voucher phải ACTIVE -> userVoucher chưa USED
     public void validateUniqueVoucher(Voucher voucher, UserVoucher userVoucher) {
-        if (!voucher.getStatus().equals(VoucherStatus.ACTIVE)) {
-            throw new AppException(VoucherErrorCode.INVALID_STATUS);
-        }
         if (userVoucher.getStatus().equals(UserVoucherStatus.USED)) {
             throw new AppException(UserVoucherErrorCode.USER_VOUCHER_ALREADY_USED);
+        }
+        if (!voucher.getStatus().equals(VoucherStatus.ACTIVE)) {
+            throw new AppException(VoucherErrorCode.INVALID_STATUS);
         }
     }
 
@@ -222,6 +259,9 @@ public class OrderService {
         List<OrderItem> items = new ArrayList<>();
         for (OrderItemRequest request : requests) {
             Product product = productMaps.get(request.getProductId());
+            if (product == null) {
+                throw new AppException(OrderErrorCode.ORDER_ITEMS_NOT_FOUND);
+            }
             totalPrice =
                     totalPrice.add(
                             product.getPrice().multiply(BigDecimal.valueOf(request.getQuantity())));
@@ -258,6 +298,8 @@ public class OrderService {
                 userVoucher.setStatus(UserVoucherStatus.USED);
             }
         }
+        voucherRepository.save(voucher);
+        userVoucherRepository.save(userVoucher);
     }
 
     // Admin lấy danh sách đơn hàng có phân trang, lọc theo trạng thái và username
@@ -343,8 +385,11 @@ public class OrderService {
 
         return OrderResponse.builder()
                 .id(order.getId())
-                .user(order.getUser())
-                .voucher(order.getVoucher())
+                .user(UserSummaryResponse.fromEntity(order.getUser()))
+                .voucher(
+                        order.getVoucher() != null
+                                ? VoucherResponse.fromEntity(order.getVoucher())
+                                : null)
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice())
                 .finalPrice(order.getFinalPrice())

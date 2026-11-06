@@ -53,7 +53,8 @@ axiosInstance.interceptors.response.use(
     } catch (refreshError) {
       processQueue(refreshError, null);
       useAuthStore.getState().clearAuth();
-      window.location.href = '/login';
+      const isAdminPage = window.location.pathname.startsWith('/admin');
+      window.location.href = isAdminPage ? '/admin/login' : '/login';
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

@@ -3,6 +3,7 @@ package group2d.promo_graud.modules.orders;
 import java.time.LocalDate;
 import java.util.List;
 
+import group2d.promo_graud.modules.fraud.DeviceFingerprintService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -21,18 +22,28 @@ import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
 import group2d.promo_graud.modules.orders.service.OrderService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Orders", description = "Quản lý đơn hàng: tạo, xem, lọc, preview trước khi đặt")
 @RestController
 @RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
 
+    private final DeviceFingerprintService deviceFingerprintService;
+
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-            @RequestBody OrderRequest request, HttpServletRequest httpRequest) {
+            @RequestBody @Valid OrderRequest request, HttpServletRequest httpRequest,
+    @RequestHeader(value = "X-Visitor-Id", required = false) String visitorId) {
         String ipAddress = extractIp(httpRequest);
-        OrderResponse orderResponse = orderService.createOrder(request, ipAddress);
+
+      String deviceFingerprint =
+        request.getVoucherId() != null
+          ? deviceFingerprintService.fingerprint(httpRequest, visitorId)
+          : null;
+        OrderResponse orderResponse = orderService.createOrder(request, ipAddress, deviceFingerprint);
         return ResponseEntity.ok(
                 ApiResponse.<OrderResponse>builder()
                         .code(201)
@@ -43,7 +54,13 @@ public class OrderController {
 
     private String extractIp(HttpServletRequest request) {
         String forwarded = request.getHeader("X-Forwarded-For");
-        return (forwarded != null) ? forwarded.split(",")[0].trim() : request.getRemoteAddr();
+        if (forwarded == null || forwarded.isBlank()) {
+            return request.getRemoteAddr();
+        }
+        // Take the rightmost entry — appended by the trusted reverse proxy (Railway LB).
+        // Clients can inject arbitrary left-hand entries but cannot forge the rightmost hop.
+        String[] parts = forwarded.split(",");
+        return parts[parts.length - 1].trim();
     }
 
     @GetMapping

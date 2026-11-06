@@ -14,8 +14,8 @@ import lombok.*;
 
 import group2d.promo_graud.modules.campaigns.Campaign;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Entity
 @Table(name = "rule_campaign")
@@ -54,7 +54,7 @@ public class RuleCampaign {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "type_of_user", length = 20, nullable = false)
-    private UserTypeEnum typeOfUser = UserTypeEnum.NORMAL;
+    private RuleTargetAudience typeOfUser = RuleTargetAudience.ALL;
 
     @Column(name = "start_time")
     private LocalDateTime startTime;

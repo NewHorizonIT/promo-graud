@@ -17,11 +17,21 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:58174}
+      port: ${REDIS_PORT:53326}
       timeout: 2000ms
 
 server:
   port: ${BACKEND_PORT:8080}
+  forward-headers-strategy: framework
+
+jobrunr:
+  background-job-server:
+    enabled: true
+    worker-count: 2
+    poll-interval: 15
+  dashboard:
+    enabled: false
+    port: 8000
 
 jwt:
   secret: 20b84f35360762f63e3f9a00d82ea614b53a207dbb842ada7cd869e35e214a94
@@ -30,9 +40,21 @@ jwt:
   valid-duration: 3600
   refresh-duration: 72000
 
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+admin:
+  username: ${ADMIN_USERNAME:admin}
+  password: ${ADMIN_PASSWORD:123456}
+  email: ${ADMIN_EMAIL:hoanganhhuy200499@gmail.com}
+
 voucher:
   batch:
     unique-threshold: 50         # UNIQUE >= số này thì chạy bằng batch
     chunk-size: 20               # số bản ghi mỗi lần commit
+
+fraud:
+  max-redemptions-per-ip-24h: 3
+  max-users-per-device-24h: 3
 
 

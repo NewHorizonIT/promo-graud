@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +38,7 @@ import group2d.promo_graud.shared.exception.AppException;
 public class AuthenticationService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${jwt.secret}")
     protected String secret;
@@ -59,8 +59,11 @@ public class AuthenticationService {
                 userRepository
                         .findByUsername(request.getUsername())
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        if (user.getIsDeleted()) {
+            throw new AppException(UserErrorCode.USER_NOT_EXISTS);
+        }
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+
         if (!matches) {
             throw new AppException(UserErrorCode.USER_NOT_EXISTS);
         }
@@ -90,17 +93,19 @@ public class AuthenticationService {
             log.info("Token is expired");
         }
 
-        try {
-            SignedJWT signedJWT = verifyToken(request.getRefreshToken(), true);
-            String jti = signedJWT.getJWTClaimsSet().getJWTID();
-            Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-            long ttl = expirationTime.getTime() - System.currentTimeMillis();
-            if (ttl > 0) {
-                String key = "invalidated_token:" + jti;
-                redisTemplate.opsForValue().set(key, "1", ttl, TimeUnit.MILLISECONDS);
+        if (request.getRefreshToken() != null) {
+            try {
+                SignedJWT signedJWT = verifyToken(request.getRefreshToken(), true);
+                String jti = signedJWT.getJWTClaimsSet().getJWTID();
+                Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+                long ttl = expirationTime.getTime() - System.currentTimeMillis();
+                if (ttl > 0) {
+                    String key = "invalidated_token:" + jti;
+                    redisTemplate.opsForValue().set(key, "1", ttl, TimeUnit.MILLISECONDS);
+                }
+            } catch (AppException e) {
+                log.info("Token is expired");
             }
-        } catch (AppException e) {
-            log.info("Token is expired");
         }
     }
 
@@ -136,6 +141,9 @@ public class AuthenticationService {
                 userRepository
                         .findByUsername(username)
                         .orElseThrow(() -> new AppException(UserErrorCode.USER_NOT_EXISTS));
+        if (user.getIsDeleted()) {
+            throw new AppException(UserErrorCode.USER_NOT_EXISTS);
+        }
         String token = generateToken(user, false);
         String newRefreshToken = generateToken(user, true);
         return AuthenticationResponse.builder()

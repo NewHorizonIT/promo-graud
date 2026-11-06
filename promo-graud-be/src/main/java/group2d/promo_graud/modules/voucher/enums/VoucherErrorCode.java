@@ -13,11 +13,11 @@ public enum VoucherErrorCode implements BaseErrorCode {
     INSUFFICIENT_QUANTITY(
             1802,
             "Vouchers have been created but the required number is not yet available",
-            HttpStatus.MULTI_STATUS),
+            HttpStatus.INTERNAL_SERVER_ERROR),
     REQUIRED_FIELD(1803, "Minimum one status or quantity_remain field ", HttpStatus.BAD_REQUEST),
     NOT_EXIST(1804, "Voucher does not exist", HttpStatus.NOT_FOUND),
     OUT_OF_STOCK(1805, "Voucher is out of stock", HttpStatus.BAD_REQUEST),
-    GENERIC_QUANTITY_NOT_EDITABLE(
+    UNIQUE_QUANTITY_NOT_EDITABLE(
             1806,
             "Quantity of a UNIQUE voucher cannot be modified",
             HttpStatus.UNPROCESSABLE_ENTITY),
@@ -42,9 +42,19 @@ public enum VoucherErrorCode implements BaseErrorCode {
     BATCH_PARTIAL_COMPLETED(
             1815,
             "Job finished but the number of generated vouchers is less than requested",
-            HttpStatus.MULTI_STATUS),
-    VOUCHER_BUSY(1808, "Voucher busy", HttpStatus.BAD_REQUEST);
-
+            HttpStatus.INTERNAL_SERVER_ERROR),
+    VOUCHER_BUSY(1816, "Voucher busy", HttpStatus.CONFLICT),
+    TARGET_QUANTITY_REQUIRED(
+            1817,
+            "Quantity is required when no user targeting is specified",
+            HttpStatus.BAD_REQUEST),
+    TARGET_USER_LIMIT_EXCEEDED(
+            1821,
+            "Targeted user count exceeds the maximum allowed (500) for synchronous generation",
+            HttpStatus.BAD_REQUEST),
+    VOUCHER_TYPE_INVALID(1818, "Voucher type invalid", HttpStatus.BAD_REQUEST),
+    VOUCHER_STATUS_INVALID(1819, "Voucher status invalid ", HttpStatus.BAD_REQUEST),
+    VOUCHER_CHANNEL_INVALID(1820, "Voucher distribute channel invalid", HttpStatus.BAD_REQUEST);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;

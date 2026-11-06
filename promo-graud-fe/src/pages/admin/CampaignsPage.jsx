@@ -1,7 +1,9 @@
+import { Fragment, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import CampaignTable from '../../features/admin/campaigns/components/CampaignTable';
 import { useCampaigns, useDeleteCampaign } from '../../features/admin/campaigns/hooks/useCampaigns';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Tất cả' },
@@ -12,12 +14,32 @@ const STATUS_FILTERS = [
 
 const PAGE_SIZE = 20;
 
+function getVisiblePages(current, total) {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const s = new Set([1, total]);
+  for (let d = -2; d <= 2; d++) {
+    const p = current + d;
+    if (p > 1 && p < total) s.add(p);
+  }
+  return [...s].sort((a, b) => a - b);
+}
+
 export default function CampaignsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get('status') ?? '';
+  const nameParam = searchParams.get('name') ?? '';
   const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
-  const params = { page, pageSize: PAGE_SIZE, ...(status ? { status } : {}) };
+  // local state để input không gây re-fetch mỗi keystroke
+  const [nameInput, setNameInput] = useState(nameParam);
+  const [pendingDelete, setPendingDelete] = useState(null);
+
+  const params = {
+    page,
+    size: PAGE_SIZE,
+    ...(status ? { status } : {}),
+    ...(nameParam ? { name: nameParam } : {}),
+  };
   const { data, isLoading } = useCampaigns(params);
   const deleteMutation = useDeleteCampaign();
 
@@ -26,16 +48,48 @@ export default function CampaignsPage() {
   const totalPages = data?.totalPages ?? 1;
 
   const handleDelete = (campaign) => {
-    if (!confirm(`Xóa campaign "${campaign.name}"?`)) return;
-    deleteMutation.mutate(campaign.id);
+    setPendingDelete(campaign);
   };
 
   const setFilter = (val) => {
     setSearchParams(val ? { status: val } : {});
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const newParams = {};
+    if (status) newParams.status = status;
+    if (nameInput.trim()) newParams.name = nameInput.trim();
+    setSearchParams(newParams);
+  };
+
+  const handleClearSearch = () => {
+    setNameInput('');
+    const newParams = {};
+    if (status) newParams.status = status;
+    setSearchParams(newParams);
+  };
+
   return (
     <div className="space-y-5">
+      {pendingDelete && (
+        <ConfirmModal
+          title="Xóa Campaign"
+          message={`Xác nhận xóa campaign "${pendingDelete.name}"? Hành động này không thể hoàn tác.`}
+          confirmLabel="Xóa"
+          loading={deleteMutation.isPending}
+          onConfirm={() => {
+            deleteMutation.mutate(pendingDelete.id, {
+              onSuccess: () => setPendingDelete(null),
+              onError: () => setPendingDelete(null),
+            });
+          }}
+          onClose={() => {
+            if (!deleteMutation.isPending) setPendingDelete(null);
+          }}
+        />
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <p className="text-sm text-text-muted">{total} campaigns</p>
         <Link
@@ -46,21 +100,55 @@ export default function CampaignsPage() {
         </Link>
       </div>
 
-      <div className="flex items-center gap-1 bg-surface-muted p-1 rounded-xl w-fit">
-        {STATUS_FILTERS.map((f) => (
+      {/* Search + filter row */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1 max-w-sm">
+          <div className="relative flex-1">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+            />
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Tìm theo tên..."
+              className="w-full h-9 pl-9 pr-3 rounded-xl border border-border bg-surface text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+            />
+          </div>
           <button
-            key={f.value}
-            type="button"
-            onClick={() => setFilter(f.value)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-              status === f.value
-                ? 'bg-surface text-text-primary shadow-level-1'
-                : 'text-text-muted hover:text-text-primary'
-            }`}
+            type="submit"
+            className="h-9 px-3 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all hover:shadow-glow cursor-pointer"
           >
-            {f.label}
+            Tìm
           </button>
-        ))}
+          {nameParam && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="h-9 px-3 border border-border bg-surface hover:bg-surface-muted text-sm font-semibold text-text-secondary rounded-xl transition-colors cursor-pointer"
+            >
+              Xóa
+            </button>
+          )}
+        </form>
+
+        <div className="flex items-center gap-1 bg-surface-muted p-1 rounded-xl w-fit">
+          {STATUS_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFilter(f.value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                status === f.value
+                  ? 'bg-surface text-text-primary shadow-level-1'
+                  : 'text-text-muted hover:text-text-primary'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isLoading ? (
@@ -75,13 +163,22 @@ export default function CampaignsPage() {
 
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 pt-2">
-          {[...Array(totalPages)].map((_, i) => {
-            const pg = i + 1;
-            return (
+          {getVisiblePages(page, totalPages).map((pg, idx, arr) => (
+            <Fragment key={pg}>
+              {idx > 0 && arr[idx - 1] !== pg - 1 && (
+                <span className="flex items-center px-1 text-text-muted text-sm select-none">
+                  …
+                </span>
+              )}
               <button
-                key={pg}
                 type="button"
-                onClick={() => setSearchParams({ ...(status ? { status } : {}), page: String(pg) })}
+                onClick={() =>
+                  setSearchParams({
+                    ...(status ? { status } : {}),
+                    ...(nameParam ? { name: nameParam } : {}),
+                    page: String(pg),
+                  })
+                }
                 className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
                   pg === page
                     ? 'bg-primary text-white shadow-glow'
@@ -90,8 +187,8 @@ export default function CampaignsPage() {
               >
                 {pg}
               </button>
-            );
-          })}
+            </Fragment>
+          ))}
         </div>
       )}
     </div>

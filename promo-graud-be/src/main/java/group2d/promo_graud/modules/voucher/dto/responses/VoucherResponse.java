@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.enums.VoucherType;
 
 @Getter
 @Setter
@@ -22,15 +21,14 @@ public class VoucherResponse {
     private String status;
 
     public static VoucherResponse fromEntity(Voucher v) {
-        boolean isGeneric = v.getType() == VoucherType.GENERIC;
         return VoucherResponse.builder()
                 .id(v.getId())
                 .code(v.getCode())
                 .type(v.getType().name())
                 .ruleId(v.getRuleCampaign() != null ? v.getRuleCampaign().getId() : null)
-                .quantity(isGeneric ? v.getQuantity() : null)
-                .quantityRemain(isGeneric ? v.getQuantityRemain() : null)
-                .limitClient(isGeneric ? v.getQuantityRemain() : null)
+                .quantity(v.getQuantity())
+                .quantityRemain(v.getQuantityRemain())
+                .limitClient(v.getLimitClient())
                 .distributionChannel(v.getDistributionChannel().name())
                 .status(v.getStatus().name())
                 .build();

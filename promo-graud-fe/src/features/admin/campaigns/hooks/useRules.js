@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRules, createRule, deleteRule } from '../services/campaignService';
+import { getRules, createRule, updateRule, deleteRule } from '../services/campaignService';
 
 export function useRules(campaignId) {
   return useQuery({
@@ -13,6 +13,15 @@ export function useCreateRule() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ campaignId, body }) => createRule(campaignId, body),
+    onSuccess: (_, { campaignId }) =>
+      qc.invalidateQueries({ queryKey: ['admin', 'rules', campaignId] }),
+  });
+}
+
+export function useUpdateRule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ campaignId, ruleId, body }) => updateRule(campaignId, ruleId, body),
     onSuccess: (_, { campaignId }) =>
       qc.invalidateQueries({ queryKey: ['admin', 'rules', campaignId] }),
   });

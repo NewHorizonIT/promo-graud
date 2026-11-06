@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository;
 import group2d.promo_graud.modules.products.entity.TypeOfProduct;
 
 @Repository
-public interface TypeOfProductRepository extends JpaRepository<TypeOfProduct, Integer> {}
+public interface TypeOfProductRepository extends JpaRepository<TypeOfProduct, Integer> {
+    boolean existsByType(String type);
+}

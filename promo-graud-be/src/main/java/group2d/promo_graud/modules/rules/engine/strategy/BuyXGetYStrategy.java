@@ -46,6 +46,10 @@ public class BuyXGetYStrategy implements RuleStrategy {
         Integer yId = yProductId.intValue();
         Integer yQuantity = yProductQuantity.intValue();
 
+        if (xQuantity <= 0 || yQuantity <= 0) {
+            return BigDecimal.ZERO;
+        }
+
         List<OrderItem> orderItems = order.getItems();
 
         OrderItem productBuy =
@@ -71,7 +75,8 @@ public class BuyXGetYStrategy implements RuleStrategy {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal result = yInOrderItems.getPrice().multiply(new BigDecimal(totalFree));
+        int actualFree = Math.min(totalFree, yInOrderItems.getQuantity());
+        BigDecimal result = yInOrderItems.getPrice().multiply(new BigDecimal(actualFree));
 
         return result;
     }

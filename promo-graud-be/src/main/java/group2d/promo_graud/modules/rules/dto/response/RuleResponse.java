@@ -9,8 +9,8 @@ import lombok.Data;
 
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.rules.enums.TypeOfRule;
-import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Data
 @Builder
@@ -22,7 +22,7 @@ public class RuleResponse {
     private BigDecimal value;
     private BigDecimal maxDiscountValue;
     private BigDecimal minOrderValue;
-    private UserTypeEnum typeOfUser;
+    private RuleTargetAudience typeOfUser;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private Map<String, Object> payload;

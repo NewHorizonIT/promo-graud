@@ -6,17 +6,58 @@ import { useMe } from '../../features/user/hooks/useUser';
 const PAGE_TITLES = {
   '/admin': 'Dashboard',
   '/admin/campaigns': 'Campaigns',
+  '/admin/campaigns/new': 'Campaign Create',
   '/admin/vouchers': 'Vouchers',
+  '/admin/vouchers/new': 'Voucher Create',
+  '/admin/orders': 'Orders',
+  '/admin/products': 'Products',
+  '/admin/products/new': 'Product Create',
+  '/admin/product-types': 'Product Types',
+  '/admin/users': 'Users',
+  '/admin/users/new': 'User Create',
+  '/admin/user-types': 'User Types',
 };
 
+const getPageTitle = (pathname) => {
+  // 1. Kiểm tra xem có khớp chính xác trong từ điển không (ví dụ: /admin/users, /admin/users/new)
+  if (PAGE_TITLES[pathname]) {
+    return PAGE_TITLES[pathname];
+  }
+
+  // 2. Xử lý các đường dẫn động (có chứa ID)
+  if (pathname.startsWith('/admin/users/')) {
+    if (pathname.endsWith('/edit')) return 'User Edit';
+    return 'User Detail';
+  }
+
+  if (pathname.startsWith('/admin/products/')) {
+    if (pathname.endsWith('/edit')) return 'Product Edit';
+    return 'Product Detail';
+  }
+
+  if (pathname.startsWith('/admin/campaigns/')) {
+    if (pathname.endsWith('/edit')) return 'Campaign Edit';
+    return 'Campaign Detail';
+  }
+
+  if (pathname.startsWith('/admin/vouchers/')) {
+    if (pathname.endsWith('/edit')) return 'Voucher Edit';
+    return 'Voucher Detail';
+  }
+
+  if (pathname.startsWith('/admin/orders/')) {
+    return 'Order Detail';
+  }
+
+  return 'Admin';
+};
 export default function AdminTopbar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { data: me } = useMe();
   const { mutate: doLogout, isPending } = useLogout();
 
-  const title =
-    PAGE_TITLES[pathname] ?? (pathname.includes('/campaigns/') ? 'Campaign Detail' : 'Admin');
+  const title = getPageTitle(pathname);
 
   const handleLogout = () => {
     doLogout(undefined, {

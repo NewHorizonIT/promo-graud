@@ -21,6 +21,7 @@ public class UserResponse {
     RoleEnum role;
     Integer typeOfUserId;
     UserTypeEnum typeOfUserType;
+    BigDecimal typeOfUserThreshold;
     Boolean isDelete;
     LocalDateTime createdAt;
     LocalDateTime updateAt;

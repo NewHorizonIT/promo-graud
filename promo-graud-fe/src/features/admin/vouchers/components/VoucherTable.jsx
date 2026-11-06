@@ -2,11 +2,6 @@ import { Link } from 'react-router-dom';
 import { Eye, Trash2, Send } from 'lucide-react';
 import VoucherStatusBadge from './VoucherStatusBadge';
 
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN');
-}
-
 export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) {
   if (!vouchers.length) {
     return (
@@ -41,9 +36,6 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                 Còn lại / Tổng
               </th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
-                Hết hạn
-              </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
                 Kênh
               </th>
               <th className="text-right py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
@@ -60,12 +52,12 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                 <td className="py-3 px-4">
                   <span
                     className={`px-2 py-0.5 text-xs font-semibold rounded-sm ${
-                      v.type === 'generic'
+                      v.type === 'GENERIC'
                         ? 'bg-primary-light text-primary'
                         : 'bg-surface-muted text-text-secondary'
                     }`}
                   >
-                    {v.type === 'generic' ? 'Generic' : 'Unique'}
+                    {v.type === 'GENERIC' ? 'Generic' : 'Unique'}
                   </span>
                 </td>
                 <td className="py-3 px-4">
@@ -77,20 +69,17 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                       <div
                         className="bg-primary h-full rounded-full"
                         style={{
-                          width: `${v.quantity > 0 ? (v.quantity_remain / v.quantity) * 100 : 0}%`,
+                          width: `${v.quantity > 0 ? (v.quantityRemain / v.quantity) * 100 : 0}%`,
                         }}
                       />
                     </div>
                     <span className="text-xs text-text-muted">
-                      {v.quantity_remain}/{v.quantity}
+                      {v.quantityRemain}/{v.quantity}
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-xs text-text-secondary">
-                  {formatDate(v.expired_at)}
-                </td>
                 <td className="py-3 px-4 text-xs text-text-secondary capitalize">
-                  {v.distribution_channel}
+                  {v.distributionChannel}
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex items-center justify-end gap-1">
@@ -101,14 +90,16 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                     >
                       <Eye size={15} />
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => onDistribute?.(v)}
-                      className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer"
-                      title="Phân phối"
-                    >
-                      <Send size={15} />
-                    </button>
+                    {onDistribute && (
+                      <button
+                        type="button"
+                        onClick={() => onDistribute(v)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer"
+                        title="Phân phối"
+                      >
+                        <Send size={15} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onDelete?.(v)}

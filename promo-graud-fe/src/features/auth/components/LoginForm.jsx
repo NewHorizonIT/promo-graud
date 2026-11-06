@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 import { useLogin } from '../hooks/useAuth';
+import Toast from '../../../components/Toast';
 
 function validate(username, password) {
   const errors = {};
@@ -23,7 +24,15 @@ export default function LoginForm({ onSuccess }) {
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
+  const [toast, setToast] = useState(null);
   const { mutate: doLogin, isPending, error: apiError } = useLogin();
+
+  useEffect(() => {
+    if (apiError) {
+      const msg = apiError.response?.data?.message || apiError.message;
+      setToast({ type: 'error', message: msg });
+    }
+  }, [apiError]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -51,15 +60,8 @@ export default function LoginForm({ onSuccess }) {
 
   return (
     <div className="bg-surface rounded-2xl p-8" style={{ boxShadow: 'var(--shadow-level-2)' }}>
+      <Toast toast={toast} onClose={() => setToast(null)} />
       <h1 className="text-2xl font-bold text-text-primary mb-6">Đăng nhập</h1>
-
-      {/* API error */}
-      {apiError && (
-        <div className="flex items-start gap-3 mb-5 px-4 py-3 rounded-xl bg-error-bg border border-error-text/20">
-          <AlertCircle size={18} className="text-error-text mt-0.5 shrink-0" />
-          <p className="text-sm text-error-text">{apiError.message}</p>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-5">
         {/* Username */}

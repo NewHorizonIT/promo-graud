@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import lombok.AccessLevel;
@@ -53,6 +54,7 @@ public class ProductService {
         return toResponse(product);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ProductResponse createProduct(ProductRequest request) {
         TypeOfProduct type =
                 typeOfProductRepository
@@ -70,6 +72,7 @@ public class ProductService {
         return toResponse(productRepository.save(product));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ProductResponse updateProduct(Integer id, ProductRequest request) {
         Product product =
                 productRepository
@@ -88,6 +91,7 @@ public class ProductService {
         return toResponse(productRepository.save(product));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteProduct(Integer id) {
         Product product =
                 productRepository
@@ -97,19 +101,47 @@ public class ProductService {
         productRepository.save(product);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public TypeOfProductResponse createType(TypeOfProductRequest request) {
         TypeOfProduct typeOfProduct = TypeOfProduct.builder().type(request.getType()).build();
+
+        if (typeOfProductRepository.existsByType(request.getType())) {
+            throw new AppException(ProductErrorCode.PRODUCT_TYPE_HAS_EXISTED);
+        }
 
         return toTypeResponse(typeOfProductRepository.save(typeOfProduct));
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public void deleteType(Integer id) {
+        TypeOfProduct type =
+                typeOfProductRepository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new AppException(ProductErrorCode.PRODUCT_TYPE_NOT_FOUND));
+        if (productRepository.existsByTypeOfProductIdAndIsDeletedFalse(id)) {
+            throw new AppException(ProductErrorCode.PRODUCT_TYPE_IN_USE);
+        }
+        typeOfProductRepository.delete(type);
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public TypeOfProductResponse updateType(Integer id, TypeOfProductRequest request) {
         TypeOfProduct type =
                 typeOfProductRepository
                         .findById(id)
                         .orElseThrow(
                                 () -> new AppException(ProductErrorCode.PRODUCT_TYPE_NOT_FOUND));
-        type.setType(request.getType());
+
+        String newType = request.getType().trim();
+
+        boolean duplicated = typeOfProductRepository.existsByType(newType);
+
+        if (duplicated && !type.getType().equalsIgnoreCase(newType)) {
+            throw new AppException(ProductErrorCode.PRODUCT_TYPE_HAS_EXISTED);
+        }
+
+        type.setType(newType);
         return toTypeResponse(typeOfProductRepository.save(type));
     }
 
@@ -148,7 +180,9 @@ public class ProductService {
     }
 
     // Get type of product
-    public List<TypeOfProduct> getTypes() {
-        return typeOfProductRepository.findAll(Sort.by("id"));
+    public List<TypeOfProductResponse> getTypes() {
+        return typeOfProductRepository.findAll(Sort.by("id")).stream()
+                .map(this::toTypeResponse)
+                .toList();
     }
 }

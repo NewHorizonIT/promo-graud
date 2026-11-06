@@ -3,12 +3,15 @@ import MainLayout from '../layouts/MainLayout';
 import AdminLayout from '../layouts/AdminLayout';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
 import ProductsPage from '../pages/ProductsPage';
 import CartPage from '../pages/CartPage';
 import ProfilePage from '../pages/ProfilePage';
 import OrderHistoryPage from '../pages/OrderHistoryPage';
 import VoucherCollectionPage from '../pages/VoucherCollectionPage';
+import MyVouchersPage from '../pages/MyVouchersPage';
 import ProtectedRoute from './ProtectedRoute';
+import AdminProtectedRoute from './AdminProtectedRoute';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
 import DashboardPage from '../pages/admin/DashboardPage';
 import CampaignsPage from '../pages/admin/CampaignsPage';
@@ -23,13 +26,20 @@ import ProductFormPage from '../pages/admin/ProductFormPage';
 import ProductDetailPage from '../pages/admin/ProductDetailPage';
 import ProductPage from '../pages/admin/ProductPage';
 import ProductTypesPage from '../pages/admin/ProductTypesPage';
+import UsersPage from '../pages/admin/UserPage';
+import UserTypesPage from '../pages/admin/UserTypePage';
+import UserFormPage from '../pages/admin/UserFormPage';
+import UserDetailPage from '../pages/admin/UserDetailPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
+      {/* ── Standalone auth pages (no header/footer) ── */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
       {/* ── User routes ── */}
       <Route path="/" element={<MainLayout />}>
-        <Route path="login" element={<LoginPage />} />
         <Route index element={<HomePage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="cart" element={<CartPage />} />
@@ -57,13 +67,28 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="my-vouchers"
+          element={
+            <ProtectedRoute>
+              <MyVouchersPage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* ── Admin standalone (no layout) ── */}
       <Route path="/admin/login" element={<AdminLoginPage />} />
 
       {/* ── Admin with sidebar layout ── */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout />
+          </AdminProtectedRoute>
+        }
+      >
         <Route index element={<DashboardPage />} />
         <Route path="campaigns" element={<CampaignsPage />} />
         <Route path="campaigns/new" element={<CampaignFormPage />} />
@@ -79,6 +104,11 @@ export default function AppRoutes() {
         <Route path="products/:id" element={<ProductDetailPage />} />
         <Route path="products/:id/edit" element={<ProductFormPage />} />
         <Route path="product-types" element={<ProductTypesPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="users/new" element={<UserFormPage />} />
+        <Route path="users/:id" element={<UserDetailPage />} />
+        <Route path="users/:id/edit" element={<UserFormPage />} />
+        <Route path="user-types" element={<UserTypesPage />} />
       </Route>
     </Routes>
   );

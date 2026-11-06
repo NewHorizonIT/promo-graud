@@ -1,9 +1,10 @@
 package group2d.promo_graud.modules.auth.component;
 
 import java.text.ParseException;
-import java.util.Objects;
 
 import javax.crypto.spec.SecretKeySpec;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -29,12 +30,17 @@ public class CustomJwtDecoder implements JwtDecoder {
     @Value("${jwt.secret}")
     protected String secret;
 
-    private NimbusJwtDecoder nimbusJwtDecoder = null;
+    private NimbusJwtDecoder nimbusJwtDecoder;
+
+    @PostConstruct
+    public void init() {
+        SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HS512");
+        nimbusJwtDecoder =
+                NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS512).build();
+    }
 
     @Override
     public Jwt decode(String token) {
-        // Kiểm tra token theo logic nghiệp vụ riêng của project (token có bị sửa đổi, hết hạn, đã
-        // logout chưa)
         try {
             var response =
                     authenticationService.introspect(
@@ -46,17 +52,6 @@ public class CustomJwtDecoder implements JwtDecoder {
             throw new JwtException(e.getMessage());
         }
 
-        // dùng đối tượng nimbus (implementation của JwtDecoder) để decode token có hợp lệ hay ko
-        if (Objects.isNull(nimbusJwtDecoder)) {
-            // Tạo SecretKey từ JWT secret và project sử dụng thuật toán HMAC SHA-512.
-            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HS512");
-
-            // Tạo NimbusJwtDecoder sử dụng secret key và thuật toán HS512 để verify JWT
-            nimbusJwtDecoder =
-                    NimbusJwtDecoder.withSecretKey(secretKey)
-                            .macAlgorithm(MacAlgorithm.HS512)
-                            .build();
-        }
         return nimbusJwtDecoder.decode(token);
     }
 }

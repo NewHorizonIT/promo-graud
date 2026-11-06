@@ -16,3 +16,8 @@ export async function logout() {
     useAuthStore.getState().clearAuth();
   }
 }
+
+export async function register(username, email, password) {
+  const { data } = await axiosInstance.post('/users/register', { username, email, password });
+  return data;
+}

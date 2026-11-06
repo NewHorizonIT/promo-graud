@@ -9,7 +9,12 @@ function formatBudget(raw) {
   return n.toLocaleString('en-US');
 }
 
-export default function CampaignForm({ initial = EMPTY, onSubmit, loading = false }) {
+export default function CampaignForm({
+  initial = EMPTY,
+  onSubmit,
+  loading = false,
+  isEdit = false,
+}) {
   const [form, setForm] = useState(initial);
   const [errors, setErrors] = useState({});
   const [budgetFocused, setBudgetFocused] = useState(false);
@@ -29,7 +34,12 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
     if (!form.name.trim()) e.name = 'Tên campaign không được để trống';
     else if (form.name.trim().length < 5) e.name = 'Tên campaign phải ít nhất 5 ký tự';
     else if (form.name.trim().length > 100) e.name = 'Tên campaign không quá 100 ký tự';
-    if (!form.start_time) e.start_time = 'Chọn ngày bắt đầu';
+    if (!form.start_time) {
+      e.start_time = 'Chọn ngày bắt đầu';
+    } else if (!isEdit) {
+      const now = new Date().toISOString().slice(0, 16);
+      if (form.start_time < now) e.start_time = 'Ngày bắt đầu phải ở hiện tại hoặc tương lai';
+    }
     if (!form.end_time) e.end_time = 'Chọn ngày kết thúc';
     if (form.start_time && form.end_time && form.end_time <= form.start_time)
       e.end_time = 'Ngày kết thúc phải sau ngày bắt đầu';
@@ -94,6 +104,7 @@ export default function CampaignForm({ initial = EMPTY, onSubmit, loading = fals
           <input
             type="datetime-local"
             value={form.start_time}
+            min={isEdit ? undefined : new Date().toISOString().slice(0, 16)}
             onChange={(e) => set('start_time', e.target.value)}
             className={`${inputClass} ${errors.start_time ? errorClass : ''}`}
           />

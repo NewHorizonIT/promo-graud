@@ -15,7 +15,11 @@ import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(
+        name = "Vouchers",
+        description = "Quản lý voucher Generic/Unique: tạo, cập nhật, xóa, theo dõi batch job")
 @RestController
 @RequestMapping("/api/v1/vouchers")
 @RequiredArgsConstructor
@@ -78,5 +82,12 @@ public class VoucherController {
                         .result(voucher)
                         .message("Lấy chi tiết voucher thành công")
                         .build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteVoucher(@PathVariable Integer id) {
+        voucherService.delete(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder().code(200).message("Xóa voucher thành công").build());
     }
 }
