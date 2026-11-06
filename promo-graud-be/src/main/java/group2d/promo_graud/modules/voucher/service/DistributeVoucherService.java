@@ -1,6 +1,8 @@
 package group2d.promo_graud.modules.voucher.service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.domain.Page;
@@ -13,6 +15,8 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import group2d.promo_graud.modules.user.entity.User;
+import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.voucher.dto.requests.DistributeVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.DistributionResponse;
@@ -34,31 +38,10 @@ public class DistributeVoucherService {
 
     // Nếu kho hết mã, sẽ quăng lỗi ngay lập tức về Frontend mà không cần gọi Spring Batch.
     public Long distribute(DistributeVoucherRequest request) {
-        List<Integer> finalUserIds = request.getUserIds();
-
-        // Nếu Admin chọn "Gửi cho tất cả hạng VÀNG/BẠC..."
-        if (request.getTargetUserType() != null) {
-            // Có chọn loại user và có chọn danh sách user cụ thể
-            if (request.getUserIds() != null && !request.getUserIds().isEmpty()) {
-                finalUserIds =
-                        userRepository.findIdsByTypeAndIdIn(
-                                request.getTargetUserType(), request.getUserIds());
-
-            } else {
-                // Chỉ chọn loại user => gửi cho tất cả user thuộc loại đó
-                finalUserIds = userRepository.findIdsByType(request.getTargetUserType());
-            }
-
-        } else {
-            // Không chọn hạng -> gửi user thủ công
-            finalUserIds =
-                    request.getUserIds() == null
-                            ? List.of()
-                            : request.getUserIds().stream().distinct().toList();
-        }
+        List<Integer> finalUserIds = resolveUserIds(request);
 
         // Chặn lỗi nếu danh sách rỗng (Không có user nào để gửi)
-        if (finalUserIds == null || finalUserIds.isEmpty()) {
+        if (finalUserIds.isEmpty()) {
             throw new AppException(VoucherErrorCode.NO_USER_SELECTED);
         }
         // Gán ngược lại vào request để đẩy sang Batch
@@ -120,6 +103,35 @@ public class DistributeVoucherService {
                                         new AppException(
                                                 DistributionErrorCode.DISTRIBUTION_NOT_FOUND));
         return mapToResponse(distributionLog);
+    }
+
+    private List<Integer> resolveUserIds(DistributeVoucherRequest request) {
+        List<Integer> userIds = request.getUserIds() == null ? List.of() : request.getUserIds();
+        UserTypeEnum type = request.getTargetUserType();
+        List<Integer> result;
+
+        if (Boolean.TRUE.equals(request.getSelectAll())) {
+            if (type != null) {
+                result = userRepository.findIdsByType(type);
+            } else {
+                result = userRepository.findByIsDeletedFalse().stream().map(User::getId).toList();
+            }
+
+            List<Integer> excludedList = request.getExcludedUserIds();
+            if (excludedList != null && !excludedList.isEmpty()) {
+                Set<Integer> excluded = new HashSet<>(excludedList);
+                result = result.stream().filter(id -> !excluded.contains(id)).toList();
+            }
+        } else if (type != null) {
+            result =
+                    userIds.isEmpty()
+                            ? userRepository.findIdsByType(type)
+                            : userRepository.findIdsByTypeAndIdIn(type, userIds);
+        } else {
+            result = userIds;
+        }
+
+        return result.stream().distinct().toList();
     }
 
     private DistributionResponse mapToResponse(DistributionLog distributionLog) {

@@ -37,3 +37,13 @@ export const distributeVoucher = async (id, body) => {
   const { data } = await axiosInstance.post(`/vouchers/${id}/distribute`, body);
   return data.result;
 };
+
+export const getCards = async () => {
+  const { data } = await axiosInstance.get('/vouchers/summary-cards');
+  return data.result;
+};
+
+export const getJobStatus = async (id) => {
+  const { data } = await axiosInstance.get(`/vouchers/jobs/${id}`);
+  return data; // PaginatedResponse: { data: [], page, size, totalItems, totalPages }
+};

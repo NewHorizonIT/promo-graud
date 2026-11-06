@@ -26,4 +26,10 @@ public class DistributeVoucherRequest {
 
     // CÁCH 2: Nếu Admin bấm "Chọn tất cả người dùng hạng ..."
     private UserTypeEnum targetUserType;
+    // true  -> chọn tất cả user (theo targetUserType nếu có), trừ excludedUserIds
+    // false/null -> chỉ dùng userIds
+    private Boolean selectAll;
+
+    // Những user bị bỏ tick khi đang ở chế độ selectAll
+    private List<Integer> excludedUserIds;
 }

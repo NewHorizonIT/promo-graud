@@ -33,6 +33,7 @@ import UserDetailPage from '../pages/admin/UserDetailPage';
 import PaymentResultPage from '../pages/PaymentResultPage';
 import DistributionPage from '../pages/admin/DistributionPage';
 import DistributionLogDetailPage from '../pages/admin/DistributionLogDetailPage';
+import DistributeVoucherPage from '../pages/admin/DistributeVoucherPage';
 
 export default function AppRoutes() {
   return (
@@ -100,6 +101,7 @@ export default function AppRoutes() {
         <Route path="campaigns/:id/edit" element={<CampaignFormPage />} />
         <Route path="vouchers" element={<VouchersPage />} />
         <Route path="vouchers/new" element={<VoucherFormPage />} />
+        <Route path="vouchers/distribute" element={<DistributeVoucherPage />} />
         <Route path="vouchers/:id" element={<VoucherDetailPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />

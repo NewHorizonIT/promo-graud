@@ -13,7 +13,7 @@ public enum VoucherErrorCode implements BaseErrorCode {
     INSUFFICIENT_QUANTITY(
             1802,
             "Vouchers have been created but the required number is not yet available",
-            HttpStatus.INTERNAL_SERVER_ERROR),
+            HttpStatus.BAD_REQUEST),
     REQUIRED_FIELD(1803, "Minimum one status or quantity_remain field ", HttpStatus.BAD_REQUEST),
     NOT_EXIST(1804, "Voucher does not exist", HttpStatus.NOT_FOUND),
     OUT_OF_STOCK(1805, "Voucher is out of stock", HttpStatus.BAD_REQUEST),

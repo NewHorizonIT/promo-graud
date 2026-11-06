@@ -9,3 +9,7 @@ export const getDistributionLogsById = async (id) => {
   const { data } = await axiosInstance.get(`/distributes/${id}`);
   return data;
 };
+export const distributeVoucher = async (body) => {
+  const { data } = await axiosInstance.post('/distributes', body);
+  return data;
+};
