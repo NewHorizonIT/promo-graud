@@ -45,3 +45,6 @@ bruno
 # Load test — generated data chứa tokens, không commit
 # ============================================================
 load-test/
+
+.codex/
+AGENTS.md
