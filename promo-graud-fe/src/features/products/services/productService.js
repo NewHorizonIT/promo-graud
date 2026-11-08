@@ -1,8 +1,8 @@
 import { API_BASE } from '../../../config/constants';
 
 export async function fetchProducts({
-  limit = 16,
-  offset = 0,
+  page = 1,
+  size = 16,
   typeId,
   minPrice,
   maxPrice,
@@ -10,8 +10,8 @@ export async function fetchProducts({
   search,
 } = {}) {
   const params = new URLSearchParams({
-    limit: String(limit),
-    offset: String(offset),
+    page: String(page),
+    size: String(size),
   });
 
   if (typeId !== undefined && typeId !== null && typeId !== '') {

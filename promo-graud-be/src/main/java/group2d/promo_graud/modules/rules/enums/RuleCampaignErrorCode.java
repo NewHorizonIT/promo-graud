@@ -43,7 +43,12 @@ public enum RuleCampaignErrorCode implements BaseErrorCode {
     RULE_NOT_ELIGIBLE(
             1512,
             "Order does not meet the conditions required by this rule",
-            HttpStatus.BAD_REQUEST);
+            HttpStatus.BAD_REQUEST),
+    CAMPAIGN_ALREADY_ENDED(1513, "Campaign already ended", HttpStatus.CONFLICT),
+    RULE_HAS_ISSUED_VOUCHERS(1514, "Rule has issued vouchers", HttpStatus.CONFLICT),
+    INVALID_PAYLOAD(1515, "Rule payload invalid", HttpStatus.BAD_REQUEST),
+    RULE_IS_DELETED(1516, "Rule is deleted", HttpStatus.CONFLICT),
+    UNSUPPORTED_RULE_STATUS(1517, "Rule status unsupport", HttpStatus.BAD_REQUEST);
 
     private final int code;
     private final String message;

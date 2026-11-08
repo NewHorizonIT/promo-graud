@@ -127,8 +127,9 @@ public class VoucherServiceUnitTest {
         @DisplayName("Thất bại khi type không hợp lệ")
         void getAll_Fail_InvalidType() {
             assertThrows(
-                    IllegalArgumentException.class,
+                    AppException.class,
                     () -> voucherService.getAll("abc", null, null, null, null, 1, 10));
+
             verifyNoInteractions(voucherRepository);
         }
 
@@ -136,8 +137,9 @@ public class VoucherServiceUnitTest {
         @DisplayName("Thất bại khi status không hợp lệ")
         void getAll_Fail_InvalidStatus() {
             assertThrows(
-                    IllegalArgumentException.class,
+                    AppException.class,
                     () -> voucherService.getAll(null, "abc", null, null, null, 1, 10));
+
             verifyNoInteractions(voucherRepository);
         }
 
@@ -145,8 +147,9 @@ public class VoucherServiceUnitTest {
         @DisplayName("Thất bại khi distributionChannel không hợp lệ")
         void getAll_Fail_InvalidDistributionChannel() {
             assertThrows(
-                    IllegalArgumentException.class,
+                    AppException.class,
                     () -> voucherService.getAll(null, null, null, "abc", null, 1, 10));
+
             verifyNoInteractions(voucherRepository);
         }
     }
@@ -196,7 +199,7 @@ public class VoucherServiceUnitTest {
             // Act & Assert
             AppException ex =
                     assertThrows(AppException.class, () -> voucherService.update(id, request));
-            assertEquals(VoucherErrorCode.GENERIC_QUANTITY_NOT_EDITABLE, ex.getErrorCode());
+            assertEquals(VoucherErrorCode.UNIQUE_QUANTITY_NOT_EDITABLE, ex.getErrorCode());
             assertEquals(1, uniqueVoucher.getQuantityRemain()); // Không bị đổi
             verify(voucherRepository, never()).save(any());
         }

@@ -42,7 +42,11 @@ export default function ProductModal({ product, onClose }) {
         {/* Image */}
         <div className="md:w-1/2 aspect-square bg-surface-muted rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none overflow-hidden flex-shrink-0">
           {product.images ? (
-            <img src={product.images} alt={product.name} className="w-full h-full object-cover" />
+            <img
+              src={product.images.split(',')[0].trim()}
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-8xl">👕</div>
           )}
@@ -61,9 +65,6 @@ export default function ProductModal({ product, onClose }) {
 
           <div className="flex items-baseline gap-3 mt-auto pt-4 border-t border-border">
             <span className="text-3xl font-bold text-primary">{formatCurrency(product.price)}</span>
-            <span className="text-text-muted line-through text-sm">
-              {formatCurrency(product.price * 1.25)}
-            </span>
           </div>
 
           <button

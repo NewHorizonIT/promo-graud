@@ -3,12 +3,15 @@ package group2d.promo_graud.modules.campaigns.service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import jakarta.transaction.Transactional;
+
 import org.jobrunr.scheduling.JobScheduler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import group2d.promo_graud.modules.campaigns.dto.CampaignResponse;
 import group2d.promo_graud.modules.campaigns.dto.CampaignSearchRequest;
 import group2d.promo_graud.modules.campaigns.dto.CampaignUpdateStatusRequest;
 import group2d.promo_graud.modules.campaigns.specification.CampaignSpecification;
+import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Service
@@ -30,8 +34,10 @@ public class CampaignService {
     private final CampaignRepository campaignRepository;
     private final CampaignStatusUpdater campaignStatusUpdater;
     private final JobScheduler jobScheduler;
+    private final RuleCampaignRepository ruleCampaignRepository;
 
     // Tạo chiến dịch
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public CampaignResponse createCampaign(CampaignRequest request) {
         validateCampaignTime(request.getStartTime(), request.getEndTime());
         validateCampaignBudget(request.getPromotionBudget());
@@ -52,6 +58,7 @@ public class CampaignService {
     }
 
     //  Sửa chiến dịch
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public CampaignResponse updatedCampaign(Integer id, CampaignRequest request) {
         Campaign campaign = findCampaignOrThrow(id);
         LocalDateTime now = LocalDateTime.now();
@@ -99,6 +106,7 @@ public class CampaignService {
     }
 
     // Cập nhật status của Campaign
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public CampaignResponse updatedStatus(Integer id, CampaignUpdateStatusRequest request) {
         Campaign campaign = findCampaignOrThrow(id);
         CampaignStatus newStatus = request.getStatus();
@@ -125,6 +133,8 @@ public class CampaignService {
     }
 
     // Xóa chiến dịch
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteCampaign(Integer id) {
         Campaign campaign = findCampaignOrThrow(id);
 
@@ -133,6 +143,8 @@ public class CampaignService {
         }
 
         campaign.setIsDeleted(true);
+
+        ruleCampaignRepository.softDeleteByCampaignId(id);
 
         campaignRepository.save(campaign);
     }
@@ -199,13 +211,16 @@ public class CampaignService {
         Sort.Direction direction =
                 "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
 
-        // nếu sort theo budget
-        if ("promotionBudget".equalsIgnoreCase(sortBy)) {
-            return Sort.by(direction, "promotionBudget");
+        if (sortBy == null || sortBy.isBlank()) {
+            return Sort.by(Sort.Direction.DESC, "id");
         }
 
-        // Mặc định: Luôn giảm dần theo ID (mới nhất lên đầu)
-        return Sort.by(Sort.Direction.DESC, "id");
+        return switch (sortBy.toLowerCase()) {
+            case "id" -> Sort.by(direction, "id");
+            case "promotionbudget" -> Sort.by(direction, "promotionBudget");
+            case "createdat" -> Sort.by(direction, "createdAt");
+            default -> throw new AppException(CampaignErrorCode.INVALID_SORT_FIELD);
+        };
     }
 
     // Hàm validate Time filter

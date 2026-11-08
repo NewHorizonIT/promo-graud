@@ -42,3 +42,8 @@ CLAUDE.md
 bruno
 .codex/
 AGENTS.md
+
+# ============================================================
+# Load test — generated data chứa tokens, không commit
+# ============================================================
+load-test/

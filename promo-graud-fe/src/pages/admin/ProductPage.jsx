@@ -9,12 +9,14 @@ import {
 } from '../../features/admin/products/hooks/useProducts';
 // QUAN TRỌNG: Hãy sửa lại đường dẫn import Toast cho đúng với cấu trúc thư mục của bạn
 import Toast from '../../components/Toast';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const PAGE_SIZE = 10;
 
 export default function ProductPage() {
   // State quản lý Toast custom
   const [toast, setToast] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // State lưu tạm giá trị đang nhập ở Form
   const [formValues, setFormValues] = useState({
@@ -48,16 +50,23 @@ export default function ProductPage() {
   const deleteMutation = useDeleteProduct();
 
   // Xử lý dữ liệu trả về
-  const products = data?.data ?? data?.result?.data ?? [];
-  const total = data?.totalItems ?? data?.result?.totalItems ?? 0;
-  const totalPages = data?.totalPages ?? data?.result?.totalPages ?? 1;
+  const products = data?.data ?? [];
+  const total = data?.totalItems ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
-  const handleDelete = (product) => {
-    if (!confirm(`Xóa sản phẩm "${product.name}"?`)) return;
-    deleteMutation.mutate(product.id, {
-      // Dùng setState của Toast custom thay vì react-hot-toast
-      onSuccess: () => setToast({ type: 'success', message: 'Xóa sản phẩm thành công!' }),
-      onError: () => setToast({ type: 'error', message: 'Có lỗi xảy ra khi xóa sản phẩm.' }),
+  const handleDelete = (product) => setDeleteTarget(product);
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+        setToast({ type: 'success', message: 'Xóa sản phẩm thành công!' });
+      },
+      onError: () => {
+        setDeleteTarget(null);
+        setToast({ type: 'error', message: 'Có lỗi xảy ra khi xóa sản phẩm.' });
+      },
     });
   };
 
@@ -223,27 +232,47 @@ export default function ProductPage() {
       {/* Phân trang */}
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 pt-2">
-          {[...Array(totalPages)].map((_, i) => {
-            const pg = i + 1;
-            return (
-              <button
-                key={pg}
-                type="button"
-                onClick={() => handlePageChange(pg)}
-                className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
-                  pg === queryParams.page
-                    ? 'bg-primary text-white shadow-glow'
-                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
-                }`}
-              >
-                {pg}
-              </button>
-            );
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => {
+            const cur = queryParams.page;
+            if (pg === 1 || pg === totalPages || (pg >= cur - 2 && pg <= cur + 2)) {
+              return (
+                <button
+                  key={pg}
+                  type="button"
+                  onClick={() => handlePageChange(pg)}
+                  className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
+                    pg === cur
+                      ? 'bg-primary text-white shadow-glow'
+                      : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
+                  }`}
+                >
+                  {pg}
+                </button>
+              );
+            }
+            if (pg === cur - 3 || pg === cur + 3) {
+              return (
+                <span key={pg} className="px-1 text-text-muted select-none self-center">
+                  ...
+                </span>
+              );
+            }
+            return null;
           })}
         </div>
       )}
 
-      {/* Gọi Component Toast ở đây */}
+      {deleteTarget && (
+        <ConfirmModal
+          title="Xóa sản phẩm"
+          message={`Bạn có chắc muốn xóa sản phẩm "${deleteTarget.name}"? Hành động này không thể hoàn tác.`}
+          confirmLabel="Xóa"
+          onConfirm={confirmDelete}
+          onClose={() => setDeleteTarget(null)}
+          loading={deleteMutation.isPending}
+        />
+      )}
+
       <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );

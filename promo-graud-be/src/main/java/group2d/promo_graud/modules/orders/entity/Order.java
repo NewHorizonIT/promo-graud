@@ -51,7 +51,7 @@ public class Order {
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
-    private OrderStatus status = OrderStatus.SUCCESS;
+    private OrderStatus status = OrderStatus.PENDING;
 
     @Builder.Default
     @Column(name = "is_deleted", nullable = false)

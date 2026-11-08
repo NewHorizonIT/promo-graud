@@ -21,6 +21,17 @@ export const deleteVoucher = async (id) => {
   return data.result;
 };
 
+export const updateVoucher = async (id, body) => {
+  const { data } = await axiosInstance.patch(`/vouchers/${id}`, body);
+  return data.result;
+};
+
+// job status cho UNIQUE batch: GET /vouchers/jobs/{jobId}
+export const getJobStatus = async (jobId) => {
+  const { data } = await axiosInstance.get(`/vouchers/jobs/${jobId}`);
+  return data.result; // { jobId, status, processed, requested, errorMessage }
+};
+
 // BE chưa implement POST /vouchers/{id}/distribute
 export const distributeVoucher = async (id, body) => {
   const { data } = await axiosInstance.post(`/vouchers/${id}/distribute`, body);

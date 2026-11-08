@@ -67,11 +67,10 @@ export default function ProductsPage() {
   // Execute fetch products using currently APPLIED filters & search keyword
   const loadProducts = useCallback(() => {
     setLoading(true);
-    const offset = (page - 1) * DEFAULT_PAGE_LIMIT;
 
     fetchProducts({
-      limit: DEFAULT_PAGE_LIMIT,
-      offset,
+      page,
+      size: DEFAULT_PAGE_LIMIT,
       typeId: appliedFilters.typeId,
       minPrice: appliedFilters.minPrice,
       maxPrice: appliedFilters.maxPrice,

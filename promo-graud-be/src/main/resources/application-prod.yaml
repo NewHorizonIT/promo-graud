@@ -3,6 +3,10 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 3000
 
   jpa:
     hibernate:
@@ -14,6 +18,10 @@ spring:
       url: ${REDIS_URL}
       timeout: 2000ms
 
+  batch:
+    job:
+      enabled: false
+
 server:
   port: ${BACKEND_PORT:8080}
 
@@ -24,3 +32,22 @@ admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}
   email: ${ADMIN_EMAIL}
+
+jwt:
+  secret: ${JWT_SECRET}
+  refresh-secret: ${JWT_REFRESH_SECRET}
+  valid-duration: ${JWT_VALID_DURATION:3600}
+  refresh-duration: ${JWT_REFRESH_DURATION:72000}
+
+jobrunr:
+  background-job-server:
+    enabled: true
+    worker-count: 2
+    poll-interval: 15
+  dashboard:
+    enabled: false
+
+voucher:
+  batch:
+    unique-threshold: 50
+    chunk-size: 20

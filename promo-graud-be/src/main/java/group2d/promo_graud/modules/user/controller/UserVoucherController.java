@@ -1,13 +1,14 @@
 package group2d.promo_graud.modules.user.controller;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/v1/user-vouchers")
 @RequiredArgsConstructor
+@Validated
 public class UserVoucherController {
     private final UserVoucherService userVoucherService;
 
@@ -32,19 +34,32 @@ public class UserVoucherController {
     public ResponseEntity<ApiResponse<UserVoucherResponse>> create(
             @Valid @RequestBody UserVoucherRequest request) {
         UserVoucherResponse response = userVoucherService.create(request);
-        return ResponseEntity.ok(
-                ApiResponse.<UserVoucherResponse>builder()
-                        .code(201)
-                        .message("Create user_voucher success")
-                        .result(response)
-                        .build());
+        return ResponseEntity.status(201)
+                .body(
+                        ApiResponse.<UserVoucherResponse>builder()
+                                .code(201)
+                                .message("Create user_voucher success")
+                                .result(response)
+                                .build());
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserVoucherResponse>>> findAll() {
-        List<UserVoucherResponse> response = userVoucherService.findAll();
+    public ResponseEntity<ApiResponse<PaginatedResponse<UserVoucherResponse>>> findAll(
+            @RequestParam(defaultValue = "0") @Min(0) Integer page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) Integer limit) {
+
+        Page<UserVoucherResponse> userVouchers = userVoucherService.findAll(page, limit);
+
+        PaginatedResponse<UserVoucherResponse> response =
+                PaginatedResponse.<UserVoucherResponse>builder()
+                        .data(userVouchers.getContent())
+                        .page(page)
+                        .size(limit)
+                        .totalItems(userVouchers.getTotalElements())
+                        .totalPages(userVouchers.getTotalPages())
+                        .build();
         return ResponseEntity.ok(
-                ApiResponse.<List<UserVoucherResponse>>builder()
+                ApiResponse.<PaginatedResponse<UserVoucherResponse>>builder()
                         .code(200)
                         .message("Find all user_voucher success")
                         .result(response)

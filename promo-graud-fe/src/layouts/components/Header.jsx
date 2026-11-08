@@ -10,6 +10,7 @@ import {
   Moon,
   User,
   History,
+  Ticket,
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLogout } from '../../features/auth/hooks/useAuth';
@@ -212,6 +213,14 @@ export default function Header() {
                     >
                       <History size={16} />
                       Lịch sử mua hàng
+                    </Link>
+                    <Link
+                      to="/my-vouchers"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors"
+                    >
+                      <Ticket size={16} />
+                      Ví voucher
                     </Link>
                     <div className="border-t border-border">
                       <button

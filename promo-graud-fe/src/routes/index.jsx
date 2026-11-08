@@ -9,6 +9,7 @@ import CartPage from '../pages/CartPage';
 import ProfilePage from '../pages/ProfilePage';
 import OrderHistoryPage from '../pages/OrderHistoryPage';
 import VoucherCollectionPage from '../pages/VoucherCollectionPage';
+import MyVouchersPage from '../pages/MyVouchersPage';
 import ProtectedRoute from './ProtectedRoute';
 import AdminProtectedRoute from './AdminProtectedRoute';
 import AdminLoginPage from '../pages/admin/AdminLoginPage';
@@ -63,6 +64,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <VoucherCollectionPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="my-vouchers"
+          element={
+            <ProtectedRoute>
+              <MyVouchersPage />
             </ProtectedRoute>
           }
         />

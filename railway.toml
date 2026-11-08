@@ -1,0 +1,4 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "promo-graud-be/Dockerfile"
+watchPaths = ["promo-graud-be/**", "checkstyle.xml"]

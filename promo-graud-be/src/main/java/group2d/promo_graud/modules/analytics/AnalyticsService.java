@@ -98,7 +98,10 @@ public class AnalyticsService {
                 .map(
                         row ->
                                 TimelinePointResponse.builder()
-                                        .timestamp(((Timestamp) row[0]).toLocalDateTime())
+                                        .timestamp(
+                                                row[0] instanceof Timestamp t
+                                                        ? t.toLocalDateTime()
+                                                        : (LocalDateTime) row[0])
                                         .redeemed(((Number) row[1]).longValue())
                                         .revenue(
                                                 row[2] != null

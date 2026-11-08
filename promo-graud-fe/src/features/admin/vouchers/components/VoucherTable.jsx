@@ -2,11 +2,6 @@ import { Link } from 'react-router-dom';
 import { Eye, Trash2, Send } from 'lucide-react';
 import VoucherStatusBadge from './VoucherStatusBadge';
 
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN');
-}
-
 export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) {
   if (!vouchers.length) {
     return (
@@ -39,9 +34,6 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
               </th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
                 Còn lại / Tổng
-              </th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
-                Hết hạn
               </th>
               <th className="text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider">
                 Kênh
@@ -86,7 +78,6 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                     </span>
                   </div>
                 </td>
-                <td className="py-3 px-4 text-xs text-text-secondary">{formatDate(v.expiredAt)}</td>
                 <td className="py-3 px-4 text-xs text-text-secondary capitalize">
                   {v.distributionChannel}
                 </td>
@@ -99,14 +90,16 @@ export default function VoucherTable({ vouchers = [], onDelete, onDistribute }) 
                     >
                       <Eye size={15} />
                     </Link>
-                    <button
-                      type="button"
-                      onClick={() => onDistribute?.(v)}
-                      className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer"
-                      title="Phân phối"
-                    >
-                      <Send size={15} />
-                    </button>
+                    {onDistribute && (
+                      <button
+                        type="button"
+                        onClick={() => onDistribute(v)}
+                        className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary-light transition-colors cursor-pointer"
+                        title="Phân phối"
+                      >
+                        <Send size={15} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => onDelete?.(v)}

@@ -31,7 +31,7 @@ export default function ProductDetailPage() {
       ?.split(',')
       .map((s) => s.trim())
       .filter(Boolean) ?? [];
-  const typeName = product.typeOfProduct?.type ?? product.typeName;
+  const typeName = product.typeName;
 
   return (
     <div className="space-y-5">

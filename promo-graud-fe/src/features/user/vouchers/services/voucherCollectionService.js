@@ -4,7 +4,7 @@ export async function getCampaigns() {
   const { data } = await axiosInstance.get('/campaigns', {
     params: { status: 'ACTIVE' },
   });
-  return data.result;
+  return data; // PaginatedResponse trực tiếp, không bọc trong ApiResponse
 }
 
 export async function getVouchersByCampaign(campaignId, size = 4) {

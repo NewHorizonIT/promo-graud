@@ -18,6 +18,8 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     Optional<Product> findByIdAndIsDeletedFalse(Integer id);
 
+    boolean existsByTypeOfProductIdAndIsDeletedFalse(Integer typeId);
+
     @Query(
             "SELECT p FROM Product p "
                     + "WHERE p.isDeleted = false "

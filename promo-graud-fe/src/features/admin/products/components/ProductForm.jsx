@@ -38,6 +38,7 @@ export default function ProductForm({ initial = EMPTY, onSubmit, loading = false
     const e = {};
     if (!form.name.trim()) e.name = 'Tên sản phẩm không được để trống';
     else if (form.name.trim().length > 255) e.name = 'Tên sản phẩm không quá 255 ký tự';
+    if (!form.type_id) e.type_id = 'Loại sản phẩm không được để trống';
     if (!form.price || Number(form.price) <= 0) e.price = 'Giá phải lớn hơn 0';
     if (toUrlList(form.images).some((u) => !/^https?:\/\//i.test(u)))
       e.images = 'Mỗi dòng phải là một URL hợp lệ (http/https)';
@@ -96,12 +97,12 @@ export default function ProductForm({ initial = EMPTY, onSubmit, loading = false
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1.5">
-            Loại sản phẩm
+            Loại sản phẩm <span className="text-error-text">*</span>
           </label>
           <select
             value={form.type_id}
             onChange={(e) => set('type_id', e.target.value)}
-            className={inputClass}
+            className={`${inputClass} ${errors.type_id ? errorClass : ''}`}
           >
             <option value="">— Chưa phân loại —</option>
             {types.map((t) => (
@@ -110,6 +111,7 @@ export default function ProductForm({ initial = EMPTY, onSubmit, loading = false
               </option>
             ))}
           </select>
+          {errors.type_id && <p className="mt-1 text-xs text-error-text">{errors.type_id}</p>}
         </div>
         <div>
           <label className="block text-sm font-medium text-text-secondary mb-1.5">

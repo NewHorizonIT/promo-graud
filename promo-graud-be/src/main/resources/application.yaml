@@ -12,6 +12,13 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+server:
+  tomcat:
+    threads:
+      max: 400
+      min-spare: 20
+    accept-count: 200
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

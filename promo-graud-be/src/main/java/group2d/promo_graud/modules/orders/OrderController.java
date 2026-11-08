@@ -128,6 +128,17 @@ public class OrderController {
                         .build());
     }
 
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(@PathVariable Integer id) {
+        OrderResponse orderResponse = orderService.cancelOrder(id);
+        return ResponseEntity.ok(
+                ApiResponse.<OrderResponse>builder()
+                        .code(200)
+                        .message("Cancel order success")
+                        .result(orderResponse)
+                        .build());
+    }
+
     @PostMapping("/preview")
     public ResponseEntity<ApiResponse<OrderPreviewResponse>> previewOrder(
             @Valid @RequestBody OrderPreviewRequest request) {

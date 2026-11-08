@@ -3,31 +3,48 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Plus } from 'lucide-react';
 import {
   useCreateTypeProduct,
+  useDeleteTypeProduct,
   useTypeProducts,
   useUpdateTypeProduct,
 } from '../../features/admin/products/hooks/useProducts';
 import ProductTypeTable from '../../features/admin/products/components/ProductTypetable';
 import ProductTypeModal from '../../features/admin/products/components/ProductTypeModal';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const PAGE_SIZE = 10;
 
 export default function ProductTypesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const page = Math.max(1, Number(searchParams.get('page') ?? 1));
-  const params = { page, pageSize: PAGE_SIZE };
+  const params = { page, size: PAGE_SIZE };
 
   const { data, isLoading } = useTypeProducts(params);
   const createMutation = useCreateTypeProduct();
   const updateMutation = useUpdateTypeProduct();
+  const deleteMutation = useDeleteTypeProduct();
 
-  const types = data?.content ?? data?.data ?? (Array.isArray(data) ? data : []);
-  const totalItems = data?.totalElements ?? data?.totalItems ?? types.length;
+  const types = data?.data ?? [];
+  const totalItems = data?.totalItems ?? 0;
   const totalPages = data?.totalPages ?? 1;
   // item = null -> tạo mới, item = { id, type } -> chỉnh sửa
   const [modal, setModal] = useState({ open: false, item: null });
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [error, setError] = useState('');
 
   const saving = createMutation.isPending || updateMutation.isPending;
+
+  const handleDelete = (item) => setDeleteTarget(item);
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteMutation.mutate(deleteTarget.id, {
+      onSuccess: () => setDeleteTarget(null),
+      onError: (err) => {
+        setDeleteTarget(null);
+        setError(err?.response?.data?.message ?? 'Có lỗi xảy ra khi xóa loại sản phẩm.');
+      },
+    });
+  };
 
   const openCreate = () => {
     setError('');
@@ -81,7 +98,7 @@ export default function ProductTypesPage() {
           ))}
         </div>
       ) : (
-        <ProductTypeTable types={types} onEdit={openEdit} />
+        <ProductTypeTable types={types} onEdit={openEdit} onDelete={handleDelete} />
       )}
 
       {totalPages > 1 && (
@@ -116,6 +133,17 @@ export default function ProductTypesPage() {
           onClose={closeModal}
           loading={saving}
           error={error}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmModal
+          title="Xóa loại sản phẩm"
+          message={`Bạn có chắc muốn xóa loại "${deleteTarget.type}"? Hành động này không thể hoàn tác.`}
+          confirmLabel="Xóa"
+          onConfirm={confirmDelete}
+          onClose={() => setDeleteTarget(null)}
+          loading={deleteMutation.isPending}
         />
       )}
     </div>

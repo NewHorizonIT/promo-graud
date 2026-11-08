@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
-import { useAdminOrder } from '../../features/admin/orders/hooks/useAdminOrders';
+import { ChevronLeft, XCircle, Loader2 } from 'lucide-react';
+import { useAdminOrder, useCancelOrder } from '../../features/admin/orders/hooks/useAdminOrders';
 import { formatCurrency } from '../../utils/format';
 
 const STATUS_STYLES = {
@@ -41,6 +42,8 @@ function InfoRow({ label, value }) {
 export default function OrderDetailPage() {
   const { id } = useParams();
   const { data: order, isLoading } = useAdminOrder(id);
+  const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
+  const [confirming, setConfirming] = useState(false);
 
   if (isLoading) {
     return (
@@ -74,13 +77,48 @@ export default function OrderDetailPage() {
             <h2 className="text-2xl font-bold text-text-primary">Đơn hàng #{order.id}</h2>
             <p className="text-sm text-text-muted mt-1">{formatDate(order.createdAt)}</p>
           </div>
-          <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-              STATUS_STYLES[order.status] ?? 'bg-surface-muted text-text-muted'
-            }`}
-          >
-            {STATUS_LABELS[order.status] ?? order.status}
-          </span>
+          <div className="flex items-center gap-3 flex-wrap justify-end">
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
+                STATUS_STYLES[order.status] ?? 'bg-surface-muted text-text-muted'
+              }`}
+            >
+              {STATUS_LABELS[order.status] ?? order.status}
+            </span>
+
+            {order.status === 'SUCCESS' && !confirming && (
+              <button
+                type="button"
+                onClick={() => setConfirming(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-error-text/30 text-error-text text-sm font-semibold hover:bg-error-bg transition-colors cursor-pointer"
+              >
+                <XCircle size={15} />
+                Hủy đơn
+              </button>
+            )}
+
+            {order.status === 'SUCCESS' && confirming && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-muted">Xác nhận hủy?</span>
+                <button
+                  type="button"
+                  onClick={() => setConfirming(false)}
+                  className="px-3 py-1.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-muted transition-colors cursor-pointer"
+                >
+                  Thôi
+                </button>
+                <button
+                  type="button"
+                  disabled={isCancelling}
+                  onClick={() => cancelOrder(Number(id), { onSuccess: () => setConfirming(false) })}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-error-text text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+                >
+                  {isCancelling && <Loader2 size={14} className="animate-spin" />}
+                  Xác nhận
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -30,7 +30,6 @@ function StatCard({ label, value, icon: Icon, iconClass, to }) {
 export default function DashboardPage() {
   const { data: campaignsPage, isLoading: cLoading } = useCampaigns({ pageSize: 100 });
   const { data: vouchersPage, isLoading: vLoading } = useAdminVouchers({ pageSize: 1 });
-
   const loading = cLoading || vLoading;
   const campaigns = campaignsPage?.data ?? [];
   const totalVouchers = vouchersPage?.totalItems ?? 0;
@@ -38,6 +37,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* 3 cards gốc — giữ nguyên */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard
           label="Tổng Campaigns"
@@ -62,6 +62,7 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Campaigns gần đây — giữ nguyên */}
       <div className="bg-surface border border-border rounded-xl p-5 shadow-level-1">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-base text-text-primary">Campaigns gần đây</h2>

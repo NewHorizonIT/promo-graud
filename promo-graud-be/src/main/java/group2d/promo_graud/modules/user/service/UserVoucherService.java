@@ -1,7 +1,5 @@
 package group2d.promo_graud.modules.user.service;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +22,8 @@ import group2d.promo_graud.modules.voucher.Voucher;
 import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
+import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
+import group2d.promo_graud.modules.voucher.enums.VoucherType;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Service
@@ -34,8 +34,22 @@ public class UserVoucherService {
     private final VoucherRepository voucherRepository;
 
     public UserVoucherResponse create(UserVoucherRequest request) {
+
         User user = getUser();
         Voucher voucher = getVoucher(request.getVoucherId());
+
+        if (voucher.getType() == VoucherType.UNIQUE) {
+            throw new AppException(UserVoucherErrorCode.USER_VOUCHER_ALREADY_CLAIMED);
+        }
+
+        if (voucher.getStatus() != VoucherStatus.ACTIVE) {
+            throw new AppException(UserVoucherErrorCode.USER_VOUCHER_INACTIVE);
+        }
+
+        if (voucher.getQuantityRemain() <= 0) {
+            throw new AppException(UserVoucherErrorCode.USER_VOUCHER_VOUCHER_OUT_STOCK);
+        }
+
         if (userVoucherRepository.existsByUserIdAndVoucherId(user.getId(), voucher.getId())) {
             throw new AppException(UserVoucherErrorCode.USER_VOUCHER_ALREADY_CLAIMED);
         }
@@ -45,9 +59,10 @@ public class UserVoucherService {
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public List<UserVoucherResponse> findAll() {
-        List<UserVoucher> list = userVoucherRepository.findAll();
-        return list.stream().map(this::mapToUserVoucherResponse).toList();
+    public Page<UserVoucherResponse> findAll(int page, int limit) {
+        Pageable pageAble = PageRequest.of(page, limit);
+        Page<UserVoucher> list = userVoucherRepository.findAll(pageAble);
+        return list.map(this::mapToUserVoucherResponse);
     }
 
     public User getUser() {
