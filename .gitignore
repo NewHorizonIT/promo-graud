@@ -47,3 +47,5 @@ AGENTS.md
 # Load test — generated data chứa tokens, không commit
 # ============================================================
 load-test/
+
+performance-test

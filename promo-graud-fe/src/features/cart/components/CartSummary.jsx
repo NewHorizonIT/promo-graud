@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, ShieldCheck, Tag, Ticket, X, Loader2 } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Tag, Ticket, X, Loader2, Truck, CreditCard } from 'lucide-react';
 import { formatCurrency } from '../../../utils/format';
 import { previewOrder } from '../../checkout/services/checkoutService';
 import VoucherPickerModal from './VoucherPickerModal';
@@ -8,6 +8,7 @@ import VoucherPickerModal from './VoucherPickerModal';
 export default function CartSummary({ items = [], onCheckout, checkoutLoading = false }) {
   const [selectedVoucher, setSelectedVoucher] = useState(null); // { id, code }
   const [voucherPickerOpen, setVoucherPickerOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('COD');
 
   // Stable key so useQuery re-fetches when quantities change
   const itemsKey = items.map((i) => `${i.id}:${i.quantity}`).join(',');
@@ -95,7 +96,53 @@ export default function CartSummary({ items = [], onCheckout, checkoutLoading = 
           </div>
         )}
       </div>
+      <div className="pt-4 border-t border-border space-y-3">
+        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
+          Phương thức thanh toán
+        </p>
 
+        <label
+          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'COD' ? 'border-primary bg-primary-light/10' : 'border-border hover:bg-surface-muted'}`}
+        >
+          <input
+            type="radio"
+            name="paymentMethod"
+            value="COD"
+            checked={paymentMethod === 'COD'}
+            onChange={() => setPaymentMethod('COD')}
+            className="w-4 h-4 text-primary accent-primary"
+          />
+          <div className="flex items-center gap-2">
+            <Truck
+              size={18}
+              className={paymentMethod === 'COD' ? 'text-primary' : 'text-text-muted'}
+            />
+            <span className="text-sm font-medium text-text-primary">
+              Thanh toán khi nhận hàng (COD)
+            </span>
+          </div>
+        </label>
+
+        <label
+          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${paymentMethod === 'VNP' ? 'border-primary bg-primary-light/10' : 'border-border hover:bg-surface-muted'}`}
+        >
+          <input
+            type="radio"
+            name="paymentMethod"
+            value="VNP"
+            checked={paymentMethod === 'VNP'}
+            onChange={() => setPaymentMethod('VNP')}
+            className="w-4 h-4 text-primary accent-primary"
+          />
+          <div className="flex items-center gap-2">
+            <CreditCard
+              size={18}
+              className={paymentMethod === 'VNP' ? 'text-primary' : 'text-text-muted'}
+            />
+            <span className="text-sm font-medium text-text-primary">Thanh toán qua VNPay</span>
+          </div>
+        </label>
+      </div>
       {/* Grand Total */}
       <div className="pt-4 border-t border-border">
         <div className="flex items-baseline justify-between mb-1">
@@ -108,7 +155,7 @@ export default function CartSummary({ items = [], onCheckout, checkoutLoading = 
       {/* Checkout Button */}
       <button
         type="button"
-        onClick={() => onCheckout?.(selectedVoucher?.id ?? null)}
+        onClick={() => onCheckout?.({ voucherId: selectedVoucher?.id ?? null, paymentMethod })}
         disabled={items.length === 0 || checkoutLoading || previewLoading}
         className="
           w-full py-3.5 px-4 bg-primary hover:bg-primary-hover

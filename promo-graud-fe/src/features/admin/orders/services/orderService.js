@@ -17,3 +17,13 @@ export async function cancelAdminOrder(id) {
   const { data } = await axiosInstance.patch(`/orders/${id}/cancel`);
   return data.result;
 }
+
+export async function updateStatusOrder(id, body) {
+  const { data } = await axiosInstance.put(`/orders/${id}`, body);
+  return data.result;
+}
+
+export const deleteOrder = async (id) => {
+  const { data } = await axiosInstance.delete(`/orders/${id}`);
+  return data.result;
+};
