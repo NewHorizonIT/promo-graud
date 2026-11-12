@@ -46,6 +46,12 @@ jwt:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
+vnpay:
+  tmn-code: ${TMN_CODE}
+  hash-secret: ${HASH_SECRET}
+  url: ${URL}
+  return_url: ${VNPAY_RETURN_URL:http://localhost:8080/api/v1/payments/vnpay/return}
+
 admin:
   username: ${ADMIN_USERNAME:admin}
   password: ${ADMIN_PASSWORD:123456}

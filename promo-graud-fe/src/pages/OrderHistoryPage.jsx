@@ -1,18 +1,47 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, ChevronLeft, ChevronRight, X, Receipt } from 'lucide-react';
+import {
+  ShoppingBag,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Receipt,
+  Loader2,
+  CreditCard,
+} from 'lucide-react';
 import { useMyOrders } from '../features/user/hooks/useOrders';
 import { formatCurrency } from '../utils/format';
+import { useCart } from '../store/CartContext';
+import { createVNPayUrl } from '../features/checkout/services/checkoutService';
 
 const STATUS_STYLE = {
   SUCCESS: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   PENDING: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  FAILED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 };
 
 const STATUS_LABEL = {
   SUCCESS: 'Thành công',
   PENDING: 'Đang xử lý',
   CANCELLED: 'Đã hủy',
+  FAILED: 'Thất bại',
+};
+
+const PAYMENT_METHOD_LABEL = { COD: 'COD', VNP: 'VNPay' };
+const PAYMENT_METHOD_STYLE = {
+  COD: 'bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300',
+  VNP: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+};
+
+const PAY_STATUS_STYLE = {
+  PAID: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  UNPAID: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  FAILED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+const PAY_STATUS_LABEL = {
+  PAID: 'Đã thanh toán',
+  UNPAID: 'Chưa thanh toán',
+  FAILED: 'Thanh toán lỗi',
 };
 
 function formatDate(iso) {
@@ -37,8 +66,45 @@ function StatusBadge({ status }) {
     </span>
   );
 }
+function PaymentStatusBadge({ status }) {
+  return (
+    <span
+      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+        PAY_STATUS_STYLE[status] ?? 'bg-surface-muted text-text-secondary'
+      }`}
+    >
+      {PAY_STATUS_LABEL[status] ?? status}
+    </span>
+  );
+}
+
+function PaymentMethodBadge({ method }) {
+  return (
+    <span
+      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+        PAYMENT_METHOD_STYLE[method] ?? 'bg-surface-muted text-text-secondary'
+      }`}
+    >
+      {PAYMENT_METHOD_LABEL[method] ?? method}
+    </span>
+  );
+}
 
 function OrderModal({ order, onClose }) {
+  const { showToast } = useCart();
+  const [paying, setPaying] = useState(false);
+  const canRepay =
+    order.status === 'PENDING' && order.paymentMethod === 'VNP' && order.paymentStatus === 'UNPAID';
+
+  const handleRepay = async () => {
+    setPaying(true);
+    try {
+      window.location.href = await createVNPayUrl(order.id);
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Không tạo được link thanh toán', 'error', 4000);
+      setPaying(false);
+    }
+  };
   useEffect(() => {
     const handleKey = (e) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', handleKey);
@@ -139,6 +205,25 @@ function OrderModal({ order, onClose }) {
             <span className="text-text-secondary">Trạng thái</span>
             <StatusBadge status={order.status} />
           </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary">Thanh toán</span>
+            <PaymentStatusBadge status={order.paymentStatus} />
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-text-secondary">Phương thức</span>
+            <PaymentMethodBadge method={order.paymentMethod} />
+          </div>
+          {canRepay && (
+            <button
+              type="button"
+              onClick={handleRepay}
+              disabled={paying}
+              className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all hover:shadow-glow disabled:opacity-50 cursor-pointer"
+            >
+              {paying ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+              Thanh toán lại qua VNPay
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -171,7 +256,6 @@ export default function OrderHistoryPage() {
   const orders = ordersData?.data ?? [];
   const totalPages = ordersData?.totalPages ?? 0;
   const totalItems = ordersData?.totalItems ?? 0;
-
   return (
     <>
       <div className="max-w-5xl mx-auto px-4 py-10">

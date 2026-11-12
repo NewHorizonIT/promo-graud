@@ -3,15 +3,14 @@ package group2d.promo_graud.modules.orders.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -22,10 +21,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.orders.OrderErrorCode;
+import group2d.promo_graud.modules.orders.OrderPaymentEnum;
+import group2d.promo_graud.modules.orders.OrderPaymentStatusEnum;
 import group2d.promo_graud.modules.orders.OrderStatus;
 import group2d.promo_graud.modules.orders.dto.request.OrderItemRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderPreviewRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
+import group2d.promo_graud.modules.orders.dto.request.OrderStatusRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderItemResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderPreviewResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
@@ -81,29 +83,55 @@ public class OrderService {
     private final UserVoucherRepository userVoucherRepository;
     private final RuleEngine ruleEngine;
 
-    public OrderResponse createOrder(OrderRequest request, String ipAddress) {
+    public OrderResponse createOrder(OrderRequest request, String ipAddress, String idemKey) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new AppException(OrderErrorCode.ORDER_ITEMS_NOT_FOUND);
         }
-
-        if (request.getVoucherId() == null) {
-            return createOrderWithOutVoucher(request);
+        String key = (idemKey == null || idemKey.isBlank()) ? null : idemKey.trim();
+        if (key != null && key.length() > 64) {
+            throw new AppException(OrderErrorCode.INVALID_IDEMPOTENCY_KEY); // thêm vào enum
         }
+        User user = getCurrentUser();
 
-        String lockKey = "lock:voucher:" + request.getVoucherId();
-        String lockValue = UUID.randomUUID().toString();
-        boolean isLocked = distributedLockService.tryLock(lockKey, lockValue, 10);
-        if (!isLocked) {
-            throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
+        // Lớp 1: replay nhanh, không cần chờ lock
+        if (key != null) {
+            Optional<Order> existing =
+                    orderRepository.findByUserIdAndIdempotencyKey(user.getId(), key);
+            if (existing.isPresent()) {
+                return mapToOrderResponse(existing.get());
+            }
         }
         try {
-            return createOrderVoucher(request, ipAddress);
-        } finally {
-            distributedLockService.unLock(lockKey, lockValue);
+
+            if (request.getVoucherId() == null) {
+                return createOrderWithOutVoucher(request, key);
+            }
+
+            String lockKey = "lock:voucher:" + request.getVoucherId();
+            String lockValue = UUID.randomUUID().toString();
+            boolean isLocked = distributedLockService.tryLock(lockKey, lockValue, 10);
+            if (!isLocked) {
+                throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
+            }
+            try {
+                return createOrderVoucher(request, ipAddress, key);
+            } finally {
+                distributedLockService.unLock(lockKey, lockValue);
+            }
+        } catch (DataIntegrityViolationException e) {
+            // Lớp 3: 2 request cùng key lọt qua lớp 1 cùng lúc, unique index chỉ cho 1 request
+            // insert
+            if (key != null) {
+                return orderRepository
+                        .findByUserIdAndIdempotencyKey(user.getId(), key)
+                        .map(this::mapToOrderResponse)
+                        .orElseThrow(() -> e); // không có đơn cùng key thì là lỗi khác, ném lại
+            }
+            throw e;
         }
     }
 
-    private OrderResponse createOrderWithOutVoucher(OrderRequest request) {
+    private OrderResponse createOrderWithOutVoucher(OrderRequest request, String key) {
         return transactionTemplate.execute(
                 status -> {
                     User user = getCurrentUser();
@@ -113,23 +141,35 @@ public class OrderService {
                                             .user(user)
                                             .totalPrice(BigDecimal.ZERO)
                                             .finalPrice(BigDecimal.ZERO)
+                                            .idempotencyKey(key)
+                                            .paymentMethod(request.getPaymentMethod())
+                                            .paymentStatus(OrderPaymentStatusEnum.UNPAID)
                                             .voucher(null)
                                             .build());
                     BigDecimal totalPrice =
                             createOrderItemAndCalculateTotal(order, request.getItems());
                     order.setTotalPrice(totalPrice);
                     order.setFinalPrice(totalPrice);
-                    order.setStatus(OrderStatus.SUCCESS);
+                    order.setStatus(OrderStatus.PENDING);
+                    order.setPaymentStatus(OrderPaymentStatusEnum.UNPAID);
                     orderRepository.save(order);
 
                     return mapToOrderResponse(order);
                 });
     }
 
-    private OrderResponse createOrderVoucher(OrderRequest request, String ipAddress) {
+    private OrderResponse createOrderVoucher(OrderRequest request, String ipAddress, String key) {
         return transactionTemplate.execute(
                 status -> {
                     User user = getCurrentUser();
+                    // Lớp 2: kiểm tra lại SAU KHI đã có lock
+                    if (key != null) {
+                        Optional<Order> existing =
+                                orderRepository.findByUserIdAndIdempotencyKey(user.getId(), key);
+                        if (existing.isPresent()) {
+                            return mapToOrderResponse(existing.get());
+                        }
+                    }
                     Voucher currentVoucher =
                             voucherRepository
                                     .findById(request.getVoucherId())
@@ -153,6 +193,9 @@ public class OrderService {
                                     Order.builder()
                                             .user(user)
                                             .voucher(currentVoucher)
+                                            .paymentMethod(request.getPaymentMethod())
+                                            .paymentStatus(OrderPaymentStatusEnum.UNPAID)
+                                            .idempotencyKey(key)
                                             .totalPrice(BigDecimal.ZERO)
                                             .finalPrice(BigDecimal.ZERO)
                                             .build());
@@ -164,7 +207,9 @@ public class OrderService {
                     // Fix: check final price >= 0
                     BigDecimal finalPrice = totalPrice.subtract(discount).max(BigDecimal.ZERO);
                     order.setFinalPrice(finalPrice);
-                    order.setStatus(OrderStatus.SUCCESS);
+                    order.setPaymentMethod(request.getPaymentMethod());
+                    order.setStatus(OrderStatus.PENDING);
+                    order.setPaymentStatus(OrderPaymentStatusEnum.UNPAID);
                     consumeVoucher(currentVoucher, userVoucher);
                     voucherRedemptionRepository.save(
                             VoucherRedemption.builder()
@@ -248,8 +293,10 @@ public class OrderService {
                 voucher.setStatus(VoucherStatus.DISABLED);
             }
             long usedCount =
-                    orderRepository.countByUserIdAndVoucherIdAndStatus(
-                            userVoucher.getUser().getId(), voucher.getId(), OrderStatus.SUCCESS);
+                    orderRepository.countByUserIdAndVoucherIdAndStatusIn(
+                            userVoucher.getUser().getId(),
+                            voucher.getId(),
+                            List.of(OrderStatus.SUCCESS, OrderStatus.PENDING));
             if (usedCount >= voucher.getLimitClient()) {
                 userVoucher.setStatus(UserVoucherStatus.USED);
             }
@@ -261,23 +308,26 @@ public class OrderService {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Page<OrderResponse> findAll(
             Integer page, Integer size, OrderStatus status, String username) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
         boolean hasStatus = status != null;
         boolean hasUsername = username != null && !username.isBlank();
         if (hasStatus && hasUsername) {
             return orderRepository
-                    .findByStatusAndUserUsernameContainingIgnoreCase(status, username, pageable)
+                    .findByStatusAndUserUsernameContainingIgnoreCaseAndIsDeletedFalse(
+                            status, username, pageable)
                     .map(this::mapToOrderResponse);
         }
         if (hasStatus) {
-            return orderRepository.findByStatus(status, pageable).map(this::mapToOrderResponse);
+            return orderRepository
+                    .findByStatusAndIsDeletedFalse(status, pageable)
+                    .map(this::mapToOrderResponse);
         }
         if (hasUsername) {
             return orderRepository
-                    .findByUserUsernameContainingIgnoreCase(username, pageable)
+                    .findByUserUsernameContainingIgnoreCaseAndIsDeletedFalse(username, pageable)
                     .map(this::mapToOrderResponse);
         }
-        return orderRepository.findAll(pageable).map(this::mapToOrderResponse);
+        return orderRepository.findByIsDeletedFalse(pageable).map(this::mapToOrderResponse);
     }
 
     @PostAuthorize(
@@ -305,11 +355,137 @@ public class OrderService {
     }
 
     public Page<OrderResponse> findByUserId(Integer userId, Integer page, Integer limit) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, limit));
+        Pageable pageable =
+                PageRequest.of(
+                        Math.max(0, page), Math.max(1, limit), Sort.by(Sort.Direction.DESC, "id"));
 
         Page<Order> orders = orderRepository.findByUserId(userId, pageable);
 
         return orders.map(this::mapToOrderResponse);
+    }
+
+    public void releaseVoucher(Order order) {
+        if (order.getVoucher() == null) {
+            return;
+        }
+
+        String lockKey = "lock:voucher:" + order.getVoucher().getId();
+        String lockValue = UUID.randomUUID().toString();
+        boolean isLocked = distributedLockService.tryLock(lockKey, lockValue, 10);
+        if (!isLocked) {
+            throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
+        }
+        try {
+            transactionTemplate.execute(
+                    status -> {
+                        Voucher voucher =
+                                voucherRepository.findById(order.getVoucher().getId()).orElse(null);
+                        if (voucher == null) {
+                            return null;
+                        }
+
+                        LocalDateTime ruleEndTime = voucher.getRuleCampaign().getEndTime();
+                        boolean isExpired =
+                                ruleEndTime != null && LocalDateTime.now().isAfter(ruleEndTime);
+
+                        if (isExpired) {
+                            // Nếu Rule đã hết hạn -> KHÔNG hoàn lại trạng thái ACTIVE và UNUSED
+                            // Có thể set status của Voucher thành DISABLED (nếu cần thiết để dọn
+                            // dẹp)
+                            voucher.setStatus(VoucherStatus.DISABLED);
+                            voucherRepository.save(voucher);
+                            return null;
+                        }
+
+                        if (voucher.getType().equals(VoucherType.UNIQUE)) {
+                            voucher.setStatus(VoucherStatus.ACTIVE);
+                        } else {
+                            voucher.setQuantityRemain(voucher.getQuantityRemain() + 1);
+                            voucher.setStatus(VoucherStatus.ACTIVE);
+                        }
+                        voucherRepository.save(voucher);
+
+                        userVoucherRepository
+                                .findByUserIdAndVoucherId(order.getUser().getId(), voucher.getId())
+                                .ifPresent(
+                                        uv -> {
+                                            uv.setStatus(UserVoucherStatus.UNUSED);
+                                            userVoucherRepository.save(uv);
+                                        });
+                        return null;
+                    });
+        } finally {
+            distributedLockService.unLock(lockKey, lockValue);
+        }
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public OrderResponse updatedStatus(Integer id, OrderStatusRequest request) {
+        Order order =
+                orderRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_EXISTS));
+
+        OrderStatus current = order.getStatus();
+        OrderStatus target = request.getStatus();
+        OrderPaymentStatusEnum pay = order.getPaymentStatus(); // lấy từ DB, không tin client
+        boolean isCod = order.getPaymentMethod() == OrderPaymentEnum.COD;
+
+        if (target == current) {
+            throw new AppException(OrderErrorCode.ORDER_CANNOT_DUPLICATE);
+        }
+        if (current != OrderStatus.PENDING) {
+            throw new AppException(OrderErrorCode.ORDER_STATUS);
+        }
+
+        OrderPaymentStatusEnum newPays = pay;
+        if (target == OrderStatus.CANCELLED) {
+            // VNP đã PAID thì phải hoàn tiền thủ công, không hủy ở đây
+            if (!isCod && pay != OrderPaymentStatusEnum.UNPAID) {
+                throw new AppException(OrderErrorCode.ORDER_STATUS);
+            }
+        } else if (target == OrderStatus.SUCCESS) {
+            if (isCod) {
+                newPays = OrderPaymentStatusEnum.PAID; // COD: giao xong mới thu tiền
+            } else if (pay != OrderPaymentStatusEnum.PAID) {
+                throw new AppException(OrderErrorCode.ORDER_STATUS);
+            }
+        } else {
+            throw new AppException(
+                    OrderErrorCode.ORDER_STATUS); // admin chỉ được chọn SUCCESS / CANCELLED
+        }
+
+        int updated =
+                orderRepository.transition(
+                        id, current, pay, target, newPays, order.getTransactionNo());
+        if (updated == 0) {
+            throw new AppException(OrderErrorCode.ORDER_STATUS); // vừa bị IPN/admin khác đổi
+        }
+
+        Order fresh =
+                orderRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_EXISTS));
+        if (target == OrderStatus.CANCELLED) {
+            releaseVoucher(fresh);
+        }
+        return mapToOrderResponse(fresh);
+    }
+
+    public void deleteOrder(Integer id) {
+        Order order =
+                orderRepository
+                        .findById(id)
+                        .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_EXISTS));
+
+        if (order.getStatus() == OrderStatus.PENDING) {
+            throw new AppException(OrderErrorCode.ORDER_CANNOT_DELETE);
+        } else if (order.getStatus() == OrderStatus.SUCCESS) {
+            throw new AppException(OrderErrorCode.ORDER_CANNOT_DELETE);
+        }
+        order.setIsDeleted(true);
+
+        orderRepository.save(order);
     }
 
     public OrderResponse mapToOrderResponse(Order order) {
@@ -335,7 +511,11 @@ public class OrderService {
                 .status(order.getStatus())
                 .totalPrice(order.getTotalPrice())
                 .finalPrice(order.getFinalPrice())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentStatus(order.getPaymentStatus())
+                .idempotencyKey(order.getIdempotencyKey())
                 .createdAt(order.getCreatedAt())
+                .isDeleted(order.getIsDeleted())
                 .items(itemResponses)
                 .build();
     }
