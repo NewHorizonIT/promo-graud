@@ -15,4 +15,11 @@ public class DistributionPayload {
     private String voucherCode;
     private DistributionChannel channel;
     private String targetUrl;
+
+    // Thông tin hiển thị lên thẻ Voucher trong Email
+    private String campaignName;
+    private String ruleName;
+    private String startTime;
+    private String endTime;
+    private Integer usageLimit;
 }

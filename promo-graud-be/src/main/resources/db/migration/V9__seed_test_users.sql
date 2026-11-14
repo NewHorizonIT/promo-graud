@@ -16,7 +16,7 @@ SELECT
         WHEN i % 2 = 0 THEN 1
         ELSE 2
     END
-FROM generate_series(4, 10000) AS i
+FROM generate_series(4, 100) AS i
 ON CONFLICT DO NOTHING;
 
 SELECT setval(

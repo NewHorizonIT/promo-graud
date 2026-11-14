@@ -8,7 +8,11 @@ public interface VoucherCardResponse {
 
     String getRuleName();
 
+    String getRuleStatus();
+
     String getCampaignName();
+
+    String getTargetType();
 
     String getChannel();
 

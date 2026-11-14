@@ -9,6 +9,15 @@ export default function VoucherCardList({
   isSubmitting,
   selectedUserCount,
 }) {
+  const getStatusBadgeStyle = (status) => {
+    if (status === 'ACTIVE') {
+      return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20';
+    }
+    if (status === 'INACTIVE') {
+      return 'bg-red-500/10 text-red-600 border border-red-500/20';
+    }
+    return 'bg-slate-500/10 text-slate-600 border border-slate-500/20';
+  };
   return (
     <div className="flex flex-col gap-4 h-full">
       <div className="bg-surface border border-border p-5 rounded-2xl flex-1 flex flex-col min-h-[400px]">
@@ -54,6 +63,22 @@ export default function VoucherCardList({
                       <p className="font-semibold text-text-primary">{card.ruleId}</p>
                     </div>
                     <div>
+                      <p className="text-text-muted">Loại người áp dụng</p>
+                      <p className="font-semibold text-primary">
+                        {card.targetType || 'Không xác định'}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <p className="text-text-muted">Rule Status</p>
+                      <span
+                        className={`mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${getStatusBadgeStyle(
+                          card.ruleStatus,
+                        )}`}
+                      >
+                        {card.ruleStatus}
+                      </span>
+                    </div>
+                    <div>
                       <p className="text-text-muted">Tổng Voucher</p>
                       <p className="font-semibold text-primary">
                         {card.totalUniqueVouchers?.toLocaleString() || 0}
@@ -86,7 +111,7 @@ export default function VoucherCardList({
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={isSubmitting}
+        disabled={isSubmitting || selectedCard?.ruleStatus === 'INACTIVE'}
         className="w-full flex items-center justify-center gap-2 py-3.5 bg-primary hover:bg-primary-hover text-white rounded-2xl text-sm font-bold transition-all shadow-glow disabled:opacity-60 cursor-pointer"
       >
         {isSubmitting ? (

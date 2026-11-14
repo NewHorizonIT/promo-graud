@@ -37,11 +37,12 @@ public interface VoucherRepository extends JpaRepository<Voucher, Integer> {
     // interface base projection
     // map tự động vào Interface Projection nhờ các alias (AS) trùng tên với Getter
     @Query(
-            "SELECT r.id AS ruleId, r.name AS ruleName, c.name AS campaignName, "
+            "SELECT r.id AS ruleId, r.name AS ruleName, r.status AS ruleStatus, "
+                    + "r.typeOfUser AS targetType, c.name AS campaignName, "
                     + "v.distributionChannel AS channel, COUNT(v.id) AS totalUniqueVouchers "
                     + "FROM Voucher v JOIN v.ruleCampaign r JOIN r.campaign c "
                     + "WHERE v.type = 'UNIQUE' AND v.status = 'ACTIVE' "
-                    + "GROUP BY r.id, r.name, c.name, v.distributionChannel")
+                    + "GROUP BY r.id, r.name, r.status, r.typeOfUser, c.name, v.distributionChannel")
     List<VoucherCardResponse> getUniqueVoucherCard();
 
     Long countByRuleCampaignIdAndTypeAndStatusAndDistributionChannel(

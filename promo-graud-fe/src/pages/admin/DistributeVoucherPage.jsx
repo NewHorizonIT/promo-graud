@@ -29,7 +29,7 @@ export default function DistributeVoucherPage() {
 
   // isSelectAll = true  -> chọn tất cả user của bộ lọc, trừ excludedUserIds
   // isSelectAll = false -> chỉ chọn selectedUserIds
-  const [isSelectAll, setIsSelectAll] = useState(true);
+  const [isSelectAll, setIsSelectAll] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState([]);
   const [excludedUserIds, setExcludedUserIds] = useState([]);
 
@@ -95,7 +95,7 @@ export default function DistributeVoucherPage() {
   const handleChangeType = (id) => {
     setUserTypeId(id);
     setPage(1);
-    resetSelection(true);
+    resetSelection(false);
   };
 
   // Tick header: đang chọn đủ -> bỏ hết, còn lại -> chọn tất cả
@@ -198,7 +198,22 @@ export default function DistributeVoucherPage() {
       setIsSubmitting(false);
     }
   };
+  const handleSelectCard = (card) => {
+    setSelectedCard(card);
+    if (!card?.targetType) return;
 
+    if (card.targetType === 'ALL') {
+      if (userTypeId !== '') {
+        handleChangeType('');
+      }
+      return;
+    }
+
+    const matchedTab = types.find((t) => t.type === card.targetType);
+    if (matchedTab && String(matchedTab.id) !== String(userTypeId)) {
+      handleChangeType(matchedTab.id);
+    }
+  };
   return (
     <div className="space-y-6">
       <Toast toast={toast} onClose={() => setToast(null)} />
@@ -240,7 +255,7 @@ export default function DistributeVoucherPage() {
           cards={cards}
           isLoadingCards={isLoadingCards}
           selectedCard={selectedCard}
-          setSelectedCard={setSelectedCard}
+          setSelectedCard={handleSelectCard}
           handleSubmit={handleSubmit}
           isSubmitting={isSubmitting}
           selectedUserCount={selectedCount}

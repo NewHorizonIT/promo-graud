@@ -29,7 +29,7 @@ public class StreamDeadLetterCronjob {
     private final DistributionLogRepository logRepository;
 
     // Chạy ngầm mỗi 5 phút một lần
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 60000)
     public void processStuckMessages() {
         String streamKey = "voucher_distribution_stream";
         String group = "email-group";
@@ -46,7 +46,7 @@ public class StreamDeadLetterCronjob {
                                 );
         for (PendingMessage pending : pendingMessages) {
             Duration idleTime = pending.getElapsedTimeSinceLastDelivery();
-            if (idleTime.toMinutes() >= 10) {
+            if (idleTime.toMinutes() >= 2) {
                 String recordId = pending.getIdAsString();
                 long deliveryCount = pending.getTotalDeliveryCount();
 
@@ -72,7 +72,7 @@ public class StreamDeadLetterCronjob {
                 } else {
                     // XCLAIM: Cướp lại quyền xử lý và giao cho Worker này làm lại
                     RedisStreamCommands.XClaimOptions claimOptions =
-                            RedisStreamCommands.XClaimOptions.minIdle(Duration.ofMinutes(10))
+                            RedisStreamCommands.XClaimOptions.minIdle(Duration.ofMinutes(2))
                                     .ids(recordId);
 
                     redisTemplate.opsForStream().claim(streamKey, group, workerName, claimOptions);

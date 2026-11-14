@@ -15,6 +15,11 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import group2d.promo_graud.modules.rules.RuleCampaign;
+import group2d.promo_graud.modules.rules.RuleCampaignRepository;
+import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
+import group2d.promo_graud.modules.rules.enums.RuleStatus;
+import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.repository.UserRepository;
@@ -35,14 +40,35 @@ public class DistributeVoucherService {
     private final StringRedisTemplate redisTemplate;
     private final VoucherRepository voucherRepository;
     private final DistributeBatchService distributeBatchService;
+    private final RuleCampaignRepository ruleCampaignRepository;
 
     // Nếu kho hết mã, sẽ quăng lỗi ngay lập tức về Frontend mà không cần gọi Spring Batch.
     public Long distribute(DistributeVoucherRequest request) {
+        RuleCampaign ruleCampaign =
+                ruleCampaignRepository
+                        .findById(request.getRuleId())
+                        .orElseThrow(() -> new AppException(RuleCampaignErrorCode.RULE_NOT_EXIST));
+
+        if (ruleCampaign.getStatus() == RuleStatus.INACTIVE) {
+            throw new AppException(RuleCampaignErrorCode.RULE_NOT_ELIGIBLE);
+        }
+
         List<Integer> finalUserIds = resolveUserIds(request);
 
         // Chặn lỗi nếu danh sách rỗng (Không có user nào để gửi)
         if (finalUserIds.isEmpty()) {
             throw new AppException(VoucherErrorCode.NO_USER_SELECTED);
+        }
+        // Check nghiệp vụ: Nếu Rule giới hạn hạng user (vd: VIP), toàn bộ user được chọn phải thuộc
+        // hạng đó
+        RuleTargetAudience audience = ruleCampaign.getTypeOfUser();
+        if (audience != null && audience != RuleTargetAudience.ALL) {
+            UserTypeEnum requiredType = UserTypeEnum.valueOf(audience.name());
+            List<Integer> validUserIds =
+                    userRepository.findIdsByTypeAndIdIn(requiredType, finalUserIds);
+            if (validUserIds.size() < finalUserIds.size()) {
+                throw new AppException(RuleCampaignErrorCode.USER_TYPE_NOT_MATCH_RULE);
+            }
         }
         // Gán ngược lại vào request để đẩy sang Batch
         request.setUserIds(finalUserIds);

@@ -15,7 +15,7 @@ import group2d.promo_graud.modules.voucher.component.distribute.DistributionPayl
 import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.DistributionLogStatus;
 import group2d.promo_graud.modules.voucher.repository.DistributionLogRepository;
-import group2d.promo_graud.modules.voucher.service.DevEmailService;
+import group2d.promo_graud.modules.voucher.service.EmailService;
 import group2d.promo_graud.modules.voucher.service.WebHookService;
 
 @Component
@@ -23,7 +23,7 @@ import group2d.promo_graud.modules.voucher.service.WebHookService;
 @Slf4j
 public class VoucherDistributeWorker
         implements StreamListener<String, ObjectRecord<String, DistributionPayload>> {
-    private final DevEmailService emailService;
+    private final EmailService emailService;
     private final DistributionLogRepository logRepository;
     private final WebHookService webHookService;
     private final StringRedisTemplate redisTemplate;
@@ -33,27 +33,14 @@ public class VoucherDistributeWorker
     @Transactional
     public void onMessage(ObjectRecord<String, DistributionPayload> message) {
         // 1 & 2. LẤY TRỰC TIẾP OBJECT TỪ MESSAGE (Không cần ép kiểu hay parse JSON bằng tay)
-        DistributionPayload payload =
-                message.getValue(); // Lấy thẳng ra Object, không cần tự parse JSON nữa!
+        DistributionPayload payload = message.getValue();
         try {
-
-            log.info(
-                    "Worker nhận nhiệm vụ gửi Voucher {} cho Email: {}",
-                    payload.getVoucherCode(),
-                    payload.getUserEmail());
-
             // 3. Phân luồng xử lý theo Channel
             if (payload.getChannel() == DistributionChannel.EMAIL) {
-                emailService.sendVoucher(payload.getUserEmail(), payload.getVoucherCode());
+                emailService.sendVoucher(payload);
             } else if (payload.getChannel() == DistributionChannel.WEBHOOK) {
-                log.info(
-                        "Worker bắn WEBHOOK mã {} cho {}",
-                        payload.getVoucherCode(),
-                        payload.getUserEmail());
-
                 String partnerWebhookUrl = payload.getTargetUrl();
-                webHookService.sendVoucherWebHook(
-                        partnerWebhookUrl, payload.getUserEmail(), payload.getVoucherCode());
+                webHookService.sendVoucherWebHook(payload);
             }
             // 4. Thành công -> Update trạng thái Log xuống Database (Chỉ tốn 1 lệnh UPDATE)
             logRepository.updateStatus(payload.getLogId(), DistributionLogStatus.SENT);

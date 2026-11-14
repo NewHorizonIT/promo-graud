@@ -3,6 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { Plus, Send } from 'lucide-react';
 import VoucherTable from '../../features/admin/vouchers/components/VoucherTable';
 import ConfirmModal from '../../components/ConfirmModal';
+import Pagination from '../../components/Pagination';
 import {
   useAdminVouchers,
   useDeleteVoucher,
@@ -41,6 +42,10 @@ export default function VouchersPage() {
           onError: () => setModal(null),
         }),
     });
+  };
+
+  const handlePageChange = (newPage) => {
+    setSearchParams({ ...(type ? { type } : {}), page: String(newPage) });
   };
 
   return (
@@ -101,27 +106,10 @@ export default function VouchersPage() {
           <VoucherTable vouchers={vouchers} onDelete={handleDelete} />
         )}
 
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 pt-2">
-            {[...Array(totalPages)].map((_, i) => {
-              const pg = i + 1;
-              return (
-                <button
-                  key={pg}
-                  type="button"
-                  onClick={() => setSearchParams({ ...(type ? { type } : {}), page: String(pg) })}
-                  className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
-                    pg === page
-                      ? 'bg-primary text-white shadow-glow'
-                      : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
-                  }`}
-                >
-                  {pg}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <Pagination
+          meta={{ current_page: page, last_page: totalPages }}
+          onPageChange={handlePageChange}
+        />
       </div>
     </>
   );

@@ -47,9 +47,9 @@ public class RedisStreamConfig {
 
         // 1. Tạo ThreadPool cho các luồng xử lý email
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
-        executor.setQueueCapacity(5000);
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(2000);
         executor.setThreadNamePrefix("stream-worker-");
         executor.initialize();
 
