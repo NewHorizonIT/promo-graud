@@ -28,6 +28,15 @@ server:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
+vnpay:
+  tmn-code: ${TMN_CODE}
+  hash-secret: ${HASH_SECRET}
+  url: ${URL:https}
+  return-url: ${VNPAY_RETURN_URL}
+
+app:
+  frontend-url: ${FE_RETURN_URL}
+
 admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}

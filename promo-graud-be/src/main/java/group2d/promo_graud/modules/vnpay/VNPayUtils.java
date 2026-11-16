@@ -12,7 +12,7 @@ public class VNPayUtils {
     public static String hmacSHA512(String key, String data) {
         try {
             if (key == null || data == null) {
-                throw new NullPointerException();
+                throw new IllegalArgumentException("Key and data must not be null");
             }
             Mac hmac512 = Mac.getInstance("HmacSHA512");
             SecretKeySpec secretKey =
@@ -25,7 +25,7 @@ public class VNPayUtils {
             }
             return sb.toString();
         } catch (Exception ex) {
-            return "";
+            throw new IllegalStateException("Failed to generate HMAC-SHA512 signature", ex);
         }
     }
 }

@@ -75,6 +75,24 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
             @Param("newPay") OrderPaymentStatusEnum newPay,
             @Param("txnNo") String txnNo);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query(
+            """
+            UPDATE Order o
+            SET o.status = :newStatus,
+                o.paymentStatus = :newPay
+            WHERE o.id = :id
+              AND o.status = :curStatus
+              AND o.paymentStatus = :curPay
+            """)
+    int transitionStatus(
+            Integer id,
+            OrderStatus curStatus,
+            OrderPaymentStatusEnum curPay,
+            OrderStatus newStatus,
+            OrderPaymentStatusEnum newPay);
+
     // Tìm đơn VNPay kẹt PENDING + UNPAID tạo trước thời điểm chỉ định
     List<Order> findByPaymentMethodAndStatusAndPaymentStatusAndCreatedAtBefore(
             OrderPaymentEnum paymentMethod,
