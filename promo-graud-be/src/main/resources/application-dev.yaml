@@ -50,7 +50,10 @@ vnpay:
   tmn-code: ${TMN_CODE}
   hash-secret: ${HASH_SECRET}
   url: ${URL}
-  return_url: ${VNPAY_RETURN_URL:http://localhost:8080/api/v1/payments/vnpay/return}
+  return-url: ${VNPAY_RETURN_URL}
+
+app:
+  frontend-url: ${FE_RETURN_URL}
 
 admin:
   username: ${ADMIN_USERNAME:admin}

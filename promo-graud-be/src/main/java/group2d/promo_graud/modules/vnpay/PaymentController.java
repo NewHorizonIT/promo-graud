@@ -5,6 +5,7 @@ import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,9 @@ import group2d.promo_graud.shared.dto.ApiResponse;
 @RequiredArgsConstructor
 public class PaymentController {
     private final PaymentService paymentService;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @GetMapping("/create-url")
     public ResponseEntity<ApiResponse> createPaymentUrl(
@@ -59,7 +63,7 @@ public class PaymentController {
 
         // Redirect về Frontend hiển thị UI
         String feRedirectUrl =
-                "http://localhost:5173/payment-result?orderId=" + orderId + "&code=" + responseCode;
+                frontendUrl + "/payment-result?orderId=" + orderId + "&code=" + responseCode;
 
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(feRedirectUrl)).build();
     }

@@ -472,6 +472,7 @@ public class OrderService {
         return mapToOrderResponse(fresh);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public void deleteOrder(Integer id) {
         Order order =
                 orderRepository

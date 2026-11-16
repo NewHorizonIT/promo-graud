@@ -24,9 +24,8 @@ public class ExpiredOrderScheduler {
     private final OrderService orderService;
 
     @Scheduled(cron = "0 */5 * * * *")
-    // ĐÃ BỎ @Transactional Ở ĐÂY ĐỂ TRÁNH LỖI CHẾT CHÙM
     public void handleExpiredVnpayOrders() {
-        LocalDateTime expireThreshold = LocalDateTime.now().minusMinutes(15);
+        LocalDateTime expireThreshold = LocalDateTime.now().minusMinutes(20);
 
         List<Order> expiredOrders =
                 orderRepository.findByPaymentMethodAndStatusAndPaymentStatusAndCreatedAtBefore(
@@ -45,10 +44,20 @@ public class ExpiredOrderScheduler {
 
         for (Order order : expiredOrders) {
             try {
-                // 1. Chuyển trạng thái đơn sang FAILED
-                order.setStatus(OrderStatus.FAILED);
-                order.setPaymentStatus(OrderPaymentStatusEnum.FAILED);
-                orderRepository.save(order);
+                int updated =
+                        orderRepository.transitionStatus(
+                                order.getId(),
+                                OrderStatus.PENDING,
+                                OrderPaymentStatusEnum.UNPAID,
+                                OrderStatus.FAILED,
+                                OrderPaymentStatusEnum.FAILED);
+
+                if (updated == 0) {
+                    log.info(
+                            "Đơn hàng ID {} đã thay đổi trạng thái (có thể vừa thanh toán), bỏ qua hủy.",
+                            order.getId());
+                    continue;
+                }
 
                 // 2. Gọi hàm hoàn voucher (Đã có sẵn Redis Lock & Transaction riêng bên trong hàm)
                 orderService.releaseVoucher(order);

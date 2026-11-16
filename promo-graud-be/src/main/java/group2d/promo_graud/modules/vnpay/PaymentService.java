@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import group2d.promo_graud.modules.orders.OrderErrorCode;
 import group2d.promo_graud.modules.orders.OrderPaymentEnum;
@@ -21,6 +22,7 @@ import group2d.promo_graud.shared.exception.AppException;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
     private final OrderRepository orderRepository;
 
@@ -113,7 +115,6 @@ public class PaymentService {
     public Map<String, String> processIpn(Map<String, String> queryParams) {
         String vnpSecureHash = queryParams.remove("vnp_SecureHash");
         queryParams.remove("vnp_SecureHashType");
-
         List<String> fieldNames = new ArrayList<>(queryParams.keySet());
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
@@ -139,8 +140,6 @@ public class PaymentService {
             return Map.of("RspCode", "97", "Message", "Invalid Checksum");
         }
 
-        // LƯU Ý: Vẫn đang cố tình bỏ qua check Idempotency (order.getStatus() == PENDING)
-        // Để bạn có thể test gọi IPN nhiều lần sinh lỗi như yêu cầu.
         Integer orderId;
         try {
             orderId = Integer.parseInt(queryParams.get("vnp_TxnRef").split("_")[0]);
@@ -171,9 +170,26 @@ public class PaymentService {
                         OrderPaymentStatusEnum.PAID,
                         queryParams.get("vnp_TransactionNo"));
         if (updated == 0) {
-            return Map.of("RspCode", "02", "Message", "Order already confirmed");
-        } else {
-            return Map.of("RspCode", "00", "Message", "Confirm Success");
+            Order latestOrder = orderRepository.findById(orderId).orElse(null);
+            if (latestOrder == null) {
+                return Map.of("RspCode", "01", "Message", "Order not found");
+            }
+
+            // Trường hợp 1: Đơn đã PAID từ trước -> Đúng là VNPay gọi lại IPN (Retry)
+            if (latestOrder.getPaymentStatus() == OrderPaymentStatusEnum.PAID) {
+                return Map.of("RspCode", "02", "Message", "Order already confirmed");
+            }
+
+            // Trường hợp 2: Đơn đã bị Cronjob/Admin đánh FAILED nhưng tiền khách vẫn bị trừ
+            if (latestOrder.getStatus() == OrderStatus.FAILED) {
+                latestOrder.setTransactionNo(queryParams.get("vnp_TransactionNo"));
+                orderRepository.save(latestOrder);
+
+                // Vẫn trả về 00 để báo VNPay đã ghi nhận kết quả, tránh VNPay spam retry IPN
+                return Map.of("RspCode", "00", "Message", "Confirm Success");
+            }
         }
+
+        return Map.of("RspCode", "00", "Message", "Confirm Success");
     }
 }
