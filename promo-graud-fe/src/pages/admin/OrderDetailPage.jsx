@@ -1,22 +1,13 @@
-import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, XCircle, Loader2 } from 'lucide-react';
-import { useAdminOrder, useCancelOrder } from '../../features/admin/orders/hooks/useAdminOrders';
+import { ChevronLeft, XCircle, CheckCircle2 } from 'lucide-react';
+import { useAdminOrder } from '../../features/admin/orders/hooks/useAdminOrders';
 import { formatCurrency } from '../../utils/format';
-
-const STATUS_STYLES = {
-  SUCCESS: 'bg-success-bg text-success-text',
-  PENDING: 'bg-warning-bg text-warning-text',
-  FAILED: 'bg-error-bg text-error-text',
-  CANCELLED: 'bg-surface-muted text-text-muted',
-};
-
-const STATUS_LABELS = {
-  SUCCESS: 'Thành công',
-  PENDING: 'Đang xử lý',
-  FAILED: 'Thất bại',
-  CANCELLED: 'Đã hủy',
-};
+import {
+  PaymentMethodBadge,
+  PaymentStatusBadge,
+  StatusBadge,
+} from '../../features/admin/orders/components/OrderBadges';
+import { useOrderStatusChange } from '../../features/admin/orders/hooks/useOrderStatusChange';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -42,9 +33,7 @@ function InfoRow({ label, value }) {
 export default function OrderDetailPage() {
   const { id } = useParams();
   const { data: order, isLoading } = useAdminOrder(id);
-  const { mutate: cancelOrder, isPending: isCancelling } = useCancelOrder();
-  const [confirming, setConfirming] = useState(false);
-
+  const { options, change, isPending } = useOrderStatusChange(order);
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -78,44 +67,34 @@ export default function OrderDetailPage() {
             <p className="text-sm text-text-muted mt-1">{formatDate(order.createdAt)}</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap justify-end">
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                STATUS_STYLES[order.status] ?? 'bg-surface-muted text-text-muted'
-              }`}
-            >
-              {STATUS_LABELS[order.status] ?? order.status}
-            </span>
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              <StatusBadge status={order.status} size="md" />
+              <PaymentStatusBadge status={order.paymentStatus} size="md" />
+              <PaymentMethodBadge method={order.paymentMethod} size="md" />
+            </div>
 
-            {order.status === 'SUCCESS' && !confirming && (
-              <button
-                type="button"
-                onClick={() => setConfirming(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-error-text/30 text-error-text text-sm font-semibold hover:bg-error-bg transition-colors cursor-pointer"
-              >
-                <XCircle size={15} />
-                Hủy đơn
-              </button>
-            )}
-
-            {order.status === 'SUCCESS' && confirming && (
+            {options.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-text-muted">Xác nhận hủy?</span>
-                <button
-                  type="button"
-                  onClick={() => setConfirming(false)}
-                  className="px-3 py-1.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:bg-surface-muted transition-colors cursor-pointer"
-                >
-                  Thôi
-                </button>
-                <button
-                  type="button"
-                  disabled={isCancelling}
-                  onClick={() => cancelOrder(Number(id), { onSuccess: () => setConfirming(false) })}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-error-text text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
-                >
-                  {isCancelling && <Loader2 size={14} className="animate-spin" />}
-                  Xác nhận
-                </button>
+                {options.includes('SUCCESS') && (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => change('SUCCESS')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    <CheckCircle2 size={15} /> Xác nhận hoàn thành
+                  </button>
+                )}
+                {options.includes('CANCELLED') && (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => change('CANCELLED')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-error-text/30 text-error-text text-sm font-semibold hover:bg-error-bg disabled:opacity-50 transition-colors cursor-pointer"
+                  >
+                    <XCircle size={15} /> Hủy đơn
+                  </button>
+                )}
               </div>
             )}
           </div>

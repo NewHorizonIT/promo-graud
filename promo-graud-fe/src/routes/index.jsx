@@ -30,6 +30,7 @@ import UsersPage from '../pages/admin/UserPage';
 import UserTypesPage from '../pages/admin/UserTypePage';
 import UserFormPage from '../pages/admin/UserFormPage';
 import UserDetailPage from '../pages/admin/UserDetailPage';
+import PaymentResultPage from '../pages/PaymentResultPage';
 
 export default function AppRoutes() {
   return (
@@ -75,6 +76,7 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="payment-result" element={<PaymentResultPage />} />
       </Route>
 
       {/* ── Admin standalone (no layout) ── */}

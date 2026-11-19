@@ -6,8 +6,13 @@ import { useAuthStore } from '../store/authStore';
 import CartItem from '../features/cart/components/CartItem';
 import CartSummary from '../features/cart/components/CartSummary';
 import EmptyCart from '../features/cart/components/EmptyCart';
-import { createOrder } from '../features/checkout/services/checkoutService';
+import {
+  clearAllIdempotencyKeys,
+  createOrder,
+  createVNPayUrl,
+} from '../features/checkout/services/checkoutService';
 import { formatCurrency } from '../utils/format';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -18,6 +23,7 @@ export default function CartPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [orderResult, setOrderResult] = useState(null); // { id, finalPrice }
 
+  const queryClient = useQueryClient();
   // 1. Kiểm tra chưa đăng nhập
   if (!token) {
     return (
@@ -57,11 +63,13 @@ export default function CartPage() {
           <CheckCircle2 size={44} />
         </div>
         <h2 className="text-2xl font-bold text-text-primary mb-2">Đặt hàng thành công!</h2>
-        <p className="text-sm text-text-muted max-w-sm leading-relaxed">
+        <p className="text-sm text-emerald-600 font-medium mb-1">
+          Đơn hàng của bạn đã được ghi nhận và đang chờ shop xác nhận.
+        </p>
+        <p className="text-xs text-text-muted max-w-sm leading-relaxed mb-6">
           Cảm ơn bạn đã mua sắm tại PromoWear. Chúng tôi sẽ chuẩn bị và giao hàng cho bạn trong thời
           gian sớm nhất.
         </p>
-
         {orderResult && (
           <div className="mt-6 w-full bg-surface-muted rounded-2xl px-6 py-4 space-y-2 text-sm">
             <div className="flex justify-between text-text-secondary">
@@ -101,14 +109,42 @@ export default function CartPage() {
     return <EmptyCart />;
   }
   // 4. Xử lý đặt hàng
-  const handleCheckout = async (voucherId) => {
+  const handleCheckout = async ({ voucherId, paymentMethod }) => {
     setCheckoutLoading(true);
     try {
-      const order = await createOrder({ voucherId, items: cart });
-      clearCart();
-      setOrderResult({ id: order.id, finalPrice: order.finalPrice });
-      setCheckoutSuccess(true);
-      showToast('Đặt hàng thành công! Cảm ơn bạn.', 'success', 4000);
+      // 1. Tạo đơn hàng trước (Lúc này nếu là VNP thì trạng thái trong DB đang là PENDING)
+      let order = await createOrder({ voucherId, paymentMethod, items: cart });
+
+      // SILENT AUTO-RETRY
+      // Nếu lôi nhầm đơn cũ đã thanh toán hoặc đã hủy
+      if (order.status !== 'PENDING' || order.paymentStatus === 'PAID') {
+        clearAllIdempotencyKeys();
+        // Gọi lại hàm createOrder lần 2.
+        order = await createOrder({ voucherId, paymentMethod, items: cart });
+      }
+      queryClient.invalidateQueries({ queryKey: ['orders', 'me'] });
+
+      if (paymentMethod === 'VNP') {
+        try {
+          // Lấy link VNPay trước khi xóa giỏ hàng
+          const paymentUrl = await createVNPayUrl(order.id);
+          window.location.href = paymentUrl;
+          return;
+        } catch {
+          showToast(
+            'Đơn đã tạo nhưng chưa mở được VNPay. Vào Lịch sử đơn hàng để thanh toán lại.',
+            'error',
+            5000,
+          );
+          navigate('/orders');
+        }
+      } else {
+        clearCart();
+        clearAllIdempotencyKeys();
+        setOrderResult({ id: order.id, finalPrice: order.finalPrice });
+        setCheckoutSuccess(true);
+        showToast('Đặt hàng thành công! Cảm ơn bạn.', 'success', 4000);
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Đặt hàng thất bại. Vui lòng thử lại.';
       showToast(msg, 'error', 4000);
@@ -149,6 +185,7 @@ export default function CartPage() {
             onClick={() => {
               if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ giỏ hàng?')) {
                 clearCart();
+                clearAllIdempotencyKeys();
                 showToast('Đã xóa toàn bộ giỏ hàng', 'info');
               }
             }}

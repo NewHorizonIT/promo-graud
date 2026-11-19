@@ -11,6 +11,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import lombok.*;
 
+import group2d.promo_graud.modules.orders.OrderPaymentEnum;
+import group2d.promo_graud.modules.orders.OrderPaymentStatusEnum;
 import group2d.promo_graud.modules.orders.OrderStatus;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.voucher.Voucher;
@@ -52,6 +54,20 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 20, nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_method")
+    private OrderPaymentEnum paymentMethod = OrderPaymentEnum.COD;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status")
+    private OrderPaymentStatusEnum paymentStatus = OrderPaymentStatusEnum.UNPAID;
+
+    @Column(name = "transaction_no")
+    private String transactionNo;
+
+    @Column(name = "idempotency_key")
+    private String idempotencyKey;
 
     @Builder.Default
     @Column(name = "is_deleted", nullable = false)
