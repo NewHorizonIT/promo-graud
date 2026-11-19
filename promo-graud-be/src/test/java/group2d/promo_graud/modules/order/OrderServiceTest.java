@@ -37,10 +37,10 @@ import group2d.promo_graud.modules.user.entity.UserVoucher;
 import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
-import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherRedemptionRepository;
-import group2d.promo_graud.modules.voucher.VoucherRepository;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
+import group2d.promo_graud.modules.voucher.repository.VoucherRedemptionRepository;
+import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 
 @ExtendWith({MockitoExtension.class})
 @DisplayName("Order Service Unit Test")

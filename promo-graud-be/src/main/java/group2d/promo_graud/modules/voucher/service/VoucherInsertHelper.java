@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
-import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherRepository;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
+import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 
 @Service
 @RequiredArgsConstructor

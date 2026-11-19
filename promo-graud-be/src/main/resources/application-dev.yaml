@@ -23,6 +23,22 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6378}
       timeout: 2000ms
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_NAME:}
+    password: ${PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
 
 server:
   port: ${BACKEND_PORT:8080}
@@ -60,9 +76,13 @@ admin:
   password: ${ADMIN_PASSWORD:123456}
   email: ${ADMIN_EMAIL:hoanganhhuy200499@gmail.com}
 
+promo-graud:
+  webhook:
+    discord-url: ${WEBHOOK_URL:}
+    secret-key: ${KEY:}
 voucher:
   batch:
     unique-threshold: 50         # UNIQUE >= số này thì chạy bằng batch
-    chunk-size: 20               # số bản ghi mỗi lần commit
+    chunk-size: 50               # số bản ghi mỗi lần commit
 
 

@@ -40,6 +40,8 @@ public enum RuleCampaignErrorCode implements BaseErrorCode {
             "JSON payload configuration is required for TIERED or BUY_X_GET_Y rules",
             HttpStatus.BAD_REQUEST),
     UNSUPPORTED_RULE_TYPE(1511, "Unsupported rule type", HttpStatus.BAD_REQUEST),
+    USER_TYPE_NOT_MATCH_RULE(
+            1513, "Có người dùng không thuộc hạng áp dụng của Rule", HttpStatus.BAD_REQUEST),
     RULE_NOT_ELIGIBLE(
             1512,
             "Order does not meet the conditions required by this rule",
