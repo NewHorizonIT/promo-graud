@@ -73,7 +73,7 @@ export default function DistributeVoucherPage() {
     try {
       const data = await getCards();
       setCards(data ?? []);
-    } catch (error) {
+    } catch {
       setToast({ type: 'error', message: 'Không thể tải danh sách chiến dịch' });
     } finally {
       setIsLoadingCards(false);

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
-import DistributionStatusBadge, {
-  CHANNEL_LABELS,
-} from '../../features/admin/distribution/components/DistributionStatusBadge';
+import DistributionStatusBadge from '../../features/admin/distribution/components/DistributionStatusBadge';
+import { CHANNEL_LABELS } from '../../features/admin/distribution/constants/distributionConstants';
 import { getDistributionLogsById } from '../../features/admin/distribution/services/distributionService';
 
 function formatDateTime(iso) {

@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class DistributeVoucherService {
     private final RuleCampaignRepository ruleCampaignRepository;
 
     // Nếu kho hết mã, sẽ quăng lỗi ngay lập tức về Frontend mà không cần gọi Spring Batch.
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Long distribute(DistributeVoucherRequest request) {
         RuleCampaign ruleCampaign =
                 ruleCampaignRepository
@@ -104,9 +106,15 @@ public class DistributeVoucherService {
 
         // Đủ hàng -> kích hoạt spring batch
         // Gọi sang Batch Service để chạy Job
-        return distributeBatchService.launchDistributionJob(request);
+        try {
+            return distributeBatchService.launchDistributionJob(request);
+        } catch (Exception e) {
+            redisTemplate.opsForValue().increment(redisKey, targetUserCount);
+            throw e;
+        }
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Page<DistributionResponse> getAllDistribution(
             String recipient,
             DistributionLogStatus status,
@@ -120,6 +128,7 @@ public class DistributeVoucherService {
                 .map(this::mapToResponse);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public DistributionResponse getDistributionById(Integer id) {
         DistributionLog distributionLog =
                 distributionLogRepository

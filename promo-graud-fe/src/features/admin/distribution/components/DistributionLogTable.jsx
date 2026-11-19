@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
-import DistributionStatusBadge, { CHANNEL_LABELS } from './DistributionStatusBadge';
+import DistributionStatusBadge from './DistributionStatusBadge';
+import { CHANNEL_LABELS } from '../constants/distributionConstants';
 
 const TH = 'text-left py-3 px-4 text-xs font-semibold text-text-muted uppercase tracking-wider';
 
