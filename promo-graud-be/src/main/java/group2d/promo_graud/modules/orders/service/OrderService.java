@@ -217,7 +217,7 @@ public class OrderService {
                                     .order(order)
                                     .voucher(currentVoucher)
                                     .ipAddress(ipAddress)
-                                    .statusOfOrder(OrderStatus.SUCCESS)
+                                    .statusOfOrder(OrderStatus.PENDING)
                                     .build());
                     orderRepository.save(order);
                     return mapToOrderResponse(order);

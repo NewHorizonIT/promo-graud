@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,6 +38,14 @@ import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 
 @SpringBootTest
+@TestPropertySource(
+        properties = {
+            "vnpay.tmn-code=TEST_TMN_CODE",
+            "vnpay.hash-secret=test-hash-secret-for-integration-test",
+            "vnpay.url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+            "vnpay.return-url=http://localhost:8080/api/v1/payments/vnpay/return",
+            "app.frontend-url=http://localhost:5173"
+        })
 class PaymentConcurrencyIntegrationTest {
 
     @Autowired private PaymentService paymentService;

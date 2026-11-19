@@ -66,7 +66,7 @@ public class Order {
     @Column(name = "transaction_no")
     private String transactionNo;
 
-    @Column(name = "idempotency_key", length = 64)
+    @Column(name = "idempotency_key")
     private String idempotencyKey;
 
     @Builder.Default

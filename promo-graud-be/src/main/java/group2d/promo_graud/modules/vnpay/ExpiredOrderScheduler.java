@@ -39,7 +39,7 @@ public class ExpiredOrderScheduler {
         }
 
         log.info(
-                "Tìm thấy {} đơn hàng VNPay quá hạn 15 phút. Tiến hành hủy và hoàn voucher...",
+                "Tìm thấy {} đơn hàng VNPay quá hạn thanh toán (ngưỡng: 20 phút). Tiến hành hủy và hoàn voucher...",
                 expiredOrders.size());
 
         for (Order order : expiredOrders) {

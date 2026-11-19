@@ -31,7 +31,7 @@ cors:
 vnpay:
   tmn-code: ${TMN_CODE}
   hash-secret: ${HASH_SECRET}
-  url: ${URL:https}
+  url: ${URL}
   return-url: ${VNPAY_RETURN_URL}
 
 app:

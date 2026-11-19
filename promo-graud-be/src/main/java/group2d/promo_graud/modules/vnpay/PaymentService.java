@@ -80,7 +80,6 @@ public class PaymentService {
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-
         try {
             for (String fieldName : fieldNames) {
                 String fieldValue = vnpParams.get(fieldName);
@@ -105,7 +104,6 @@ public class PaymentService {
 
         query.setLength(query.length() - 1);
         hashData.setLength(hashData.length() - 1);
-
         String vnpSecureHash = VNPayUtils.hmacSHA512(hashSecret, hashData.toString());
         query.append("&vnp_SecureHash=").append(vnpSecureHash);
 
@@ -113,14 +111,15 @@ public class PaymentService {
     }
 
     public Map<String, String> processIpn(Map<String, String> queryParams) {
-        String vnpSecureHash = queryParams.remove("vnp_SecureHash");
-        queryParams.remove("vnp_SecureHashType");
-        List<String> fieldNames = new ArrayList<>(queryParams.keySet());
+        Map<String, String> params = new HashMap<>(queryParams);
+        String vnpSecureHash = params.remove("vnp_SecureHash");
+        params.remove("vnp_SecureHashType");
+        List<String> fieldNames = new ArrayList<>(params.keySet());
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
         try {
             for (String fieldName : fieldNames) {
-                String fieldValue = queryParams.get(fieldName);
+                String fieldValue = params.get(fieldName);
                 if (fieldValue != null && fieldValue.length() > 0) {
                     hashData.append(fieldName)
                             .append("=")
@@ -134,15 +133,13 @@ public class PaymentService {
             e.printStackTrace();
         }
         hashData.setLength(hashData.length() - 1);
-
         String signValue = VNPayUtils.hmacSHA512(hashSecret, hashData.toString());
         if (!signValue.equals(vnpSecureHash)) {
             return Map.of("RspCode", "97", "Message", "Invalid Checksum");
         }
-
         Integer orderId;
         try {
-            orderId = Integer.parseInt(queryParams.get("vnp_TxnRef").split("_")[0]);
+            orderId = Integer.parseInt(params.get("vnp_TxnRef").split("_")[0]);
         } catch (Exception e) {
             return Map.of("RspCode", "01", "Message", "Order not found");
         }
@@ -150,13 +147,11 @@ public class PaymentService {
         if (order == null) {
             return Map.of("RspCode", "01", "Message", "Order not found");
         }
-
-        long vnpAmount = Long.parseLong(queryParams.get("vnp_Amount"));
+        long vnpAmount = Long.parseLong(params.get("vnp_Amount"));
         if (vnpAmount != order.getFinalPrice().longValue() * 100) {
             return Map.of("RspCode", "04", "Message", "Invalid amount");
         }
-
-        if (!"00".equals(queryParams.get("vnp_ResponseCode"))) {
+        if (!"00".equals(params.get("vnp_ResponseCode"))) {
             // Khách hủy / thẻ lỗi: giữ PENDING + UNPAID để thanh toán lại
             return Map.of("RspCode", "00", "Message", "Confirm Success");
         }
@@ -168,7 +163,7 @@ public class PaymentService {
                         OrderPaymentStatusEnum.UNPAID,
                         OrderStatus.PENDING,
                         OrderPaymentStatusEnum.PAID,
-                        queryParams.get("vnp_TransactionNo"));
+                        params.get("vnp_TransactionNo"));
         if (updated == 0) {
             Order latestOrder = orderRepository.findById(orderId).orElse(null);
             if (latestOrder == null) {
@@ -182,14 +177,13 @@ public class PaymentService {
 
             // Trường hợp 2: Đơn đã bị Cronjob/Admin đánh FAILED nhưng tiền khách vẫn bị trừ
             if (latestOrder.getStatus() == OrderStatus.FAILED) {
-                latestOrder.setTransactionNo(queryParams.get("vnp_TransactionNo"));
+                latestOrder.setTransactionNo(params.get("vnp_TransactionNo"));
                 orderRepository.save(latestOrder);
 
                 // Vẫn trả về 00 để báo VNPay đã ghi nhận kết quả, tránh VNPay spam retry IPN
                 return Map.of("RspCode", "00", "Message", "Confirm Success");
             }
         }
-
         return Map.of("RspCode", "00", "Message", "Confirm Success");
     }
 }
