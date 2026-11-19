@@ -20,6 +20,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import lombok.RequiredArgsConstructor;
 
+import group2d.promo_graud.modules.fraud.FraudCheckService;
+import group2d.promo_graud.modules.fraud.FraudDetectedException;
 import group2d.promo_graud.modules.orders.OrderErrorCode;
 import group2d.promo_graud.modules.orders.OrderPaymentEnum;
 import group2d.promo_graud.modules.orders.OrderPaymentStatusEnum;
@@ -82,14 +84,16 @@ public class OrderService {
     private final TransactionTemplate transactionTemplate;
     private final UserVoucherRepository userVoucherRepository;
     private final RuleEngine ruleEngine;
+    private final FraudCheckService fraudCheckService;
 
-    public OrderResponse createOrder(OrderRequest request, String ipAddress, String idemKey) {
+    public OrderResponse createOrder(
+            OrderRequest request, String ipAddress, String idemKey, String deviceFingerprint) {
         if (request.getItems() == null || request.getItems().isEmpty()) {
             throw new AppException(OrderErrorCode.ORDER_ITEMS_NOT_FOUND);
         }
         String key = (idemKey == null || idemKey.isBlank()) ? null : idemKey.trim();
         if (key != null && key.length() > 64) {
-            throw new AppException(OrderErrorCode.INVALID_IDEMPOTENCY_KEY); // thêm vào enum
+            throw new AppException(OrderErrorCode.INVALID_IDEMPOTENCY_KEY);
         }
         User user = getCurrentUser();
 
@@ -102,7 +106,6 @@ public class OrderService {
             }
         }
         try {
-
             if (request.getVoucherId() == null) {
                 return createOrderWithOutVoucher(request, key);
             }
@@ -113,10 +116,31 @@ public class OrderService {
             if (!isLocked) {
                 throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
             }
+            String deviceLockKey =
+                    deviceFingerprint != null
+                            ? "lock:redeem:device:"
+                                    + request.getVoucherId()
+                                    + ":"
+                                    + deviceFingerprint
+                            : null;
+            String deviceLockValue = deviceLockKey != null ? UUID.randomUUID().toString() : null;
+            boolean isDeviceLocked = false;
             try {
-                return createOrderVoucher(request, ipAddress, key);
+                if (deviceLockKey != null) {
+                    isDeviceLocked =
+                            distributedLockService.tryLock(deviceLockKey, deviceLockValue, 10);
+                    if (!isDeviceLocked) {
+                        throw new AppException(VoucherErrorCode.VOUCHER_BUSY);
+                    }
+                }
+                return createOrderVoucher(request, ipAddress, key, deviceFingerprint);
+            } catch (FraudDetectedException e) {
+                throw fraudCheckService.onBlocked(user.getId(), ipAddress, deviceFingerprint, e);
             } finally {
                 distributedLockService.unLock(lockKey, lockValue);
+                if (isDeviceLocked) {
+                    distributedLockService.unLock(deviceLockKey, deviceLockValue);
+                }
             }
         } catch (DataIntegrityViolationException e) {
             // Lớp 3: 2 request cùng key lọt qua lớp 1 cùng lúc, unique index chỉ cho 1 request
@@ -125,7 +149,7 @@ public class OrderService {
                 return orderRepository
                         .findByUserIdAndIdempotencyKey(user.getId(), key)
                         .map(this::mapToOrderResponse)
-                        .orElseThrow(() -> e); // không có đơn cùng key thì là lỗi khác, ném lại
+                        .orElseThrow(() -> e);
             }
             throw e;
         }
@@ -158,7 +182,8 @@ public class OrderService {
                 });
     }
 
-    private OrderResponse createOrderVoucher(OrderRequest request, String ipAddress, String key) {
+    private OrderResponse createOrderVoucher(
+            OrderRequest request, String ipAddress, String key, String deviceFingerprint) {
         return transactionTemplate.execute(
                 status -> {
                     User user = getCurrentUser();
@@ -210,6 +235,8 @@ public class OrderService {
                     order.setPaymentMethod(request.getPaymentMethod());
                     order.setStatus(OrderStatus.PENDING);
                     order.setPaymentStatus(OrderPaymentStatusEnum.UNPAID);
+                    fraudCheckService.check(
+                            user.getId(), currentVoucher, ipAddress, deviceFingerprint);
                     consumeVoucher(currentVoucher, userVoucher);
                     voucherRedemptionRepository.save(
                             VoucherRedemption.builder()
@@ -217,6 +244,7 @@ public class OrderService {
                                     .order(order)
                                     .voucher(currentVoucher)
                                     .ipAddress(ipAddress)
+                                    .deviceFingerprint(deviceFingerprint)
                                     .statusOfOrder(OrderStatus.PENDING)
                                     .build());
                     orderRepository.save(order);

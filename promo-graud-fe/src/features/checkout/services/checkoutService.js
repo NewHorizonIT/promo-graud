@@ -1,4 +1,5 @@
 import axiosInstance from '../../../lib/axiosInstance';
+import { getVisitorId } from '../../../utils/deviceFingerprint';
 
 function idemStorageKey(voucherId, method, items) {
   const parts = items.map((i) => `${i.id}x${i.quantity}`).sort();
@@ -35,6 +36,11 @@ export async function createOrder({ voucherId, paymentMethod, items }) {
   const storageKey = idemStorageKey(voucherId, method, items);
   const key = getIdemKey(storageKey);
 
+  const headers = { 'Idempotency-Key': key };
+  if (voucherId) {
+    headers['X-Visitor-Id'] = await getVisitorId();
+  }
+
   const { data } = await axiosInstance.post(
     '/orders',
     {
@@ -46,19 +52,17 @@ export async function createOrder({ voucherId, paymentMethod, items }) {
         price: item.price,
       })),
     },
-    { headers: { 'Idempotency-Key': key } },
+    { headers },
   );
   return data.result;
 }
 
-// Hàm mới để lấy link VNPay
 export async function createVNPayUrl(orderId) {
   const { data } = await axiosInstance.get(`/payments/vnpay/create-url?orderId=${orderId}`);
-  return data.result.url; // API backend trả về { code: 200, message: "...", result: { url: "..." } }
+  return data.result.url;
 }
 
 export function clearAllIdempotencyKeys() {
-  // Lặp qua toàn bộ sessionStorage và xóa các key bắt đầu bằng 'idem:'
   Object.keys(sessionStorage).forEach((key) => {
     if (key.startsWith('idem:')) {
       sessionStorage.removeItem(key);
