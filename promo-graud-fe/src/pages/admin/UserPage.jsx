@@ -5,7 +5,7 @@ import { useDeleteUser, useUsers } from '../../features/admin/users/hooks/useUse
 import UserTable from '../../features/admin/users/components/UserTable';
 import Toast from '../../components/Toast';
 import { useTypeUser } from '../../features/admin/users/hooks/useTypeOfUser';
-import Pagination from '../../components/pagination';
+import Pagination from '../../components/Pagination';
 
 const PAGE_SIZE = 10;
 

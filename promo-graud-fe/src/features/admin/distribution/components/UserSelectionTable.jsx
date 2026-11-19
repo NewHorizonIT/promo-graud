@@ -1,5 +1,5 @@
 import { Users } from 'lucide-react';
-import Pagination from '../../../../components/pagination';
+import Pagination from '../../../../components/Pagination';
 
 /**
  * Mô hình chọn:

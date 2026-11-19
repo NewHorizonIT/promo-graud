@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import DistributionLogTable from '../../features/admin/distribution/components/DistributionLogTable';
 import { getDistributionLogs } from '../../features/admin/distribution/services/distributionService';
-import Pagination from '../../components/pagination';
+import Pagination from '../../components/Pagination';
 
 const PAGE_SIZE = 20;
 
