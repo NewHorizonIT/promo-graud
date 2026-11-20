@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import group2d.promo_graud.modules.fraud.FraudCheckService;
 import group2d.promo_graud.modules.orders.dto.request.OrderItemRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
@@ -64,6 +65,8 @@ public class OrderServiceTest {
     @Mock private UserRepository userRepository;
 
     @Mock private VoucherRedemptionRepository voucherRedemptionRepository;
+
+    @Mock private FraudCheckService fraudCheckService;
 
     @InjectMocks private OrderService orderService;
 
@@ -111,7 +114,7 @@ public class OrderServiceTest {
                             return callback.doInTransaction(null);
                         });
         request.setVoucherId(null);
-        OrderResponse response = orderService.createOrder(request, "127.0.0.1", null);
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1", null, null);
 
         assertNotNull(response);
         assertEquals(0, BigDecimal.valueOf(800_000).compareTo(response.getTotalPrice()));
@@ -164,7 +167,7 @@ public class OrderServiceTest {
                         });
         when(distributedLockService.tryLock(eq("lock:voucher:1"), anyString(), eq(10L)))
                 .thenReturn(true);
-        OrderResponse response = orderService.createOrder(request, "127.0.0.1", idemKey);
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1", idemKey, null);
 
         assertNotNull(response);
         assertEquals(response.getVoucher().getQuantityRemain(), 9);
@@ -193,7 +196,7 @@ public class OrderServiceTest {
         when(orderRepository.findByUserIdAndIdempotencyKey(user.getId(), idemKey))
                 .thenReturn(Optional.of(existingOrder));
 
-        OrderResponse response = orderService.createOrder(request, "127.0.0.1", idemKey);
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1", idemKey, null);
 
         assertNotNull(response);
         assertEquals(100, response.getId());

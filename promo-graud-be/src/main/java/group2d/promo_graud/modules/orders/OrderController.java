@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
+import group2d.promo_graud.modules.fraud.DeviceFingerprintService;
 import group2d.promo_graud.modules.orders.dto.request.OrderPreviewRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderStatusRequest;
@@ -30,14 +31,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
+    private final DeviceFingerprintService deviceFingerprintService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
             @RequestBody @Valid OrderRequest request,
             @RequestHeader(value = "Idempotency-Key", required = false) String idemKey,
+            @RequestHeader(value = "X-Visitor-Id", required = false) String visitorId,
             HttpServletRequest httpRequest) {
         String ipAddress = extractIp(httpRequest);
-        OrderResponse orderResponse = orderService.createOrder(request, ipAddress, idemKey);
+        String deviceFingerprint =
+                request.getVoucherId() != null
+                        ? deviceFingerprintService.fingerprint(httpRequest, visitorId)
+                        : null;
+        OrderResponse orderResponse =
+                orderService.createOrder(request, ipAddress, idemKey, deviceFingerprint);
         return ResponseEntity.ok(
                 ApiResponse.<OrderResponse>builder()
                         .code(201)

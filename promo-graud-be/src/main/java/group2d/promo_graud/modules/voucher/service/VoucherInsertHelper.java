@@ -15,6 +15,7 @@ public class VoucherInsertHelper {
 
     private final VoucherRepository voucherRepository;
 
+    // insert thẳng va db không đợi transaction ngoài commit
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Voucher insertSingle(Voucher voucher) {
         return voucherRepository.saveAndFlush(voucher);
