@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.orders.OrderStatus;
-import group2d.promo_graud.modules.voucher.VoucherRedemptionRepository;
 import group2d.promo_graud.modules.voucher.entity.Voucher;
+import group2d.promo_graud.modules.voucher.repository.VoucherRedemptionRepository;
 import group2d.promo_graud.shared.exception.AppException;
 
 @Component
