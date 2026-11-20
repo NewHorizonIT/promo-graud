@@ -24,9 +24,19 @@ spring:
 
 server:
   port: ${BACKEND_PORT:8080}
+  forward-headers-strategy: framework
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
+
+vnpay:
+  tmn-code: ${TMN_CODE}
+  hash-secret: ${HASH_SECRET}
+  url: ${URL}
+  return-url: ${VNPAY_RETURN_URL}
+
+app:
+  frontend-url: ${FE_RETURN_URL}
 
 admin:
   username: ${ADMIN_USERNAME}

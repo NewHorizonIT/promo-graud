@@ -1,0 +1,189 @@
+package group2d.promo_graud.modules.vnpay;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import group2d.promo_graud.modules.orders.OrderErrorCode;
+import group2d.promo_graud.modules.orders.OrderPaymentEnum;
+import group2d.promo_graud.modules.orders.OrderPaymentStatusEnum;
+import group2d.promo_graud.modules.orders.OrderStatus;
+import group2d.promo_graud.modules.orders.entity.Order;
+import group2d.promo_graud.modules.orders.repository.OrderRepository;
+import group2d.promo_graud.shared.exception.AppException;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class PaymentService {
+    private final OrderRepository orderRepository;
+
+    @Value("${vnpay.tmn-code}")
+    private String tmnCode;
+
+    @Value("${vnpay.hash-secret}")
+    private String hashSecret;
+
+    @Value("${vnpay.url}")
+    private String vnpayUrl;
+
+    @Value("${vnpay.return-url}")
+    private String returnUrl;
+
+    public String createPaymentUrl(Integer orderId, String ipAddress) {
+        Order order =
+                orderRepository
+                        .findById(orderId)
+                        .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_EXISTS));
+
+        String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!order.getUser().getUsername().equals(currentUser)) {
+            throw new AppException(OrderErrorCode.ORDER_NOT_EXISTS);
+        }
+        if (order.getPaymentMethod() != OrderPaymentEnum.VNP
+                || order.getStatus() != OrderStatus.PENDING
+                || order.getPaymentStatus() != OrderPaymentStatusEnum.UNPAID) {
+            throw new AppException(OrderErrorCode.ORDER_STATUS);
+        }
+
+        long amount = order.getFinalPrice().longValue() * 100;
+
+        Map<String, String> vnpParams = new HashMap<>();
+        vnpParams.put("vnp_Version", "2.1.0");
+        vnpParams.put("vnp_Command", "pay");
+        vnpParams.put("vnp_TmnCode", tmnCode);
+        vnpParams.put("vnp_Amount", String.valueOf(amount));
+        vnpParams.put("vnp_CurrCode", "VND");
+        vnpParams.put("vnp_TxnRef", String.valueOf(orderId));
+        vnpParams.put("vnp_OrderInfo", "Thanh toan don hang " + orderId);
+        vnpParams.put("vnp_OrderType", "other");
+        vnpParams.put("vnp_Locale", "vn");
+        vnpParams.put("vnp_ReturnUrl", returnUrl);
+        vnpParams.put("vnp_IpAddr", ipAddress != null ? ipAddress : "127.0.0.1");
+
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        vnpParams.put("vnp_CreateDate", formatter.format(cld.getTime()));
+
+        cld.add(Calendar.MINUTE, 15);
+        vnpParams.put("vnp_ExpireDate", formatter.format(cld.getTime()));
+
+        List<String> fieldNames = new ArrayList<>(vnpParams.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        StringBuilder query = new StringBuilder();
+        try {
+            for (String fieldName : fieldNames) {
+                String fieldValue = vnpParams.get(fieldName);
+                if (fieldValue != null && fieldValue.length() > 0) {
+                    hashData.append(fieldName)
+                            .append("=")
+                            .append(
+                                    URLEncoder.encode(
+                                            fieldValue, StandardCharsets.US_ASCII.toString()));
+                    query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()))
+                            .append("=")
+                            .append(
+                                    URLEncoder.encode(
+                                            fieldValue, StandardCharsets.US_ASCII.toString()));
+                    query.append("&");
+                    hashData.append("&");
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error encoding VNPay params", e);
+        }
+
+        query.setLength(query.length() - 1);
+        hashData.setLength(hashData.length() - 1);
+        String vnpSecureHash = VNPayUtils.hmacSHA512(hashSecret, hashData.toString());
+        query.append("&vnp_SecureHash=").append(vnpSecureHash);
+
+        return vnpayUrl + "?" + query.toString();
+    }
+
+    public Map<String, String> processIpn(Map<String, String> queryParams) {
+        Map<String, String> params = new HashMap<>(queryParams);
+        String vnpSecureHash = params.remove("vnp_SecureHash");
+        params.remove("vnp_SecureHashType");
+        List<String> fieldNames = new ArrayList<>(params.keySet());
+        Collections.sort(fieldNames);
+        StringBuilder hashData = new StringBuilder();
+        try {
+            for (String fieldName : fieldNames) {
+                String fieldValue = params.get(fieldName);
+                if (fieldValue != null && fieldValue.length() > 0) {
+                    hashData.append(fieldName)
+                            .append("=")
+                            .append(
+                                    URLEncoder.encode(
+                                            fieldValue, StandardCharsets.US_ASCII.toString()))
+                            .append("&");
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        hashData.setLength(hashData.length() - 1);
+        String signValue = VNPayUtils.hmacSHA512(hashSecret, hashData.toString());
+        if (!signValue.equals(vnpSecureHash)) {
+            return Map.of("RspCode", "97", "Message", "Invalid Checksum");
+        }
+        Integer orderId;
+        try {
+            orderId = Integer.parseInt(params.get("vnp_TxnRef").split("_")[0]);
+        } catch (Exception e) {
+            return Map.of("RspCode", "01", "Message", "Order not found");
+        }
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) {
+            return Map.of("RspCode", "01", "Message", "Order not found");
+        }
+        long vnpAmount = Long.parseLong(params.get("vnp_Amount"));
+        if (vnpAmount != order.getFinalPrice().longValue() * 100) {
+            return Map.of("RspCode", "04", "Message", "Invalid amount");
+        }
+        if (!"00".equals(params.get("vnp_ResponseCode"))) {
+            // Khách hủy / thẻ lỗi: giữ PENDING + UNPAID để thanh toán lại
+            return Map.of("RspCode", "00", "Message", "Confirm Success");
+        }
+
+        int updated =
+                orderRepository.transition(
+                        orderId,
+                        OrderStatus.PENDING,
+                        OrderPaymentStatusEnum.UNPAID,
+                        OrderStatus.PENDING,
+                        OrderPaymentStatusEnum.PAID,
+                        params.get("vnp_TransactionNo"));
+        if (updated == 0) {
+            Order latestOrder = orderRepository.findById(orderId).orElse(null);
+            if (latestOrder == null) {
+                return Map.of("RspCode", "01", "Message", "Order not found");
+            }
+
+            // Trường hợp 1: Đơn đã PAID từ trước -> Đúng là VNPay gọi lại IPN (Retry)
+            if (latestOrder.getPaymentStatus() == OrderPaymentStatusEnum.PAID) {
+                return Map.of("RspCode", "02", "Message", "Order already confirmed");
+            }
+
+            // Trường hợp 2: Đơn đã bị Cronjob/Admin đánh FAILED nhưng tiền khách vẫn bị trừ
+            if (latestOrder.getStatus() == OrderStatus.FAILED) {
+                latestOrder.setTransactionNo(params.get("vnp_TransactionNo"));
+                orderRepository.save(latestOrder);
+
+                // Vẫn trả về 00 để báo VNPay đã ghi nhận kết quả, tránh VNPay spam retry IPN
+                return Map.of("RspCode", "00", "Message", "Confirm Success");
+            }
+        }
+        return Map.of("RspCode", "00", "Message", "Confirm Success");
+    }
+}

@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, Eye } from 'lucide-react';
-import { useAdminOrders, useAdminOrder } from '../../features/admin/orders/hooks/useAdminOrders';
+import { Search, Eye, ChevronDown, X, Trash2 } from 'lucide-react';
+import {
+  useAdminOrders,
+  useAdminOrder,
+  useDeleteOrder,
+} from '../../features/admin/orders/hooks/useAdminOrders';
 import { formatCurrency } from '../../utils/format';
+import { StatusBadge } from '../../features/admin/orders/components/OrderBadges';
+import { useOrderStatusChange } from '../../features/admin/orders/hooks/useOrderStatusChange';
+import ConfirmModal from '../../components/ConfirmModal';
+import { useCart } from '../../store/CartContext';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Tất cả' },
@@ -12,19 +20,50 @@ const STATUS_FILTERS = [
   { value: 'CANCELLED', label: 'Đã hủy' },
 ];
 
-const STATUS_STYLES = {
-  SUCCESS: 'bg-success-bg text-success-text',
-  PENDING: 'bg-warning-bg text-warning-text',
-  FAILED: 'bg-error-bg text-error-text',
-  CANCELLED: 'bg-surface-muted text-text-muted',
-};
+function StatusCell({ order }) {
+  const [editing, setEditing] = useState(false);
+  const { options, change, isPending } = useOrderStatusChange(order);
 
-const STATUS_LABELS = {
-  SUCCESS: 'Thành công',
-  PENDING: 'Đang xử lý',
-  FAILED: 'Thất bại',
-  CANCELLED: 'Đã hủy',
-};
+  if (options.length === 0) return <StatusBadge status={order.status} />;
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        title="Bấm để đổi trạng thái"
+        className="inline-flex items-center gap-1 cursor-pointer group"
+      >
+        <StatusBadge status={order.status} />
+        <ChevronDown size={13} className="text-text-muted group-hover:text-text-primary" />
+      </button>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      {options.map((s) => (
+        <button
+          key={s}
+          type="button"
+          disabled={isPending}
+          onClick={() => change(s, () => setEditing(false))}
+          className="cursor-pointer disabled:opacity-50"
+        >
+          <StatusBadge status={s} />
+        </button>
+      ))}
+      <button
+        type="button"
+        onClick={() => setEditing(false)}
+        aria-label="Đóng"
+        className="p-0.5 text-text-muted hover:text-text-primary cursor-pointer"
+      >
+        <X size={13} />
+      </button>
+    </div>
+  );
+}
 
 const PAGE_SIZE = 10;
 
@@ -42,25 +81,39 @@ function formatDate(iso) {
 export default function OrdersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const status = searchParams.get('status') ?? '';
-  const page = Math.max(0, Number(searchParams.get('page') ?? 0));
+  // SỬA: Đặt giá trị mặc định là 1 (trùng với 1-based index ở Backend)
+  const page = Math.max(1, Number(searchParams.get('page') ?? 1));
 
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const { showToast } = useCart();
+  // --- STATE QUẢN LÝ CONFIRM MODAL ---
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: '',
+    onConfirm: null,
+    isPending: false, // Dùng để khóa nút khi đang xử lý API
+  });
 
+  const deleteMutation = useDeleteOrder();
   useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput.trim()), 400);
     return () => clearTimeout(t);
   }, [searchInput]);
 
-  // Reset to page 0 when search changes
+  // SỬA: Xóa param page khi tìm kiếm từ khóa mới nhưng giữ nguyên trạng thái searchParams khác
   useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        prev.delete('page');
-        return prev;
-      },
-      { replace: true },
-    );
+    if (search !== '') {
+      setSearchParams(
+        (prev) => {
+          prev.delete('page');
+          return prev;
+        },
+        { replace: true },
+      );
+    }
   }, [search, setSearchParams]);
 
   const isIdSearch = search !== '' && /^\d+$/.test(search);
@@ -81,12 +134,72 @@ export default function OrdersPage() {
   const totalItems = isIdSearch ? (orderById ? 1 : 0) : (listData?.totalItems ?? 0);
   const totalPages = isIdSearch ? 1 : (listData?.totalPages ?? 1);
 
+  // SỬA: Giữ lại searchParams hiện tại khi chuyển status filter
   const setStatus = (val) => {
-    setSearchParams(val ? { status: val } : {});
+    setSearchParams((prev) => {
+      if (val) prev.set('status', val);
+      else prev.delete('status');
+      prev.delete('page');
+      return prev;
+    });
   };
 
+  // SỬA: Giữ lại searchParams hiện tại khi chuyển trang
   const setPage = (pg) => {
-    setSearchParams({ ...(status ? { status } : {}), page: String(pg) });
+    setSearchParams((prev) => {
+      prev.set('page', String(pg));
+      return prev;
+    });
+  };
+
+  // --- HÀM ĐÓNG MODAL ---
+  const closeModal = () => setModalState((prev) => ({ ...prev, isOpen: false }));
+
+  // --- HÀM MỞ MODAL XÓA ĐƠN HÀNG ---
+  const handleRequestDelete = (order) => {
+    setModalState({
+      isOpen: true,
+      title: 'Xóa đơn hàng',
+      message: `Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng #${order.id}? Hành động này không thể hoàn tác.`,
+      confirmLabel: 'Xóa',
+      isPending: false,
+      onConfirm: async () => {
+        setModalState((prev) => ({ ...prev, isPending: true }));
+        try {
+          // Gọi API xóa
+          await deleteMutation.mutateAsync(order.id);
+          // NẾU THÀNH CÔNG: Hiện Toast thành công
+          showToast('Đã xóa đơn hàng thành công!', 'success');
+        } catch (error) {
+          // NẾU BỊ BACKEND CHẶN LẠI: Lấy message từ AppException của Backend hiện lên Toast
+          const errorMsg = error.response?.data?.message || 'Không thể xóa đơn hàng này';
+          showToast(errorMsg, 'error');
+        } finally {
+          // Dù thành công hay thất bại cũng đóng Modal
+          closeModal();
+        }
+      },
+    });
+  };
+
+  // --- HÀM MỞ MODAL THAY ĐỔI TRẠNG THÁI ---
+  const handleRequestStatusChange = (order, newStatus, executeChange) => {
+    setModalState({
+      isOpen: true,
+      title: 'Xác nhận đổi trạng thái',
+      message: `Bạn có chắc chắn muốn chuyển trạng thái đơn hàng #${order.id} thành "${newStatus}"?`,
+      confirmLabel: 'Xác nhận',
+      isPending: false,
+      onConfirm: async () => {
+        setModalState((prev) => ({ ...prev, isPending: true }));
+        try {
+          // Gọi hàm `change()` được truyền từ StatusCell
+          await executeChange();
+        } finally {
+          closeModal();
+        }
+      },
+    });
   };
 
   return (
@@ -171,13 +284,7 @@ export default function OrdersPage() {
                       <td className="py-3 px-4 font-medium text-text-primary">#{o.id}</td>
                       <td className="py-3 px-4 text-text-secondary">{o.user?.username ?? '—'}</td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            STATUS_STYLES[o.status] ?? 'bg-surface-muted text-text-muted'
-                          }`}
-                        >
-                          {STATUS_LABELS[o.status] ?? o.status}
-                        </span>
+                        <StatusCell order={o} onStatusChangeRequest={handleRequestStatusChange} />
                       </td>
                       <td className="py-3 px-4 text-text-secondary">
                         {formatCurrency(o.totalPrice)}
@@ -192,13 +299,24 @@ export default function OrdersPage() {
                         {formatDate(o.createdAt)}
                       </td>
                       <td className="py-3 px-4">
-                        <Link
-                          to={`/admin/orders/${o.id}`}
-                          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-muted transition-colors inline-flex"
-                          title="Xem chi tiết"
-                        >
-                          <Eye size={15} />
-                        </Link>
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            to={`/admin/orders/${o.id}`}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-muted transition-colors inline-flex"
+                            title="Xem chi tiết"
+                          >
+                            <Eye size={15} />
+                          </Link>
+                          {/* --- NÚT XÓA --- */}
+                          <button
+                            type="button"
+                            onClick={() => handleRequestDelete(o)}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-error-text hover:bg-error-bg transition-colors inline-flex cursor-pointer"
+                            title="Xóa đơn hàng"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -209,23 +327,37 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
+      {/* SỬA: Phân trang tính từ 1 thay vì 0 */}
+      {totalPages > 0 && (
         <div className="flex justify-center gap-2 pt-2">
-          {[...Array(totalPages)].map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setPage(i)}
-              className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
-                i === page
-                  ? 'bg-primary text-white shadow-glow'
-                  : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
+          {[...Array(totalPages)].map((_, i) => {
+            const pageNumber = i + 1;
+            return (
+              <button
+                key={pageNumber}
+                type="button"
+                onClick={() => setPage(pageNumber)}
+                className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
+                  pageNumber === page
+                    ? 'bg-primary text-white shadow-glow'
+                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
+                }`}
+              >
+                {pageNumber}
+              </button>
+            );
+          })}
         </div>
+      )}
+      {modalState.isOpen && (
+        <ConfirmModal
+          title={modalState.title}
+          message={modalState.message}
+          confirmLabel={modalState.confirmLabel}
+          loading={modalState.isPending}
+          onConfirm={modalState.onConfirm}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

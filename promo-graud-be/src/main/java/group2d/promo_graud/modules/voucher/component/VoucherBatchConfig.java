@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 @Configuration
 @RequiredArgsConstructor
 public class VoucherBatchConfig {
-
+    // Cấu hình threadpool
     @Bean("batchTaskExecutor")
     public ThreadPoolTaskExecutor batchTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -28,6 +28,7 @@ public class VoucherBatchConfig {
         return executor;
     }
 
+    // Cấu hình bất đồng bộ
     @Bean("asyncJobOperator")
     public JobOperator asyncJobOperator(
             JobRepository jobRepository,

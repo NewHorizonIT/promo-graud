@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import group2d.promo_graud.modules.fraud.FraudCheckService;
 import group2d.promo_graud.modules.orders.dto.request.OrderItemRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
@@ -37,10 +38,10 @@ import group2d.promo_graud.modules.user.entity.UserVoucher;
 import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
-import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherRedemptionRepository;
-import group2d.promo_graud.modules.voucher.VoucherRepository;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
+import group2d.promo_graud.modules.voucher.repository.VoucherRedemptionRepository;
+import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 
 @ExtendWith({MockitoExtension.class})
 @DisplayName("Order Service Unit Test")
@@ -64,6 +65,8 @@ public class OrderServiceTest {
     @Mock private UserRepository userRepository;
 
     @Mock private VoucherRedemptionRepository voucherRedemptionRepository;
+
+    @Mock private FraudCheckService fraudCheckService;
 
     @InjectMocks private OrderService orderService;
 
@@ -98,7 +101,7 @@ public class OrderServiceTest {
         Authentication authentication = new UsernamePasswordAuthenticationToken("huy123", "123456");
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        Order order = Order.builder().id(1).user(user).build();
+        Order order = Order.builder().id(1).user(user).items(List.of()).build();
 
         when(userRepository.findByUsername("huy123")).thenReturn(Optional.of(user));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
@@ -111,7 +114,7 @@ public class OrderServiceTest {
                             return callback.doInTransaction(null);
                         });
         request.setVoucherId(null);
-        OrderResponse response = orderService.createOrder(request, "127.0.0.1");
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1", null, null);
 
         assertNotNull(response);
         assertEquals(0, BigDecimal.valueOf(800_000).compareTo(response.getTotalPrice()));
@@ -124,7 +127,7 @@ public class OrderServiceTest {
     public void createOrder_hasVoucher_typeOfRulePercentage_success() {
         Authentication authentication = new UsernamePasswordAuthenticationToken("huy123", "123456");
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
+        String idemKey = "test-idem-key-123";
         RuleCampaign ruleCampaign = RuleCampaign.builder().id(1).build();
 
         Voucher voucher =
@@ -143,9 +146,12 @@ public class OrderServiceTest {
                         .status(UserVoucherStatus.UNUSED)
                         .build();
 
-        Order order = Order.builder().id(1).voucher(voucher).user(user).build();
+        Order order = Order.builder().id(1).voucher(voucher).user(user).items(List.of()).build();
 
         when(userRepository.findByUsername("huy123")).thenReturn(Optional.of(user));
+        // 3. THÊM STUBBING CHECK KEY CHƯA TỒN TẠI
+        when(orderRepository.findByUserIdAndIdempotencyKey(user.getId(), idemKey))
+                .thenReturn(Optional.empty());
         when(voucherRepository.findById(1)).thenReturn(Optional.of(voucher));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
         when(ruleEngine.applyRules(order, ruleCampaign, user))
@@ -161,11 +167,43 @@ public class OrderServiceTest {
                         });
         when(distributedLockService.tryLock(eq("lock:voucher:1"), anyString(), eq(10L)))
                 .thenReturn(true);
-        OrderResponse response = orderService.createOrder(request, "127.0.0.1");
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1", idemKey, null);
 
         assertNotNull(response);
         assertEquals(response.getVoucher().getQuantityRemain(), 9);
         assertEquals(0, response.getTotalPrice().compareTo(BigDecimal.valueOf(800000)));
         assertEquals(0, response.getFinalPrice().compareTo(BigDecimal.valueOf(560000)));
+    }
+
+    @Test
+    @DisplayName("TC3: Trả về đơn cũ nếu Idempotency Key bị trùng (Replay)")
+    void createOrder_duplicateIdempotencyKey_returnsExistingOrder() {
+        Authentication authentication = new UsernamePasswordAuthenticationToken("huy123", "123456");
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        String idemKey = "duplicate-key-999";
+        Order existingOrder =
+                Order.builder()
+                        .id(100)
+                        .user(user)
+                        .totalPrice(BigDecimal.valueOf(800000))
+                        .finalPrice(BigDecimal.valueOf(800000))
+                        .idempotencyKey(idemKey)
+                        .items(List.of())
+                        .build();
+
+        when(userRepository.findByUsername("huy123")).thenReturn(Optional.of(user));
+        when(orderRepository.findByUserIdAndIdempotencyKey(user.getId(), idemKey))
+                .thenReturn(Optional.of(existingOrder));
+
+        OrderResponse response = orderService.createOrder(request, "127.0.0.1", idemKey, null);
+
+        assertNotNull(response);
+        assertEquals(100, response.getId());
+        assertEquals(idemKey, response.getIdempotencyKey());
+
+        // Đảm bảo không gọi save đơn mới hay xin Redis lock khi bị trùng key
+        verify(orderRepository, never()).save(any());
+        verify(distributedLockService, never()).tryLock(anyString(), anyString(), anyLong());
     }
 }

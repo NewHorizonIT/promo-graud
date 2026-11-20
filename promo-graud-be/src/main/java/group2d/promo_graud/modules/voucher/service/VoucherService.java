@@ -28,17 +28,18 @@ import group2d.promo_graud.modules.user.entity.UserVoucher;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
-import group2d.promo_graud.modules.voucher.Voucher;
-import group2d.promo_graud.modules.voucher.VoucherRepository;
 import group2d.promo_graud.modules.voucher.dto.requests.UpdatedVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.requests.VoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
+import group2d.promo_graud.modules.voucher.dto.responses.VoucherCardResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.DistributionChannel;
 import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
+import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
 import group2d.promo_graud.shared.exception.AppException;
 
@@ -353,5 +354,10 @@ public class VoucherService {
                         .orElseThrow(() -> new AppException(VoucherErrorCode.NOT_EXIST));
         voucher.setStatus(VoucherStatus.DISABLED);
         voucherRepository.save(voucher);
+    }
+
+    // lấy card Voucher
+    public List<VoucherCardResponse> getSummaryCards() {
+        return voucherRepository.getUniqueVoucherCard();
     }
 }

@@ -14,8 +14,10 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
+import group2d.promo_graud.modules.fraud.DeviceFingerprintService;
 import group2d.promo_graud.modules.orders.dto.request.OrderPreviewRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
+import group2d.promo_graud.modules.orders.dto.request.OrderStatusRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderPreviewResponse;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
 import group2d.promo_graud.modules.orders.service.OrderService;
@@ -29,12 +31,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
+    private final DeviceFingerprintService deviceFingerprintService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-            @RequestBody @Valid OrderRequest request, HttpServletRequest httpRequest) {
+            @RequestBody @Valid OrderRequest request,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idemKey,
+            @RequestHeader(value = "X-Visitor-Id", required = false) String visitorId,
+            HttpServletRequest httpRequest) {
         String ipAddress = extractIp(httpRequest);
-        OrderResponse orderResponse = orderService.createOrder(request, ipAddress);
+        String deviceFingerprint =
+                request.getVoucherId() != null
+                        ? deviceFingerprintService.fingerprint(httpRequest, visitorId)
+                        : null;
+        OrderResponse orderResponse =
+                orderService.createOrder(request, ipAddress, idemKey, deviceFingerprint);
         return ResponseEntity.ok(
                 ApiResponse.<OrderResponse>builder()
                         .code(201)
@@ -56,7 +67,7 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PaginatedResponse<OrderResponse>>> findAll(
-            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) String username) {
@@ -149,5 +160,26 @@ public class OrderController {
                         .message("Preview đơn hàng thành công")
                         .result(preview)
                         .build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateStatusOrder(
+            @PathVariable Integer id, @RequestBody @Valid OrderStatusRequest request) {
+        OrderResponse result = orderService.updatedStatus(id, request);
+        return ResponseEntity.ok(
+                ApiResponse.<OrderResponse>builder()
+                        .code(200)
+                        .message("Cập nhật trạng thái đơn thành công")
+                        .result(result)
+                        .build());
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteCampaign(@PathVariable Integer id) {
+
+        orderService.deleteOrder(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder().code(200).message("Xóa thành công đơn hàng").build());
     }
 }

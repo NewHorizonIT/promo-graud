@@ -13,7 +13,7 @@ public enum VoucherErrorCode implements BaseErrorCode {
     INSUFFICIENT_QUANTITY(
             1802,
             "Vouchers have been created but the required number is not yet available",
-            HttpStatus.INTERNAL_SERVER_ERROR),
+            HttpStatus.BAD_REQUEST),
     REQUIRED_FIELD(1803, "Minimum one status or quantity_remain field ", HttpStatus.BAD_REQUEST),
     NOT_EXIST(1804, "Voucher does not exist", HttpStatus.NOT_FOUND),
     OUT_OF_STOCK(1805, "Voucher is out of stock", HttpStatus.BAD_REQUEST),
@@ -54,7 +54,8 @@ public enum VoucherErrorCode implements BaseErrorCode {
             HttpStatus.BAD_REQUEST),
     VOUCHER_TYPE_INVALID(1818, "Voucher type invalid", HttpStatus.BAD_REQUEST),
     VOUCHER_STATUS_INVALID(1819, "Voucher status invalid ", HttpStatus.BAD_REQUEST),
-    VOUCHER_CHANNEL_INVALID(1820, "Voucher distribute channel invalid", HttpStatus.BAD_REQUEST);
+    VOUCHER_CHANNEL_INVALID(1820, "Voucher distribute channel invalid", HttpStatus.BAD_REQUEST),
+    NO_USER_SELECTED(1818, "No select user", HttpStatus.MULTI_STATUS);
     private final int code;
     private final String message;
     private final HttpStatusCode statusCode;
