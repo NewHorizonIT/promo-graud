@@ -228,13 +228,13 @@ export default function CampaignDetailPage() {
           <div>
             <p className="text-xs text-text-muted mb-0.5">Bắt đầu</p>
             <p className="text-sm font-medium text-text-primary">
-              {campaign.startTime ? new Date(campaign.startTime).toLocaleDateString('vi-VN') : '—'}
+              {campaign.startTime ? new Date(campaign.startTime).toLocaleString('vi-VN') : '—'}
             </p>
           </div>
           <div>
             <p className="text-xs text-text-muted mb-0.5">Kết thúc</p>
             <p className="text-sm font-medium text-text-primary">
-              {campaign.endTime ? new Date(campaign.endTime).toLocaleDateString('vi-VN') : '—'}
+              {campaign.endTime ? new Date(campaign.endTime).toLocaleString('vi-VN') : '—'}
             </p>
           </div>
           <div>
