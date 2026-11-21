@@ -30,6 +30,10 @@ import UsersPage from '../pages/admin/UserPage';
 import UserTypesPage from '../pages/admin/UserTypePage';
 import UserFormPage from '../pages/admin/UserFormPage';
 import UserDetailPage from '../pages/admin/UserDetailPage';
+import PaymentResultPage from '../pages/PaymentResultPage';
+import DistributionPage from '../pages/admin/DistributionPage';
+import DistributionLogDetailPage from '../pages/admin/DistributionLogDetailPage';
+import DistributeVoucherPage from '../pages/admin/DistributeVoucherPage';
 
 export default function AppRoutes() {
   return (
@@ -75,6 +79,7 @@ export default function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="payment-result" element={<PaymentResultPage />} />
       </Route>
 
       {/* ── Admin standalone (no layout) ── */}
@@ -96,6 +101,7 @@ export default function AppRoutes() {
         <Route path="campaigns/:id/edit" element={<CampaignFormPage />} />
         <Route path="vouchers" element={<VouchersPage />} />
         <Route path="vouchers/new" element={<VoucherFormPage />} />
+        <Route path="vouchers/distribute" element={<DistributeVoucherPage />} />
         <Route path="vouchers/:id" element={<VoucherDetailPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />
@@ -109,6 +115,8 @@ export default function AppRoutes() {
         <Route path="users/:id" element={<UserDetailPage />} />
         <Route path="users/:id/edit" element={<UserFormPage />} />
         <Route path="user-types" element={<UserTypesPage />} />
+        <Route path="distributions" element={<DistributionPage />} />
+        <Route path="distributions/:id" element={<DistributionLogDetailPage />} />
       </Route>
     </Routes>
   );

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Send } from 'lucide-react';
 import VoucherTable from '../../features/admin/vouchers/components/VoucherTable';
 import ConfirmModal from '../../components/ConfirmModal';
+import Pagination from '../../components/Pagination';
 import {
   useAdminVouchers,
   useDeleteVoucher,
@@ -43,6 +44,10 @@ export default function VouchersPage() {
     });
   };
 
+  const handlePageChange = (newPage) => {
+    setSearchParams({ ...(type ? { type } : {}), page: String(newPage) });
+  };
+
   return (
     <>
       {modal && (
@@ -58,12 +63,20 @@ export default function VouchersPage() {
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <p className="text-sm text-text-muted">{total} vouchers</p>
-          <Link
-            to="/admin/vouchers/new"
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all hover:shadow-glow"
-          >
-            <Plus size={16} /> Tạo Voucher
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/admin/vouchers/distribute"
+              className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border hover:bg-surface-muted text-text-primary rounded-xl text-sm font-semibold transition-all"
+            >
+              <Send size={16} className="text-primary" /> Phân phối
+            </Link>
+            <Link
+              to="/admin/vouchers/new"
+              className="flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all hover:shadow-glow"
+            >
+              <Plus size={16} /> Tạo Voucher
+            </Link>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 bg-surface-muted p-1 rounded-xl w-fit">
@@ -93,27 +106,10 @@ export default function VouchersPage() {
           <VoucherTable vouchers={vouchers} onDelete={handleDelete} />
         )}
 
-        {totalPages > 1 && (
-          <div className="flex justify-center gap-2 pt-2">
-            {[...Array(totalPages)].map((_, i) => {
-              const pg = i + 1;
-              return (
-                <button
-                  key={pg}
-                  type="button"
-                  onClick={() => setSearchParams({ ...(type ? { type } : {}), page: String(pg) })}
-                  className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
-                    pg === page
-                      ? 'bg-primary text-white shadow-glow'
-                      : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
-                  }`}
-                >
-                  {pg}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        <Pagination
+          meta={{ current_page: page, last_page: totalPages }}
+          onPageChange={handlePageChange}
+        />
       </div>
     </>
   );
