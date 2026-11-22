@@ -63,6 +63,8 @@ public class SecurityConfig {
                                 .permitAll()
                                 .requestMatchers(swaggerEndpoint)
                                 .permitAll()
+                                .requestMatchers("/ws/**")
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated());
 

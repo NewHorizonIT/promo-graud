@@ -22,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 
 import group2d.promo_graud.modules.fraud.FraudCheckService;
 import group2d.promo_graud.modules.fraud.FraudDetectedException;
+import group2d.promo_graud.modules.notifications.NotificationEnum;
+import group2d.promo_graud.modules.notifications.NotificationService;
 import group2d.promo_graud.modules.orders.OrderErrorCode;
 import group2d.promo_graud.modules.orders.OrderPaymentEnum;
 import group2d.promo_graud.modules.orders.OrderPaymentStatusEnum;
@@ -43,6 +45,7 @@ import group2d.promo_graud.modules.products.repository.ProductRepository;
 import group2d.promo_graud.modules.rules.engine.RuleEngine;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.entity.UserVoucher;
+import group2d.promo_graud.modules.user.enums.RoleEnum;
 import group2d.promo_graud.modules.user.enums.UserVoucherStatus;
 import group2d.promo_graud.modules.user.error.UserErrorCode;
 import group2d.promo_graud.modules.user.error.UserVoucherErrorCode;
@@ -85,6 +88,7 @@ public class OrderService {
     private final UserVoucherRepository userVoucherRepository;
     private final RuleEngine ruleEngine;
     private final FraudCheckService fraudCheckService;
+    private final NotificationService notificationService;
 
     public OrderResponse createOrder(
             OrderRequest request, String ipAddress, String idemKey, String deviceFingerprint) {
@@ -177,7 +181,18 @@ public class OrderService {
                     order.setStatus(OrderStatus.PENDING);
                     order.setPaymentStatus(OrderPaymentStatusEnum.UNPAID);
                     orderRepository.save(order);
+                    List<Integer> adminIds =
+                            userRepository.findUserIdsByRoleAndIsDeletedFalse(RoleEnum.ADMIN);
 
+                    notificationService.createForUsers(
+                            adminIds,
+                            NotificationEnum.ORDER_CREATED,
+                            "Có đơn hàng mới",
+                            "Khách hàng "
+                                    + user.getUsername()
+                                    + " vừa tạo đơn hàng #"
+                                    + order.getId(),
+                            order.getId());
                     return mapToOrderResponse(order);
                 });
     }
@@ -248,6 +263,18 @@ public class OrderService {
                                     .statusOfOrder(OrderStatus.PENDING)
                                     .build());
                     orderRepository.save(order);
+                    List<Integer> adminIds =
+                            userRepository.findUserIdsByRoleAndIsDeletedFalse(RoleEnum.ADMIN);
+
+                    notificationService.createForUsers(
+                            adminIds,
+                            NotificationEnum.ORDER_CREATED,
+                            "Có đơn hàng mới",
+                            "Khách hàng "
+                                    + user.getUsername()
+                                    + " vừa tạo đơn hàng #"
+                                    + order.getId(),
+                            order.getId());
                     return mapToOrderResponse(order);
                 });
     }
@@ -519,6 +546,21 @@ public class OrderService {
                         .orElseThrow(() -> new AppException(OrderErrorCode.ORDER_NOT_EXISTS));
         if (target == OrderStatus.CANCELLED) {
             releaseVoucher(fresh);
+            notificationService.createForUsers(
+                    List.of(fresh.getUser().getId()),
+                    NotificationEnum.ORDER_CANCELED,
+                    "Đơn hàng đã bị hủy",
+                    "Đơn hàng #" + fresh.getId() + " đã được cập nhật sang trạng thái Cancel.",
+                    fresh.getId());
+        }
+        if (target == OrderStatus.SUCCESS) {
+
+            notificationService.createForUsers(
+                    List.of(fresh.getUser().getId()),
+                    NotificationEnum.ORDER_UPDATED,
+                    "Đơn hàng đã thành công",
+                    "Đơn hàng #" + fresh.getId() + " đã được xác nhận thành công.",
+                    fresh.getId());
         }
         return mapToOrderResponse(fresh);
     }

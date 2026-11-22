@@ -1,10 +1,12 @@
 package group2d.promo_graud.modules.voucher.service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +27,12 @@ import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.repository.UserRepository;
+import group2d.promo_graud.modules.voucher.component.distribute.DistributionPayload;
+import group2d.promo_graud.modules.voucher.component.worker.VoucherDistributionEvent;
 import group2d.promo_graud.modules.voucher.dto.requests.DistributeVoucherRequest;
 import group2d.promo_graud.modules.voucher.dto.responses.DistributionResponse;
 import group2d.promo_graud.modules.voucher.entity.DistributionLog;
+import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.*;
 import group2d.promo_graud.modules.voucher.repository.DistributionLogRepository;
 import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
@@ -42,6 +48,7 @@ public class DistributeVoucherService {
     private final VoucherRepository voucherRepository;
     private final DistributeBatchService distributeBatchService;
     private final RuleCampaignRepository ruleCampaignRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Nếu kho hết mã, sẽ quăng lỗi ngay lập tức về Frontend mà không cần gọi Spring Batch.
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
@@ -167,6 +174,68 @@ public class DistributeVoucherService {
         }
 
         return result.stream().distinct().toList();
+    }
+
+    // distribute voucher generic webhook
+    @Transactional
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public void broadcastGenericWebhook(Integer voucherId) {
+        Voucher voucher =
+                voucherRepository
+                        .findById(voucherId)
+                        .orElseThrow(() -> new AppException(VoucherErrorCode.NOT_EXIST));
+
+        if (voucher.getType() != VoucherType.GENERIC
+                || voucher.getDistributionChannel() != DistributionChannel.WEBHOOK) {
+            throw new AppException(VoucherErrorCode.VOUCHER_TYPE_INVALID);
+        }
+
+        RuleCampaign rule = voucher.getRuleCampaign();
+        if (voucher.getStatus() != VoucherStatus.ACTIVE || rule.getStatus() != RuleStatus.ACTIVE) {
+            throw new AppException(RuleCampaignErrorCode.RULE_NOT_ELIGIBLE);
+        }
+
+        RuleTargetAudience audience = rule.getTypeOfUser();
+        String targetAudienceLabel =
+                (audience == null || audience == RuleTargetAudience.ALL)
+                        ? "Toàn bộ khách hàng (GENERIC)"
+                        : "Khách hàng hạng " + audience.name() + " (GENERIC)";
+
+        // 1. Ghi log đối soát
+        String recipientLabel = "DISCORD_DEMO";
+        DistributionLog logEntry =
+                DistributionLog.builder()
+                        .voucher(voucher)
+                        .channel(DistributionChannel.WEBHOOK)
+                        .recipient(recipientLabel)
+                        .status(DistributionLogStatus.PENDING)
+                        .retryCount(0)
+                        .build();
+        distributionLogRepository.saveAndFlush(logEntry);
+
+        // 2. Đóng gói payload gửi sang Redis Stream -> Discord Webhook
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+        String startTimeStr =
+                rule.getStartTime() != null
+                        ? rule.getStartTime().format(formatter)
+                        : "Có hiệu lực ngay";
+        String endTimeStr =
+                rule.getEndTime() != null ? rule.getEndTime().format(formatter) : "Không giới hạn";
+
+        DistributionPayload payload =
+                new DistributionPayload(
+                        logEntry.getId(),
+                        targetAudienceLabel, // Sẽ hiện: "Khách hàng hạng SILVER (GENERIC)"
+                        voucher.getCode(),
+                        DistributionChannel.WEBHOOK,
+                        "DISCORD_DEMO",
+                        rule.getCampaign().getName(),
+                        rule.getName(),
+                        startTimeStr,
+                        endTimeStr,
+                        voucher.getLimitClient());
+
+        eventPublisher.publishEvent(new VoucherDistributionEvent(List.of(payload)));
     }
 
     private DistributionResponse mapToResponse(DistributionLog distributionLog) {

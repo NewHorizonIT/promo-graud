@@ -15,6 +15,7 @@ import group2d.promo_graud.modules.voucher.dto.responses.CreateVoucherResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.JobStatusResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherCardResponse;
 import group2d.promo_graud.modules.voucher.dto.responses.VoucherResponse;
+import group2d.promo_graud.modules.voucher.service.DistributeVoucherService;
 import group2d.promo_graud.modules.voucher.service.VoucherService;
 import group2d.promo_graud.shared.dto.ApiResponse;
 import group2d.promo_graud.shared.dto.PaginatedResponse;
@@ -28,6 +29,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RequiredArgsConstructor
 public class VoucherController {
     private final VoucherService voucherService;
+    private final DistributeVoucherService distributeVoucherService;
 
     @GetMapping
     public ResponseEntity<PaginatedResponse<VoucherResponse>> getVouchers(
@@ -101,6 +103,15 @@ public class VoucherController {
                         .code(200)
                         .message("Lấy card voucher unique thành công")
                         .result(voucherService.getSummaryCards())
+                        .build());
+    }
+
+    @PostMapping("/{id}/broadcast-webhook")
+    public ResponseEntity<ApiResponse<Void>> broadcastWebhook(@PathVariable Integer id) {
+        distributeVoucherService.broadcastGenericWebhook(id);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .message("Đã gửi thông báo Webhook cho chiến dịch")
                         .build());
     }
 }

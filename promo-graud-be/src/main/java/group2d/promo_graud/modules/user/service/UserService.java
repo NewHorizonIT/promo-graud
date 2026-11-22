@@ -155,7 +155,7 @@ public class UserService {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public Page<UserResponse> getAllUser(Integer userTypeId, String name, int size, int page) {
-        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "id"));
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "id"));
         String keyword = name == null ? "" : name.trim();
         return userRepository
                 .getAllUser(userTypeId, keyword, pageable)

@@ -12,6 +12,9 @@ export function useCampaigns(params = {}) {
   return useQuery({
     queryKey: ['admin', 'campaigns', params],
     queryFn: () => getCampaigns(params),
+    staleTime: 1000 * 10,
+    refetchInterval: 30 * 1000,
+    refetchIntervalInBackground: false,
   });
 }
 
@@ -19,6 +22,7 @@ export function useCampaign(id) {
   return useQuery({
     queryKey: ['admin', 'campaigns', id],
     queryFn: () => getCampaign(id),
+    staleTime: 2000 * 10,
     enabled: !!id,
   });
 }

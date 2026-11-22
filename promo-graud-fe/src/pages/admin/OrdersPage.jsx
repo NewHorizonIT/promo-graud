@@ -11,6 +11,7 @@ import { StatusBadge } from '../../features/admin/orders/components/OrderBadges'
 import { useOrderStatusChange } from '../../features/admin/orders/hooks/useOrderStatusChange';
 import ConfirmModal from '../../components/ConfirmModal';
 import { useCart } from '../../store/CartContext';
+import Pagination from '../../components/Pagination';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Tất cả' },
@@ -328,27 +329,8 @@ export default function OrdersPage() {
       )}
 
       {/* SỬA: Phân trang tính từ 1 thay vì 0 */}
-      {totalPages > 0 && (
-        <div className="flex justify-center gap-2 pt-2">
-          {[...Array(totalPages)].map((_, i) => {
-            const pageNumber = i + 1;
-            return (
-              <button
-                key={pageNumber}
-                type="button"
-                onClick={() => setPage(pageNumber)}
-                className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
-                  pageNumber === page
-                    ? 'bg-primary text-white shadow-glow'
-                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
-                }`}
-              >
-                {pageNumber}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {/* Phân trang dùng component Pagination */}
+      <Pagination meta={{ current_page: page, last_page: totalPages }} onPageChange={setPage} />
       {modalState.isOpen && (
         <ConfirmModal
           title={modalState.title}

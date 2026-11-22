@@ -1,7 +1,8 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, User } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { Home, LogOut, User } from 'lucide-react';
 import { useLogout } from '../../features/auth/hooks/useAuth';
 import { useMe } from '../../features/user/hooks/useUser';
+import NotificationBell from '../../features/notification/components/NotificationBell';
 
 const PAGE_TITLES = {
   '/admin': 'Dashboard',
@@ -74,12 +75,24 @@ export default function AdminTopbar() {
     <header className="h-16 bg-surface border-b border-border flex items-center justify-between px-6 shrink-0 sticky top-0 z-30">
       <h1 className="text-lg font-bold text-text-primary">{title}</h1>
       <div className="flex items-center gap-3">
+        <NotificationBell isAdmin={true} />
+
+        <div className="h-5 w-px bg-border" />
         <div className="flex items-center gap-2 text-sm text-text-secondary">
           <div className="w-7 h-7 rounded-full bg-surface-muted border border-border flex items-center justify-center">
             <User size={14} />
           </div>
           <span className="font-medium">{me?.username ?? 'Admin'}</span>
         </div>
+        <Link
+          to="/"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg
+            text-sm font-semibold text-text-secondary
+            hover:text-primary hover:bg-surface-muted transition-all"
+        >
+          <Home size={16} />
+          Trang bán hàng
+        </Link>
         <button
           type="button"
           onClick={handleLogout}

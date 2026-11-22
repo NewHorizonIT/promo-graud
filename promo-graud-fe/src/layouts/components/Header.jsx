@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   ShoppingCart,
-  Bell,
   Search,
   LogOut,
   LogIn,
@@ -11,12 +10,15 @@ import {
   User,
   History,
   Ticket,
+  UserKeyIcon,
 } from 'lucide-react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useLogout } from '../../features/auth/hooks/useAuth';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useCart } from '../../hooks/useCart';
+import { useMe } from '../../features/user/hooks/useUser';
+import NotificationBell from '../../features/notification/components/NotificationBell';
 
 export default function Header() {
   const navigate = useNavigate();
@@ -32,6 +34,7 @@ export default function Header() {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { data: me } = useMe();
 
   useEffect(() => {
     if (location.pathname === '/products') {
@@ -174,13 +177,7 @@ export default function Header() {
 
           {token ? (
             <>
-              <button
-                type="button"
-                className="p-2 rounded-full hover:bg-surface-muted text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
-                aria-label="Thông báo"
-              >
-                <Bell size={20} />
-              </button>
+              <NotificationBell isAdmin={false} />
 
               {/* Avatar dropdown */}
               <div ref={dropdownRef} className="relative">
@@ -222,6 +219,18 @@ export default function Header() {
                       <Ticket size={16} />
                       Ví voucher
                     </Link>
+                    {me?.role === 'ADMIN' && (
+                      <Link
+                        to="/admin"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm
+                          text-text-secondary hover:bg-surface-muted
+                          hover:text-text-primary transition-colors"
+                      >
+                        <UserKeyIcon size={16} />
+                        Trang quản trị
+                      </Link>
+                    )}
                     <div className="border-t border-border">
                       <button
                         type="button"
