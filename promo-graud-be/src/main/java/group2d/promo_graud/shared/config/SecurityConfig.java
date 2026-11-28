@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -20,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import group2d.promo_graud.modules.auth.component.CustomJwtDecoder;
 import group2d.promo_graud.modules.auth.component.JwtAuthenticationEntryPoint;
+import group2d.promo_graud.shared.filter.RateLimitFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -48,9 +51,11 @@ public class SecurityConfig {
     private String allowedOrigins;
 
     private CustomJwtDecoder customJwtDecoder;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(CustomJwtDecoder customJwtDecoder) {
+    public SecurityConfig(CustomJwtDecoder customJwtDecoder, RateLimitFilter rateLimitFilter) {
         this.customJwtDecoder = customJwtDecoder;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -89,6 +94,7 @@ public class SecurityConfig {
                                 // Nếu authentication thất bại (ví dụ token không hợp lệ trả HTTP
                                 // 401 Unauthorized
                                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
+        httpSecurity.addFilterBefore(rateLimitFilter, BearerTokenAuthenticationFilter.class);
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         httpSecurity.cors(Customizer.withDefaults());
         return httpSecurity.build();
@@ -106,6 +112,15 @@ public class SecurityConfig {
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(
                 jwtGrantedAuthoritiesConverter);
         return jwtAuthenticationConverter;
+    }
+
+    // Ngăn Spring Boot tự đăng ký filter vào servlet container — nếu không filter sẽ chạy 2 lần
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration() {
+        FilterRegistrationBean<RateLimitFilter> registration =
+                new FilterRegistrationBean<>(rateLimitFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

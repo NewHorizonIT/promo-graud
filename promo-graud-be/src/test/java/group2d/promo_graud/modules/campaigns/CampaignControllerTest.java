@@ -16,6 +16,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,6 +54,7 @@ public class CampaignControllerTest {
     @Autowired private MockMvc mockMvc;
 
     @MockitoBean private CampaignService campaignService;
+    @MockitoBean private RedisTemplate<String, String> redisTemplate;
 
     private ObjectMapper objectMapper;
 

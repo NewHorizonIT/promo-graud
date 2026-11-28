@@ -61,3 +61,11 @@ voucher:
   batch:
     unique-threshold: 50
     chunk-size: 20
+
+fraud:
+  max-redemptions-per-ip-24h: 3
+  max-users-per-device-24h: 3
+
+rate-limit:
+  requests-per-window: 5
+  window-seconds: 60
