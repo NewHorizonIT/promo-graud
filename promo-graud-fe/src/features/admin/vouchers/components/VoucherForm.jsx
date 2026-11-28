@@ -1,21 +1,13 @@
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
-const USER_TYPES = [
-  { value: 'ALL', label: 'Tất cả user' },
-  { value: 'NORMAL', label: 'Bình thường' },
-  { value: 'BRONZE', label: 'Đồng' },
-  { value: 'SILVER', label: 'Bạc' },
-  { value: 'GOLD', label: 'Vàng' },
-];
-
 const EMPTY = {
   campaign_id: '',
   rule_id: '',
   type: 'GENERIC',
   quantity: '',
   limit_client: '',
-  distribution_channel: 'EMAIL',
+  distribution_channel: 'IN_APP',
   prefix: '',
   target_mode: 'none',
   target_user_type: 'ALL',
@@ -39,6 +31,20 @@ export default function VoucherForm({
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
+  const handleTypeChange = (newType) => {
+    setForm((prev) => ({
+      ...prev,
+      type: newType,
+      distribution_channel:
+        newType === 'GENERIC'
+          ? prev.distribution_channel === 'EMAIL'
+            ? 'IN_APP'
+            : prev.distribution_channel
+          : prev.distribution_channel === 'IN_APP'
+            ? 'EMAIL'
+            : prev.distribution_channel,
+    }));
+  };
   const handleCampaignChange = (e) => {
     const campaignId = e.target.value;
     setForm((prev) => ({ ...prev, campaign_id: campaignId, rule_id: '' }));
@@ -191,7 +197,7 @@ export default function VoucherForm({
           </label>
           <select
             value={form.type}
-            onChange={(e) => set('type', e.target.value)}
+            onChange={(e) => handleTypeChange(e.target.value)}
             className={inputClass}
           >
             <option value="GENERIC">Generic — 1 mã nhiều người dùng</option>
@@ -245,99 +251,22 @@ export default function VoucherForm({
         </div>
       </div>
 
-      {/* ── Targeting — chỉ hiện khi UNIQUE ── */}
-      {isUnique && (
-        <div className="border border-border rounded-xl p-4 space-y-3 bg-surface">
-          <p className="text-sm font-semibold text-text-primary">Đối tượng nhận voucher</p>
-
-          <div className="flex flex-col gap-2">
-            {[
-              { value: 'none', label: 'Không chỉ định — chỉ sinh mã, phân phối sau' },
-              { value: 'user_type', label: 'Theo loại user — phân phối tự động cho 1 loại' },
-              { value: 'user_ids', label: 'Danh sách user — nhập ID cụ thể' },
-            ].map((opt) => (
-              <label
-                key={opt.value}
-                className={`flex items-center gap-3 px-3 py-2.5 border rounded-xl cursor-pointer transition-all ${
-                  form.target_mode === opt.value
-                    ? 'border-primary bg-primary-light'
-                    : 'border-border hover:bg-surface-muted'
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="target_mode"
-                  value={opt.value}
-                  checked={form.target_mode === opt.value}
-                  onChange={() => set('target_mode', opt.value)}
-                  className="accent-primary"
-                />
-                <span
-                  className={`text-sm font-medium ${
-                    form.target_mode === opt.value ? 'text-primary' : 'text-text-secondary'
-                  }`}
-                >
-                  {opt.label}
-                </span>
-              </label>
-            ))}
-          </div>
-
-          {form.target_mode === 'user_type' && (
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                Loại user <span className="text-error-text">*</span>
-              </label>
-              <select
-                value={form.target_user_type}
-                onChange={(e) => set('target_user_type', e.target.value)}
-                className={inputClass}
-              >
-                {USER_TYPES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {form.target_mode === 'user_ids' && (
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-1.5">
-                User IDs <span className="text-error-text">*</span>
-                <span className="font-normal text-text-muted ml-1">— cách nhau bởi dấu phẩy</span>
-              </label>
-              <textarea
-                rows={3}
-                value={form.target_user_ids}
-                onChange={(e) => set('target_user_ids', e.target.value)}
-                placeholder="VD: 1, 2, 3, 4, 5"
-                className={`w-full px-4 py-2.5 rounded-xl border bg-surface-muted text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none ${
-                  errors.target_user_ids ? 'border-error-text' : 'border-border'
-                }`}
-              />
-              {parsedUserIds.length > 0 && (
-                <p className="mt-1 text-xs text-text-muted">{parsedUserIds.length} user hợp lệ</p>
-              )}
-              {errors.target_user_ids && (
-                <p className="mt-1 text-xs text-error-text">{errors.target_user_ids}</p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ── Distribution channel ── */}
       <div>
         <label className="block text-sm font-medium text-text-secondary mb-1.5">
           Kênh phân phối
         </label>
         <div className="flex gap-3">
-          {[
-            { value: 'EMAIL', label: 'Email' },
-            { value: 'WEBHOOK', label: 'Webhook' },
-          ].map((ch) => (
+          {(isUnique
+            ? [
+                { value: 'EMAIL', label: 'Email' },
+                { value: 'WEBHOOK', label: 'Webhook' },
+              ]
+            : [
+                { value: 'IN_APP', label: 'Thông báo trong hệ thống' },
+                { value: 'WEBHOOK', label: 'Webhook' },
+              ]
+          ).map((ch) => (
             <label
               key={ch.value}
               className={`flex-1 flex items-center gap-3 px-4 py-3 border rounded-xl cursor-pointer transition-all ${

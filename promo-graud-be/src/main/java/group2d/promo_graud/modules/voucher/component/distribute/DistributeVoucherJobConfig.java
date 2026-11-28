@@ -26,8 +26,8 @@ public class DistributeVoucherJobConfig {
     @Bean("stepTaskExecutor")
     public ThreadPoolTaskExecutor stepTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5); // 5 luồng cùng bốc chunk
-        executor.setMaxPoolSize(10);
+        executor.setCorePoolSize(3); // 5 luồng cùng bốc chunk
+        executor.setMaxPoolSize(6);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("step-worker-");
         executor.initialize();

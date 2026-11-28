@@ -55,6 +55,8 @@ public enum VoucherErrorCode implements BaseErrorCode {
     VOUCHER_TYPE_INVALID(1818, "Voucher type invalid", HttpStatus.BAD_REQUEST),
     VOUCHER_STATUS_INVALID(1819, "Voucher status invalid ", HttpStatus.BAD_REQUEST),
     VOUCHER_CHANNEL_INVALID(1820, "Voucher distribute channel invalid", HttpStatus.BAD_REQUEST),
+    INVALID_DISTRIBUTION_CHANNEL(
+            1822, "Kênh phân phối không hợp lệ với loại voucher này", HttpStatus.BAD_REQUEST),
     NO_USER_SELECTED(1818, "No select user", HttpStatus.MULTI_STATUS);
     private final int code;
     private final String message;

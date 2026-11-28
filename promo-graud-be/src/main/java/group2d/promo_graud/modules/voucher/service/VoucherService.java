@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -19,12 +20,15 @@ import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import group2d.promo_graud.modules.notifications.NotificationEnum;
+import group2d.promo_graud.modules.notifications.NotificationService;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
 import group2d.promo_graud.modules.rules.enums.RuleTargetAudience;
 import group2d.promo_graud.modules.user.entity.User;
 import group2d.promo_graud.modules.user.entity.UserVoucher;
+import group2d.promo_graud.modules.user.enums.RoleEnum;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 import group2d.promo_graud.modules.user.repository.UserRepository;
 import group2d.promo_graud.modules.user.repository.UserVoucherRepository;
@@ -55,7 +59,8 @@ public class VoucherService {
     private final UserRepository userRepository;
     private final UserVoucherRepository userVoucherRepository;
     private final JobRepository jobRepository;
-
+    private final DistributeVoucherService distributeVoucherService;
+    private final NotificationService notificationService;
     private static final int MAX_TARGETED_USERS = 500;
 
     @Value("${voucher.batch.unique-threshold:50}")
@@ -97,7 +102,7 @@ public class VoucherService {
                 throw new AppException(VoucherErrorCode.VOUCHER_CHANNEL_INVALID);
             }
         }
-        Pageable pageable = PageRequest.of(page - 1, pageSize);
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
 
         Page<Voucher> result =
                 voucherRepository.getAll(
@@ -185,18 +190,38 @@ public class VoucherService {
     // -----------------------Tạo voucher----------------------------------
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public CreateVoucherResponse create(VoucherRequest request) {
-
         RuleCampaign rule =
                 ruleCampaignRepository
                         .findById(request.getRuleId())
                         .orElseThrow(() -> new AppException(RuleCampaignErrorCode.RULE_NOT_EXIST));
-
+        validateChannelByType(request.getType(), request.getDistributionChannel());
         // GENERIC — targeting không áp dụng cho loại này
         if (request.getType() == VoucherType.GENERIC) {
             if (request.getQuantity() == null) {
                 throw new AppException(VoucherErrorCode.TARGET_QUANTITY_REQUIRED);
             }
             List<Voucher> voucherList = createGeneric(request, rule);
+            Voucher created = voucherList.getFirst();
+            if (created.getDistributionChannel() == DistributionChannel.IN_APP) {
+                RuleTargetAudience audience = rule.getTypeOfUser();
+                List<User> targetUsers;
+                if (audience == null || audience == RuleTargetAudience.ALL) {
+                    targetUsers = userRepository.findByRoleAndIsDeletedFalse(RoleEnum.USER);
+                } else {
+                    targetUsers =
+                            userRepository.findByTypeOfUserTypeAndRoleAndIsDeletedFalse(
+                                    UserTypeEnum.valueOf(audience.name()), RoleEnum.USER);
+                }
+                notificationService.createForUsers(
+                        targetUsers.stream().map(User::getId).toList(),
+                        NotificationEnum.VOUCHER_NEW,
+                        "Bạn có voucher mới!",
+                        "Voucher " + created.getCode() + " vừa được phát hành.",
+                        created.getId());
+            }
+            if (created.getDistributionChannel() == DistributionChannel.WEBHOOK) {
+                distributeVoucherService.broadcastGenericWebhook(created.getId());
+            }
             return CreateVoucherResponse.builder()
                     .generated(voucherList.size())
                     .vouchers(voucherList)
@@ -204,7 +229,6 @@ public class VoucherService {
                     .jobId(null)
                     .build();
         }
-
         // UNIQUE — resolve danh sách user mục tiêu (nếu có)
         List<User> targetUsers = resolveTargetUsers(request);
 
@@ -221,7 +245,6 @@ public class VoucherService {
                     .jobId(null)
                     .build();
         }
-
         // UNIQUE không có targeting — fallback theo threshold
         if (request.getQuantity() == null) {
             throw new AppException(VoucherErrorCode.TARGET_QUANTITY_REQUIRED);
@@ -359,5 +382,14 @@ public class VoucherService {
     // lấy card Voucher
     public List<VoucherCardResponse> getSummaryCards() {
         return voucherRepository.getUniqueVoucherCard();
+    }
+
+    private void validateChannelByType(VoucherType type, DistributionChannel channel) {
+        if (type == VoucherType.GENERIC && channel == DistributionChannel.EMAIL) {
+            throw new AppException(VoucherErrorCode.INVALID_DISTRIBUTION_CHANNEL);
+        }
+        if (type == VoucherType.UNIQUE && channel == DistributionChannel.IN_APP) {
+            throw new AppException(VoucherErrorCode.INVALID_DISTRIBUTION_CHANNEL);
+        }
     }
 }

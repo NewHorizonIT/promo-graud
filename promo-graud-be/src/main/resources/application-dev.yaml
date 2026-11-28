@@ -21,7 +21,7 @@ spring:
   data:
     redis:
       host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:53326}
+      port: ${REDIS_PORT:6378}
       timeout: 2000ms
   mail:
     host: smtp.gmail.com

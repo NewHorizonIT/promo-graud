@@ -1,9 +1,10 @@
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import CampaignTable from '../../features/admin/campaigns/components/CampaignTable';
 import { useCampaigns, useDeleteCampaign } from '../../features/admin/campaigns/hooks/useCampaigns';
 import ConfirmModal from '../../components/ConfirmModal';
+import Pagination from '../../components/Pagination';
 
 const STATUS_FILTERS = [
   { value: '', label: 'Tất cả' },
@@ -13,16 +14,6 @@ const STATUS_FILTERS = [
 ];
 
 const PAGE_SIZE = 20;
-
-function getVisiblePages(current, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const s = new Set([1, total]);
-  for (let d = -2; d <= 2; d++) {
-    const p = current + d;
-    if (p > 1 && p < total) s.add(p);
-  }
-  return [...s].sort((a, b) => a - b);
-}
 
 export default function CampaignsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -53,6 +44,13 @@ export default function CampaignsPage() {
 
   const setFilter = (val) => {
     setSearchParams(val ? { status: val } : {});
+  };
+
+  const setPage = (pg) => {
+    setSearchParams((prev) => {
+      prev.set('page', String(pg));
+      return prev;
+    });
   };
 
   const handleSearch = (e) => {
@@ -161,36 +159,7 @@ export default function CampaignsPage() {
         <CampaignTable campaigns={campaigns} onDelete={handleDelete} />
       )}
 
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2 pt-2">
-          {getVisiblePages(page, totalPages).map((pg, idx, arr) => (
-            <Fragment key={pg}>
-              {idx > 0 && arr[idx - 1] !== pg - 1 && (
-                <span className="flex items-center px-1 text-text-muted text-sm select-none">
-                  …
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={() =>
-                  setSearchParams({
-                    ...(status ? { status } : {}),
-                    ...(nameParam ? { name: nameParam } : {}),
-                    page: String(pg),
-                  })
-                }
-                className={`min-w-9 h-9 px-3 rounded-xl text-sm font-semibold transition-all ${
-                  pg === page
-                    ? 'bg-primary text-white shadow-glow'
-                    : 'border border-border bg-surface text-text-secondary hover:bg-surface-muted'
-                }`}
-              >
-                {pg}
-              </button>
-            </Fragment>
-          ))}
-        </div>
-      )}
+      <Pagination meta={{ current_page: page, last_page: totalPages }} onPageChange={setPage} />
     </div>
   );
 }

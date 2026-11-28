@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import group2d.promo_graud.modules.user.entity.User;
+import group2d.promo_graud.modules.user.enums.RoleEnum;
 import group2d.promo_graud.modules.user.enums.UserTypeEnum;
 
 @Repository
@@ -43,4 +44,17 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u.id FROM User u WHERE u.typeOfUser.type = :userType AND u.id IN :userIds")
     List<Integer> findIdsByTypeAndIdIn(
             @Param("userType") UserTypeEnum type, @Param("userIds") List<Integer> userIds);
+
+    @Query(
+            """
+                SELECT u.id
+                FROM User u
+                WHERE u.role = :role
+                  AND u.isDeleted = false
+            """)
+    List<Integer> findUserIdsByRoleAndIsDeletedFalse(@Param("role") RoleEnum role);
+
+    List<User> findByRoleAndIsDeletedFalse(RoleEnum role);
+
+    List<User> findByTypeOfUserTypeAndRoleAndIsDeletedFalse(UserTypeEnum type, RoleEnum role);
 }
