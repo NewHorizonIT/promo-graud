@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
+import group2d.promo_graud.modules.notifications.NotificationService;
 import group2d.promo_graud.modules.rules.RuleCampaign;
 import group2d.promo_graud.modules.rules.RuleCampaignRepository;
 import group2d.promo_graud.modules.rules.enums.RuleCampaignErrorCode;
@@ -39,6 +40,7 @@ import group2d.promo_graud.modules.voucher.enums.VoucherErrorCode;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.enums.VoucherType;
 import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
+import group2d.promo_graud.modules.voucher.service.DistributeVoucherService;
 import group2d.promo_graud.modules.voucher.service.VoucherBatchService;
 import group2d.promo_graud.modules.voucher.service.VoucherInsertHelper;
 import group2d.promo_graud.modules.voucher.service.VoucherService;
@@ -55,6 +57,9 @@ public class VoucherServiceUnitTest {
     @Mock private RuleCampaignRepository ruleCampaignRepository;
 
     @Mock private VoucherInsertHelper voucherInsertHelper;
+
+    @Mock private NotificationService notificationService;
+    @Mock private DistributeVoucherService distributeVoucherService;
 
     @BeforeEach
     void setUp() {

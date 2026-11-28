@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import group2d.promo_graud.modules.fraud.FraudCheckService;
+import group2d.promo_graud.modules.notifications.NotificationService;
 import group2d.promo_graud.modules.orders.dto.request.OrderItemRequest;
 import group2d.promo_graud.modules.orders.dto.request.OrderRequest;
 import group2d.promo_graud.modules.orders.dto.response.OrderResponse;
@@ -42,6 +43,7 @@ import group2d.promo_graud.modules.voucher.entity.Voucher;
 import group2d.promo_graud.modules.voucher.enums.VoucherStatus;
 import group2d.promo_graud.modules.voucher.repository.VoucherRedemptionRepository;
 import group2d.promo_graud.modules.voucher.repository.VoucherRepository;
+import group2d.promo_graud.modules.voucher.service.DistributeVoucherService;
 
 @ExtendWith({MockitoExtension.class})
 @DisplayName("Order Service Unit Test")
@@ -69,6 +71,10 @@ public class OrderServiceTest {
     @Mock private FraudCheckService fraudCheckService;
 
     @InjectMocks private OrderService orderService;
+
+    @Mock private NotificationService notificationService;
+
+    @Mock private DistributeVoucherService distributeVoucherService;
 
     private final User user = User.builder().id(1).username("huy123").password("123456").build();
 
